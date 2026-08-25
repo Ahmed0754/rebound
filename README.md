@@ -21,20 +21,16 @@ Think of it like a Duolingo streak, but instead of a language, it's your recover
 
 ## How it works
 
-```mermaid
-graph TD
-    A["🏃 New user signs up<br/>(free)"] --> B["Quick safety screen<br/>('anything serious going on?')"]
-    B --> C["AI builds a starter plan<br/>just for them"]
-    C --> D["Two short sessions a day<br/>morning + evening"]
-    D --> E["Daily 10-second check-in<br/>'how did that feel?'"]
-    E --> F{"Every 7 days,<br/>AI reviews the trend"}
-    F -->|"Getting better"| G["Plan gets a little harder"]
-    F -->|"Holding steady"| H["Plan stays the same"]
-    F -->|"Getting worse"| I["⚠️ Plan backs off<br/>+ 'see a professional' message"]
-    G --> D
-    H --> D
-    I --> D
-```
+1. A new user signs up for free.
+2. A quick safety screen asks if anything serious is going on.
+3. The AI builds a starter plan just for them.
+4. Two short sessions a day, morning and evening.
+5. A daily 10-second check-in: "how did that feel?"
+6. Every 7 days, the AI reviews the trend:
+   - **Getting better** → the plan gets a little harder.
+   - **Holding steady** → the plan stays the same.
+   - **Getting worse** → the plan backs off and surfaces a "see a professional" message.
+7. Back to step 4, on repeat.
 
 Two safety nets run underneath all of this, all the time:
 - **A same-day red flag check** — anything that sounds like a real medical issue routes straight to "go see a doctor," no AI plan generated.
@@ -62,10 +58,10 @@ The bet: most people don't need a licensed clinician managing every decision —
 
 ## Where the product stands today
 
-- The full experience — signup, safety screening, AI plan generation, the daily two-session loop, weekly AI adjustments, and the safety rollback system — is **built and functioning** across both web and mobile (24+ screens).
-- Current focus is a visual design pass (the product works; it doesn't look investor-demo polished yet) and locking in pricing before a public launch.
+- Pre-build. This README captures the product concept and direction before any code is written.
+- Next steps: nail down the product spec and safety rules, then start on signup, safety screening, AI plan generation, the daily two-session loop, weekly AI adjustments, and the safety rollback system.
 - No clinician review in the loop by design for v1 — this is what keeps it fast and cheap — backed by conservative, rules-based safety limits under the hood rather than relying on the AI's judgment alone.
 
 ---
 
-*For the detailed product spec, safety rules, and technical architecture, see [`documents/PRD.md`](./documents/PRD.md), [`documents/DESIGN_BRIEF.md`](./documents/DESIGN_BRIEF.md), and [`documents/TDD.md`](./documents/TDD.md).*
+*Detailed product spec, safety rules, and technical architecture will live in `documents/` as the project develops.*
