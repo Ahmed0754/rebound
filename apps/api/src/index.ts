@@ -1,12 +1,15 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { PrismaClient } from "@prisma/client";
 import { GoogleGenAI, Type } from "@google/genai";
 
 const prisma = new PrismaClient();
 const app = new Hono();
+
+app.use("/poc/*", cors());
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const model = process.env.GEMINI_MODEL ?? "gemini-3.7-flash";
 
 app.post("/poc/regime", async (c) => {
   const body = await c.req.json<{ muscle?: string }>();
@@ -53,6 +56,8 @@ app.post("/poc/regime", async (c) => {
   const parsed = JSON.parse(response.text ?? "{}") as {
     picks?: { exerciseId: string; sets: number; reps: number }[];
   };
+
+  console.log("raw picks from Gemini:", parsed.picks);
 
   const poolById = new Map(pool.map((e) => [e.id, e]));
 

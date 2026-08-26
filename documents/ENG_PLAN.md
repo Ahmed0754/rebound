@@ -37,11 +37,13 @@ Update this section only with things that have been **run and verified**, not th
 
 **M1 — Proof of concept. Hard deadline: this week.**
 
-See `GAME_PLAN.md` M1 for the checklist. The short version: one Expo screen asking "what muscle hurts," a standalone containerized API, mock exercise rows in a Dockerized Postgres, one generic Gemini call, three exercises back.
+See `GAME_PLAN.md` M1 for the checklist. The short version: one web screen asking "what muscle hurts," a standalone containerized API, mock exercise rows in a Dockerized Postgres, one generic Gemini call, three exercises back.
 
-Deliberately not the real architecture. It exists to demo for the advisor **and** to force Docker, Postgres, the API container, Expo Go on a real phone, and LAN networking between them to all work before the co-founder clones anything.
+Deliberately not the real architecture. It exists to demo for the advisor and to force Docker, Postgres, and the API container to all work before the co-founder clones anything.
 
-**Done when:** demoed on a real iPhone, and the co-founder brings the whole stack up on macOS from a clean clone with only a Gemini API key.
+**Scope deviation from the original plan (2026-08-26):** M1 was originally an Expo screen, specifically to force Expo Go + LAN networking to work early. Swapped to web under deadline pressure — the advisor demo doesn't need mobile specifically. See `GAME_PLAN.md` M1's "Note on the web-vs-mobile deviation" for the full reasoning. The Expo/LAN validation this traded away is tracked below under "Deferred, deliberately."
+
+**Done when:** demoed live in a browser, and the co-founder brings the whole stack up on macOS from a clean clone with only a Gemini API key.
 
 ---
 
@@ -137,6 +139,7 @@ Recorded so they get decided rather than rediscovered:
 - **Multi-goal tracking.** The schema allows it; the product doesn't implement it.
 - **Camera-based form tracking.** Out of scope entirely.
 - **Web as a product surface.** Marketing only.
+- **Expo Go / LAN networking validation.** Originally scoped into M1 specifically to surface this early (v1's worst local-setup pain point), traded away 2026-08-26 to hit M1's deadline via a web screen instead. Not derisked yet. Will be hit for real at [M10](./GAME_PLAN.md#m10--mobile-core-loop) — go in expecting friction, since the thing that made v1's local setup painful hasn't actually been proven to work yet.
 
 ---
 

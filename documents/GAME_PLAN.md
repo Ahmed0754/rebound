@@ -56,7 +56,7 @@ The advisor wants a bare-minimum proof of concept: something that demonstrates t
 
 **What it does:**
 
-1. An Expo screen asks *"what muscle hurts?"* — one input.
+1. A web screen asks *"what muscle hurts?"* — one input.
 2. It calls the standalone API.
 3. The API reads exercises from Postgres — **mock/generated exercise rows, not real AscendAPI data.**
 4. It makes one generic Gemini call: *pick 3 exercises from this list, assign sets and reps.*
@@ -72,12 +72,14 @@ The advisor wants a bare-minimum proof of concept: something that demonstrates t
 - [ ] Seed script writing ~30 plausible generated exercises
 - [ ] `apps/api`: one endpoint, `POST /poc/regime`
 - [ ] Gemini call — model id and key read from a single root `.env`, and **present in `.env.example`**
-- [ ] `apps/mobile`: one screen, one input, one result list
+- [ ] `apps/web`: one screen, one input, one result list
 - [ ] `README.md` with the exact setup commands, verified by running them on a clean checkout
 
-**Done when:** demoed live on Shahid's iPhone via Expo Go, *and* the co-founder can bring the entire stack up on macOS with `docker compose up` plus `pnpm --filter mobile start`, from a clean clone, with no accounts beyond a Gemini API key.
+**Done when:** demoed live in a browser, *and* the co-founder can bring the entire stack up on macOS with `docker compose up` plus `pnpm --filter web dev`, from a clean clone, with no accounts beyond a Gemini API key.
 
 > **Note on the deliberate mismatch.** This PoC does not reflect how the product actually works — the real system wraps the LLM in deterministic safety rules and never lets it freely choose dose. If the advisor asks, that distinction is worth stating out loud, because "the LLM picks your exercises" is the version of this product that would be irresponsible to ship.
+
+> **Note on the web-vs-mobile deviation (decided 2026-08-26).** M1 was originally scoped as an Expo screen specifically so that Expo Go and LAN networking — the single worst pain point in v1's local setup — would be forced to work this week, under low-stakes cover. That reasoning still holds; it was traded off deliberately against the hard deadline, not forgotten. The advisor demo itself only needed proof the stack is wired end to end, which a web screen satisfies identically. **What this trade actually costs:** the Expo Go / LAN validation this milestone was supposed to buy down early is now deferred to [M10](#m10--mobile-core-loop), where it will be hit for the first time under real feature-work pressure instead of a demo deadline. See `ENG_PLAN.md`'s "Deferred, deliberately" section — recorded there so it gets decided again at M10, not rediscovered as a surprise.
 
 ---
 
