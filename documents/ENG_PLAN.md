@@ -8,8 +8,8 @@
 
 ---
 
-**Last updated:** *(set on first real update)*
-**Current milestone:** M1 — Proof of concept
+**Last updated:** 2026-08-26
+**Current milestone:** M1 complete. M2 — Founding docs + repo conventions, not yet started.
 
 ---
 
@@ -17,33 +17,34 @@
 
 ### What works end to end
 
-*Nothing yet. v2 has not started.*
-
 Update this section only with things that have been **run and verified**, not things that have been written. v1's verification standard, carried forward verbatim:
 
 > Every item that claims "done" was, at the time it was built, verified against the real database and the real model API — **not mocked** — including real cross-user RLS isolation tests, real forced-failure tests (invalid API keys, to genuinely exercise the fallback paths), and real device testing. Hold any future work to the same standard: `pnpm typecheck && pnpm test && pnpm check:rls` at minimum, plus a real click-through for anything user-facing, before calling something done.
 
+**M1 — Proof of concept, complete as of 2026-08-26.**
+
+- `docker compose up --build` brings up Postgres and a containerized API from a clean clone, no external accounts beyond a Gemini API key. Verified via a genuine `git clone` into a separate directory, not just the working checkout.
+- The API container runs `prisma migrate deploy` then seeds ~30 mock exercises automatically on startup — no manual migration/seed step required.
+- `POST /poc/regime` takes a body-region string, retrieves matching seeded exercises from Postgres, and makes a real Gemini call (structured JSON output, IDs validated against the retrieved pool before use) to pick 3 and assign sets/reps. Verified against the live Gemini API, not mocked, independently on both the original checkout and the clean clone (different seeded exercise IDs each time, both returned real 200s).
+- `apps/web` (Vite + React) renders the input and result list — verified with a real browser click-through, not just code inspection.
+
 ### What's stubbed or faked
 
-*(List anything that looks finished but isn't. v1's list included: billing that never flipped state, an auth provider still on its development instance in production, a dead location dependency with zero call sites, and an exercise field that was empty for every row. Each of these read as "built" from the outside.)*
+- No auth, onboarding, red-flag screening, risk tiering, skeleton retrieval, retries, or fallbacks — all deliberately out of scope for M1, see `GAME_PLAN.md`.
+- Gemini's sets/reps assignments are unreviewed and vary meaningfully run to run: the same "Wall Sit" static hold has come back assigned 1, 5, 10, and 30 reps across separate identical requests. Expected for a throwaway PoC — a real signal for M8's quality-floor work, not a bug in this milestone.
+- API CORS policy is wide open (`Access-Control-Allow-Origin: *`) — fine for local-only use, wrong for anything real. Flagged for tightening when M5 defines the real API contract.
+- `apps/api/Dockerfile` is single-stage and runs as root. M3's checklist already calls for multi-stage/non-root; this one is intentionally minimal for a throwaway milestone.
+- **Mobile was never built.** M1 was originally scoped as an Expo screen specifically to de-risk Expo Go + LAN networking early; swapped to a web screen under deadline pressure (decision recorded in `GAME_PLAN.md` M1 and below, under "Deferred, deliberately"). That risk is untouched, not resolved.
 
 ### In progress
 
-*(Who is working on what, right now.)*
+Nothing. M1 is complete; M2 has not been started.
 
 ---
 
 ## What's next
 
-**M1 — Proof of concept. Hard deadline: this week.**
-
-See `GAME_PLAN.md` M1 for the checklist. The short version: one web screen asking "what muscle hurts," a standalone containerized API, mock exercise rows in a Dockerized Postgres, one generic Gemini call, three exercises back.
-
-Deliberately not the real architecture. It exists to demo for the advisor and to force Docker, Postgres, and the API container to all work before the co-founder clones anything.
-
-**Scope deviation from the original plan (2026-08-26):** M1 was originally an Expo screen, specifically to force Expo Go + LAN networking to work early. Swapped to web under deadline pressure — the advisor demo doesn't need mobile specifically. See `GAME_PLAN.md` M1's "Note on the web-vs-mobile deviation" for the full reasoning. The Expo/LAN validation this traded away is tracked below under "Deferred, deliberately."
-
-**Done when:** demoed live in a browser, and the co-founder brings the whole stack up on macOS from a clean clone with only a Gemini API key.
+**M2 — Founding docs + repo conventions.** See `GAME_PLAN.md` M2 for the checklist: properly import the six planning documents, write `CONTRIBUTING.md`, start the `adr/` directory (including ADRs for the nine decisions already locked in), and put this file into the "living state doc, updated in the same commit as the work" habit going forward — which, as of this update, it's now actually doing.
 
 ---
 
