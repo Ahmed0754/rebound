@@ -1,0 +1,7 @@
+{
+  "name": "rebound",
+  "private": true,
+  "devDependencies": {
+    "typescript": "5.7.3"
+  }
+}
