@@ -1,0 +1,16 @@
+{
+  "name": "@rebound/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "dotenv -e ../../.env -- prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.20.0"
+  }
+}
