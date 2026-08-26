@@ -1,67 +1,102 @@
-# Rebound
+# Rebound v2 — Proof of Concept (M1)
 
-**An AI coach that keeps athletes training instead of sidelined — no doctor's referral, no insurance, no waiting.**
+This is a deliberately throwaway PoC — see `documents/GAME_PLAN.md`'s M1 section for what it does and doesn't include. It proves Docker, Postgres, the API container, and a live Gemini call all work together end to end.
 
----
+## Prerequisites
 
-## The problem, in plain terms
+- Docker Desktop (or Docker Engine + Compose) running
+- Node.js v22.x
+- pnpm v11.x (`npm install -g pnpm@11.21.0`)
+- A Gemini API key from https://aistudio.google.com/apikey
 
-Athletes get nagging injuries and tight, overworked bodies all the time — a cranky knee, a stiff shoulder, a hamstring that's "not quite right." Two bad options exist today:
+## Setup
 
-1. **See a physical therapist.** Slow, expensive, needs a referral and insurance approval. Most people never even start.
-2. **Use a generic fitness app.** Fast and cheap, but it has no idea you're hurt — it just tells you to push harder.
+1. Clone the repo and enter it.
 
-So people either do nothing and stay hurt, or push through pain and make it worse. The missing piece is something that watches how you're actually doing, day to day, and adjusts your training around it — automatically.
+2. Copy the example env file and fill in your Gemini key:
 
-## The idea, in one sentence
+   ```
+   cp .env.example .env
+   ```
 
-**Rebound.ai is an app that asks you two quick questions a day, watches how your pain and mobility trend over time, and automatically rewrites your training plan every week so you keep improving instead of getting hurt again.**
+   Edit `.env` and set `GEMINI_API_KEY` to a real key. Leave `DATABASE_URL`,
+   `GEMINI_MODEL`, and `VITE_API_URL` as their defaults — they're already correct
+   for this setup.
 
-Think of it like a Duolingo streak, but instead of a language, it's your recovery — and instead of a fixed lesson plan, an AI is redesigning the plan around you every week.
+   `.env` must exist before any `docker compose` command. Compose validates every
+   service before starting any of them, so a missing `.env` fails even
+   `docker compose up postgres`, with a file-not-found error rather than anything
+   that points at this step.
 
-## How it works
+3. Install workspace dependencies:
 
-1. A new user signs up for free.
-2. A quick safety screen asks if anything serious is going on.
-3. The AI builds a starter plan just for them.
-4. Two short sessions a day, morning and evening.
-5. A daily 10-second check-in: "how did that feel?"
-6. Every 7 days, the AI reviews the trend:
-   - **Getting better** → the plan gets a little harder.
-   - **Holding steady** → the plan stays the same.
-   - **Getting worse** → the plan backs off and surfaces a "see a professional" message.
-7. Back to step 4, on repeat.
+   ```
+   pnpm install
+   ```
 
-Two safety nets run underneath all of this, all the time:
-- **A same-day red flag check** — anything that sounds like a real medical issue routes straight to "go see a doctor," no AI plan generated.
-- **A real-time pain-spike watchdog** — if a session makes things noticeably worse, the plan rolls back immediately, not at the next weekly review.
+4. Bring up Postgres and the API, fully containerized:
 
-That combination — daily habit loop + weekly AI adjustment + always-on safety monitoring — is the whole product.
+   ```
+   docker compose up --build
+   ```
 
-## Why this wins vs. what exists today
+   Wait for the api service to log `api listening on http://localhost:3000`. This
+   also runs the database migration and seeds ~30 mock exercises automatically —
+   no separate command needed.
 
-| | Physical therapy apps (Sword, Hinge Health) | Generic fitness apps | **Rebound.ai** |
-|---|---|---|---|
-| Get started | Referral, insurance, scheduling | Instant | **Instant** |
-| Cost | High (clinician-in-the-loop) | Low | **Low** (no clinician overhead) |
-| Knows you're hurt? | Yes | No | **Yes** |
-| Adjusts automatically | Slowly, human-paced | Never | **Every week, by AI** |
-| Daily habit design | Not the focus | Sometimes | **Core to the product** |
+5. In a second terminal, start the web app:
 
-The bet: most people don't need a licensed clinician managing every decision — they need a plan that actually pays attention to them and adjusts, at a price and speed a clinician-staffed model can't match.
+   ```
+   pnpm --filter web run dev
+   ```
 
-## Business model
+6. Open the URL Vite prints (typically http://localhost:5173), type a body part
+   (e.g. "knee") into the input, click "Get exercises."
 
-- **Subscription**, not a one-time purchase — the plan keeps adapting every week, so the value (and the AI cost behind it) is ongoing.
-- **Free trial built into the product itself**: signup, the AI-generated first plan, and the first weekly adjustment are all free. The user feels one full "the AI adjusted my plan and it worked" moment before ever being asked to pay.
-- Priced to undercut clinician-backed competitors, since there's no PT paid per session behind it.
+## What "working" looks like
 
-## Where the product stands today
+Three exercises render, each with an AI-assigned sets/reps count — sourced from the
+seeded mock catalogue, picked by a live Gemini call.
 
-- Pre-build. This README captures the product concept and direction before any code is written.
-- Next steps: nail down the product spec and safety rules, then start on signup, safety screening, AI plan generation, the daily two-session loop, weekly AI adjustments, and the safety rollback system.
-- No clinician review in the loop by design for v1 — this is what keeps it fast and cheap — backed by conservative, rules-based safety limits under the hood rather than relying on the AI's judgment alone.
+## Known rough edges
 
----
+- Any new dependency with a native build step needs an entry in
+  `pnpm-workspace.yaml`'s `allowBuilds`, or pnpm 11 silently blocks its postinstall
+  and it fails later with no obvious cause. Check there first if something
+  inexplicably doesn't work after adding a dependency. (Note: `onlyBuiltDependencies`
+  is the pnpm 10 spelling — pnpm 11 still reports it via `pnpm config` but ignores it
+  at install time, so it looks configured while doing nothing.)
 
-*Detailed product spec, safety rules, and technical architecture will live in `documents/` as the project develops.*
+- `DATABASE_URL` in `.env` points at `localhost`, which is correct for host-run
+  commands such as `prisma migrate dev`. The API container overrides it via
+  `environment:` in `docker-compose.yml`, because inside the compose network the
+  database is reachable as `postgres`, not `localhost`. If you add another
+  containerized service that talks to Postgres, it needs the same override.
+
+- `GEMINI_MODEL` is pinned to an exact model id, not a floating alias like
+  `gemini-flash-latest`. Google retires model ids: `gemini-2.5-flash` returns a 404
+  ("no longer available to new users") even though it still appears in the
+  `/v1beta/models` listing for a valid key. If you get a 404 from the Gemini call,
+  the model id is the first thing to check — and check it with a real
+  `generateContent` request, since the model listing is not an availability check.
+
+- If you run the API via `pnpm --filter @rebound/api run dev` instead of Docker and
+  edit `.env`, you need a full restart, not a hot reload — dotenv-cli only reads the
+  file once, at process start.
+
+- On Windows, restarting a host-run dev server can leave an orphaned process still
+  holding a port; `tsx watch`'s own reload does not reliably kill the previous
+  listener either. Check `netstat -ano | findstr :3000` before assuming a restart
+  took effect, and kill the PID directly if one lingers.
+
+- The API sends `Access-Control-Allow-Origin: *` (Hono's default `cors()`), which is
+  what lets the Vite dev server on port 5173 call it. Fine for a local PoC, wrong for
+  anything deployed.
+
+- This PoC's Gemini call has no retry logic and only ID-based validation. Sets/reps
+  assignments are not clinically reviewed and can vary meaningfully between identical
+  requests (observed: the same static hold assigned 1, 5, and 30 reps across three
+  runs of the same request). This is expected — it's exactly why the real product
+  wraps the LLM in a deterministic safety layer instead of trusting its output
+  directly. See `documents/GAME_PLAN.md`'s note on this PoC's deliberate mismatch with
+  the real architecture.
