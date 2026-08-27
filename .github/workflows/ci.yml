@@ -30,6 +30,9 @@ jobs:
       - name: Typecheck API
         run: pnpm --filter @rebound/api run typecheck
 
+      - name: Test API
+        run: pnpm --filter @rebound/api run test
+
       - name: Typecheck web
         run: pnpm --filter web run typecheck
 
