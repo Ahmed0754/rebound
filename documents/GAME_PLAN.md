@@ -2,7 +2,9 @@
 
 **Rebound.ai — zero to shippable.**
 
-This is the agenda. It is checkbox-driven, not calendar-driven: work is done when the **Done when** line is satisfied, not when a date passes. The only hard date in this document is M1.
+This is the agenda. It is checkbox-driven, not calendar-driven: work is done when the **Done when** line is satisfied, not when a date passes.
+
+> **⚠️ Re-planned 2026-09-01 — bare bones first.** On advisor guidance the approach changed from "build the full foundation, then features" to "build the smallest working thing, then add complexity one deliberate piece at a time." M1 is complete **and its code has been deleted**; a minimal real-stack slice replaced it. The milestones below are still the intended destination, but **their order is no longer a commitment**, and several of the locked-in decisions in M2 have been superseded. See [`ENG_PLAN.md`](./ENG_PLAN.md) for what actually exists and which decisions changed.
 
 Target: substantially complete by **end of November 2026**, with December 5 as the real deadline and the November gap reserved for the things that always take longer than expected.
 
@@ -50,9 +52,13 @@ Neither of these parallelizes with engineering, and both have lead times measure
 
 ---
 
-## M1 — Proof of concept ⚠️ **THIS WEEK. HARD DEADLINE.**
+## M1 — Proof of concept ✅ **COMPLETE 2026-08-26 · code deleted 2026-09-01**
 
-The advisor wants a bare-minimum proof of concept: something that demonstrates the full stack is wired end to end. This is explicitly **not** the real architecture, and it is explicitly throwaway.
+> **Outcome.** Delivered and demoed: Docker + Postgres + a containerized API + a live Gemini call + a web screen, verified from a genuine clean clone. It did its job — it forced the whole stack to work end to end before a second developer touched the repo, and it surfaced a set of real environment traps now recorded in `ENG_PLAN.md`.
+>
+> **The code was then deleted, deliberately, on 2026-09-01**, exactly as this milestone always said it would be ("explicitly throwaway"). What replaced it is a bare-bones slice on the real stack: Next.js + a plain Node API + Supabase + Gemini. The checklist below is kept as a record of what was built and verified, not as outstanding work.
+
+The advisor wanted a bare-minimum proof of concept: something that demonstrates the full stack is wired end to end. This is explicitly **not** the real architecture, and it is explicitly throwaway.
 
 **What it does:**
 
@@ -66,14 +72,14 @@ The advisor wants a bare-minimum proof of concept: something that demonstrates t
 
 **Why bother, if it's throwaway:** it forces Docker, Postgres, the API container, Expo Go on a real phone, and the LAN networking between them to all work *before* your co-founder ever clones the repo. In v1, none of that existed and local setup was the single worst part of the project. This milestone buys that down in a week, under the cover of a demo.
 
-- [ ] Repo initialized, pnpm workspace, one TypeScript version
-- [ ] `docker-compose.yml`: `postgres` + `api`
-- [ ] Prisma schema with a single `Exercise` model; **an actual migration, not `db push`**
-- [ ] Seed script writing ~30 plausible generated exercises
-- [ ] `apps/api`: one endpoint, `POST /poc/regime`
-- [ ] Gemini call — model id and key read from a single root `.env`, and **present in `.env.example`**
-- [ ] `apps/web`: one screen, one input, one result list
-- [ ] `README.md` with the exact setup commands, verified by running them on a clean checkout
+- [x] Repo initialized, pnpm workspace, one TypeScript version
+- [x] `docker-compose.yml`: `postgres` + `api`
+- [x] Prisma schema with a single `Exercise` model; **an actual migration, not `db push`**
+- [x] Seed script writing ~30 plausible generated exercises
+- [x] `apps/api`: one endpoint, `POST /poc/regime`
+- [x] Gemini call — model id and key read from a single root `.env`, and **present in `.env.example`**
+- [x] `apps/web`: one screen, one input, one result list
+- [x] `README.md` with the exact setup commands, verified by running them on a clean checkout
 
 **Done when:** demoed live in a browser, *and* the co-founder can bring the entire stack up on macOS with `docker compose up` plus `pnpm --filter web dev`, from a clean clone, with no accounts beyond a Gemini API key.
 
@@ -97,21 +103,25 @@ The other six documents in this folder get imported and become the working spec.
 
 ### Decisions already locked in — write these as ADRs first
 
+> **⚠️ Seven of these nine were superseded on 2026-09-01** when the project moved to a bare-bones-first approach. The **Why** column stays valuable — it is the reasoning that has to be re-earned if the current shortcut is kept past the demo stage. Status column added; see `ENG_PLAN.md` for the replacement decisions.
+
 | # | Decision | Why |
 |---|---|---|
-| 1 | Mobile-first (Expo). Web is marketing only. | v1 built and maintained ~24 screens twice. Most real bugs came from that duplication. The product is a twice-daily habit loop — it belongs on a phone. |
-| 2 | Standalone containerized API service, not Next.js route handlers. | The API is the mobile app's backend. Coupling it to a marketing site's deploy cycle makes no sense, and route handlers don't containerize cleanly. |
-| 3 | `docker compose up` → Postgres + API. Local dev needs no external accounts. | v1 required live Supabase + live Clerk + live API keys to run at all. |
-| 4 | Better Auth, self-hosted in our own Postgres. | Runs inside Docker. We own the user table outright rather than keying it on an external provider's user id. Removes the production-instance cutover from the launch critical path. |
-| 5 | AscendAPI as the sole exercise data source, vendored as a committed snapshot. | v1 fused two databases with a fuzzy string matcher and got 56% coverage. One source, in git, seeded offline. |
-| 6 | Gemini only. Model id is a config value. | Deliberate this time, and written down. v1 swapped Claude → Gemini for cost without a decision record, and its own TDD flagged that it was never re-confirmed. |
-| 7 | Prisma migrations, committed, from the first commit. | v1 used `prisma db push` exclusively. Schema history was git-diff archaeology. |
-| 8 | Production hosting deferred; kept portable behind Docker. | Decide at [M14](#m14--production-hosting-decision--first-deploy) with real requirements, not by default at the start. |
-| 9 | Regime quality has a floor gate before feature work continues. | See [M8](#m8--flow-a-to-a-quality-floor). |
+| 1 | ~~Mobile-first (Expo). Web is marketing only.~~ **Superseded** — Next.js web is the only surface; no mobile. | v1 built and maintained ~24 screens twice. Most real bugs came from that duplication. The product is a twice-daily habit loop — it belongs on a phone. |
+| 2 | Standalone API service, not Next.js route handlers. **Partly holds** — still standalone, no longer containerized, plain `node:http`. | The API is the mobile app's backend. Coupling it to a marketing site's deploy cycle makes no sense, and route handlers don't containerize cleanly. |
+| 3 | ~~`docker compose up` → Postgres + API. Local dev needs no external accounts.~~ **Superseded** — no Docker; local dev requires live Supabase. | v1 required live Supabase + live Clerk + live API keys to run at all. |
+| 4 | ~~Better Auth, self-hosted.~~ **Deferred** — no auth of any kind. | Runs inside Docker. We own the user table outright rather than keying it on an external provider's user id. Removes the production-instance cutover from the launch critical path. |
+| 5 | AscendAPI as the sole exercise data source. **Not started** — 30 generated mock rows instead. | v1 fused two databases with a fuzzy string matcher and got 56% coverage. One source, in git, seeded offline. |
+| 6 | Gemini only. Model id is a config value. **Holds** — `GEMINI_MODEL` in `.env`. | Deliberate this time, and written down. v1 swapped Claude → Gemini for cost without a decision record, and its own TDD flagged that it was never re-confirmed. |
+| 7 | ~~Prisma migrations, committed, from the first commit.~~ **Superseded** — no ORM, no migrations, one hand-written `schema.sql`. | v1 used `prisma db push` exclusively. Schema history was git-diff archaeology. |
+| 8 | Production hosting deferred. **Partly holds** — still deferred, but portability-behind-Docker is gone. | Decide at [M14](#m14--production-hosting-decision--first-deploy) with real requirements, not by default at the start. |
+| 9 | Regime quality has a floor gate before feature work continues. **Not started** — no eval harness exists. | See [M8](#m8--flow-a-to-a-quality-floor). |
 
 ---
 
 ## M3 — Foundation, done properly
+
+> **⚠️ Re-ordered 2026-09-01.** This milestone is no longer the immediate next step. The bare-bones-first approach means these items get added individually, as the thing being built actually needs them, rather than all at once up front. The list below is still the definition of "properly," and every unchecked item is a real gap — see `ENG_PLAN.md` for which shortcuts are actively costing something.
 
 Everything a fresh clone needs to become a running, tested system.
 

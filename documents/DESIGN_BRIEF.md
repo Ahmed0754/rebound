@@ -2,6 +2,8 @@
 
 *The design problem, the constraints, and the chosen stack. For flows through these screens, see [`USERFLOW.md`](./USERFLOW.md). For product requirements, see [`PRD.md`](./PRD.md). For where design sits in the build order, see [`GAME_PLAN.md`](./GAME_PLAN.md) M12.*
 
+> **⚠️ Current state, 2026-09-01.** No design work has started, and the platform assumption has changed: the current surface is a **Next.js web app**, not Expo. The one existing screen is deliberately unstyled — system font, inline styles, no design system — because per `GAME_PLAN.md` M12 the design pass comes after the product works, not before. See [`ENG_PLAN.md`](./ENG_PLAN.md).
+
 > **v2 note.** Rewritten. v1's research holds up and is carried forward. What changed: this is now a **mobile-first, greenfield** design problem rather than a retrofit of 24 already-built screens — and the ordering lesson from v1 is elevated from a footnote to the organizing principle of the whole document.
 
 ---

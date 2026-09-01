@@ -2,7 +2,24 @@
 
 *The authoritative schema reference. For product intent, see [`PRD.md`](./PRD.md). For architecture, see [`TDD.md`](./TDD.md).*
 
-> **When this document drifts from `packages/db/prisma/schema.prisma`, the schema wins.** Update this file in the same commit as the migration.
+> **When this document drifts from the actual schema, the schema wins.** Update this file in the same commit as the schema change.
+
+> **⚠️ Current state, 2026-09-01.** Everything below is the **target** model and is almost entirely unbuilt. There is no Prisma, no `packages/db`, and no migrations. The live Supabase database contains **exactly one table**, defined by hand in `apps/api/db/schema.sql`:
+>
+> ```sql
+> create table if not exists exercises (
+>   id          uuid primary key default gen_random_uuid(),
+>   name        text        not null,
+>   body_region text        not null,
+>   description text        not null,
+>   created_at  timestamptz not null default now()
+> );
+> create index if not exists exercises_body_region_idx on exercises (body_region);
+> ```
+>
+> It holds 30 generated mock rows across 10 body regions, applied and reseeded by `pnpm --filter @rebound/api run db:setup`. Note it is **not** the `Exercise` entity described below — no AscendAPI fields, no media, no muscle tags, no risk metadata. It is a placeholder shaped for a demo.
+>
+> **It also has no RLS decision.** Supabase exposes `public` schema tables through PostgREST, and a table without RLS is reachable with the project anon key. That is harmless for mock data and is the exact pattern that exposed seven tables in v1 — see the *RLS decisions* section below, which remains correct and unimplemented.
 
 > **v2 note.** Rewritten. The core entity design from v1 was sound and is carried forward. What changed: identity is ours, the exercise table is single-source, `media` and `frequency` are properly typed, and **every table gets an explicit RLS decision enforced by CI**.
 
