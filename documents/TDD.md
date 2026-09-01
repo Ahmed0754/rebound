@@ -294,6 +294,9 @@ Red-flag screen (rules) → free-text classifier (cheap model) → risk tiering 
 
 **Skeleton retrieval is a structured filter, not RAG.** It narrows hand-authored protocol skeletons by goal × risk tier, then keyword-matches body-region tags against free text. There is no vector database and no embedding index. For a library this size that would be premature — and if embedding-based retrieval is wanted later to handle synonymy ("overhead reach" versus "shoulder flexion drill"), embeddings for a few thousand rows load into memory at startup. No vector database is warranted at any point on the current roadmap.
 
+> **⚠ Under reversal, 2026-09-01.** The Flow A pipeline in `USERFLOW.md` §1a Phase 5 introduces a **retrieval corpus of clinical literature** with hybrid BM25 + dense search, reciprocal rank fusion, and a `RetrievalEvent` table. Read carefully, that is not quite a contradiction of the paragraph above: *skeleton selection* stays a structured filter (Phase 4 is unchanged), and what is new is a second corpus this decision never contemplated. But the sentence above says *no vector database at any point*, and the new design needs one. **This requires an ADR that states what changed, before the work starts** — not a quiet edit to this paragraph afterwards. Until that ADR exists, treat both as open.
+
+
 Flow A runs as an async job with client polling. The job's error field is **never returned to the client**.
 
 ### Flow B
@@ -451,9 +454,21 @@ Carried from v1 so they are decided rather than inherited:
 
 ---
 
+# Two invariants that must be tests, not prose
+
+Added 2026-09-01 with the Flow A pipeline design (`USERFLOW.md` §1a). Both are the kind of rule a future contributor breaks while trying to make something better, and neither fails loudly when broken:
+
+1. **The constraint envelope is immutable once computed.** Built in Phase 3 from tier ceiling, `ABSOLUTE_BOUNDS`, equipment, and difficulty cap; passed down the whole pipeline. Nothing downstream — not retrieval, not the model, not a slot fallback — may widen it.
+
+2. **The validator receives the draft and the tier, and nothing else.** It never sees retrieved context. Retrieved literature may inform which exercise is selected and how the page words a justification; it may never loosen a bound. The likely breakage is someone threading retrieved text into the validator to produce better rejection messages.
+
+Both should be enforced by a test that fails when the signature widens, not only by a sentence in a document. `packages/clinical-rules` is dependency-free precisely so this is cheap.
+
+---
+
 # Decision log
 
-Every decision here has an ADR in `adr/`. The list, for orientation:
+The `adr/` directory exists as of 2026-09-01. Entries 0002–0012 are decisions taken before it existed and are **not yet written up**; 0001 and 0013–0019 are. The list, for orientation:
 
 | ADR | Decision |
 |---|---|
@@ -468,5 +483,12 @@ Every decision here has an ADR in `adr/`. The list, for orientation:
 | 0010 | Two-tier RLS trust model |
 | 0011 | Eval harness before Flow A, CI-gated |
 | 0012 | Production hosting deferred to M14 |
+| 0013 | Clinical-literature retrieval corpus — **Proposed**, gated on the Phase E prototype |
+| 0014 | `withSession` — client-supplied session id as the RLS subject. **Accepted**, supersedes 0005 |
+| 0015 | Fail closed on classifier unavailability — **Proposed**, blocked on a review queue |
+| 0016 | Sourced clinical justification in the UI — **Proposed**, gated on legal review |
+| 0017 | Raw SQL + node-pg-migrate; no ORM. **Accepted**, supersedes 0009 |
+| 0018 | Next.js web is the only client for now. **Accepted**, supersedes 0002 |
+| 0019 | Local development runs against hosted Supabase. **Accepted**, supersedes 0004 |
 
 **The habit matters more than any individual record.** v1's decisions were mostly good and lived nowhere durable, so one of them was re-litigated from scratch and cost a full API rewrite eight days in. An ADR is fifteen lines.

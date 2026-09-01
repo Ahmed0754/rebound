@@ -205,6 +205,9 @@ The API shape is settled here and not revisited. This is the decision v1 paid ei
 
 ## M7 — Eval harness, **before** Flow A
 
+> **Reinforced 2026-09-01.** `USERFLOW.md` §1a Phase 10 shows the preview page with citations. **That page is worth prototyping against a hand-written provenance record before any retrieval exists** — if it does not read as trustworthy with perfect made-up citations, retrieval will not save it. An afternoon's finding instead of a month's.
+
+
 Inverted from v1, where evals arrived on day 10 — after the pipeline they were meant to measure. Build the ruler first.
 
 - [ ] Golden fixture set — start at 20–30 cases, grow toward 100. v1 had 9.
@@ -234,6 +237,9 @@ v1's judge deliberately used a **different model family** than the generator, to
 ---
 
 ## M8 — Flow A, to a quality floor
+
+> **Specified 2026-09-01.** The full Flow A pipeline now has a phase-by-phase design in [`USERFLOW.md`](./USERFLOW.md) §1a — capture, safety gates, tiering, skeleton selection, per-slot retrieval, candidate narrowing, generation, validation, provenance, the justification UI, and activation. It is materially larger than this milestone assumed, it introduces a clinical-literature retrieval corpus, and **four of its decisions reverse ones recorded in `TDD.md`** (decision log 0013–0016, currently *owed*). Read §1a before planning this milestone; it likely wants splitting.
+
 
 Initial regime generation. Onboarding-time, no history.
 

@@ -247,6 +247,51 @@ Fixed-window counters keyed `"<scope>:<identity>"`. Postgres-backed rather than 
 
 ---
 
+# Schema additions required by the Flow A pipeline **[target, 2026-09-01]**
+
+From `USERFLOW.md` §1a. None of these exist. Listed here because **the provenance chain is the piece most likely to be deferred and most expensive to retrofit** — add these columns in the same migration as the retrieval work, not after the UI needs them.
+
+## RetrievalEvent — new
+
+One row per slot query in Phase 5. Provenance and debuggability for retrieval.
+
+| Field | Notes |
+|---|---|
+| `id` | |
+| `regimeGenerationJobId` | FK to the job |
+| `presetSlotId` | which slot this query served |
+| `queryText` | the structured query, rendered |
+| `filtersApplied` | body region, tier applicability, evidence-grade floor, exclusions |
+| `chunkIds` | ids returned, in rank order |
+| `scores` | fused scores, parallel to `chunkIds` |
+| `floorMet` | boolean — did anything clear the relevance floor |
+| `createdAt` | |
+
+**Needs an explicit RLS decision.** It is job-scoped and therefore user-owned, so it belongs on the restricted path, not the shared-library path.
+
+## RegimeExerciseProvenance — new
+
+The join that makes the Phase 10 "why" page possible at all. One row per `RegimeExercise`.
+
+| Field | Notes |
+|---|---|
+| `regimeExerciseId` | FK, unique |
+| `presetSlotId` | the slot this exercise was selected to fill |
+| `retrievedChunkIds` | the chunks that informed the selection — may be empty |
+| `selectionNote` | the model's short note. **Rendered as AI-attributed, never as cited protocol text.** |
+
+**An empty `retrievedChunkIds` is a normal state, not an error** — retrieval is additive-only and degrades to the slot's authored rationale. The UI component takes provenance as a required prop and renders the un-cited variant when chunks are absent, so the fabricating path does not exist in code.
+
+## RegimeExercise — changed
+
+| Field | Change |
+|---|---|
+| `userModified` | **new** boolean, per row |
+
+**Why this matters more than it looks.** Today a user edit flips `Regime.createdBy` to `USER_EDITED` and nulls `sourcePresetId` — which silently deletes every citation on the preview page. Decouple them: `sourcePresetId` and provenance survive the edit; `userModified` records the edit. Edited rows show as user-adjusted and drop their **dosage** justification specifically, since those numbers are no longer the protocol's.
+
+---
+
 # RLS decisions
 
 **Every table appears in exactly one of these three buckets. `pnpm check:rls` enforces it in CI.**

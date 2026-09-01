@@ -2,8 +2,16 @@
   "name": "rebound",
   "private": true,
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@types/node": "26.4.0",
     "dotenv-cli": "11.0.0",
-    "typescript": "5.7.3"
+    "eslint": "10.9.1",
+    "typescript": "5.7.3",
+    "typescript-eslint": "8.69.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm --filter @rebound/api run test"
   }
 }

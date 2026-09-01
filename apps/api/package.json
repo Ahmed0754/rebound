@@ -7,7 +7,13 @@
     "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
     "start": "dotenv -e ../../.env -- tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "db:setup": "dotenv -e ../../.env -- tsx scripts/setup-db.ts"
+    "test": "vitest run",
+    "lint": "eslint .",
+    "db:migrate": "dotenv -e ../../.env -- node-pg-migrate up",
+    "db:migrate:down": "dotenv -e ../../.env -- node-pg-migrate down",
+    "db:seed": "dotenv -e ../../.env -- tsx scripts/seed.ts",
+    "db:setup": "pnpm run db:migrate && pnpm run db:seed",
+    "check:rls": "dotenv -e ../../.env -- tsx scripts/check-rls.ts"
   },
   "dependencies": {
     "@google/genai": "2.19.0",
@@ -15,6 +21,8 @@
   },
   "devDependencies": {
     "@types/pg": "8.23.1",
-    "tsx": "4.23.13"
+    "node-pg-migrate": "9.0.0",
+    "tsx": "4.23.13",
+    "vitest": "4.1.11"
   }
 }

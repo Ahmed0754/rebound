@@ -1,10 +1,8 @@
 /**
- * Creates the exercises table (if absent) and reseeds the mock catalogue.
- * Re-runnable: the seed replaces all rows rather than appending, so running
- * it twice leaves the same 30 rows rather than 60.
+ * Reseeds the mock exercise catalogue. Schema is owned by migrations, not by
+ * this script. Re-runnable: it replaces all rows rather than appending, so
+ * running it twice leaves the same 30 rows rather than 60.
  */
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { pool } from "../src/db.js";
 
 const exercises: [string, string, string][] = [
@@ -41,12 +39,6 @@ const exercises: [string, string, string][] = [
 ];
 
 async function main() {
-  const schemaPath = fileURLToPath(new URL("../db/schema.sql", import.meta.url));
-  const schema = await readFile(schemaPath, "utf8");
-
-  await pool.query(schema);
-  console.log("Schema applied.");
-
   await pool.query("delete from exercises");
 
   // One INSERT with an unnested array, rather than 30 round trips.

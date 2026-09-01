@@ -4,6 +4,13 @@
 
 > **⚠️ Current state, 2026-09-01.** None of the product described here is built. The repo holds a bare-bones slice: one web screen that asks which body part hurts and lists three exercises a Gemini call picked from 30 mock rows. **No onboarding, no red-flag screening, no risk tiering, no regimes, no sessions, no accounts.** In particular, the safety architecture this document treats as non-negotiable — deterministic rules bounding what the LLM may prescribe — **does not exist yet**, and the LLM currently picks dose freely. That is the arrangement this document calls irresponsible to ship, and it is knowingly the current state of a demo with mock data. See [`ENG_PLAN.md`](./ENG_PLAN.md).
 
+> **⚠ Two product decisions added 2026-09-01, specified in `USERFLOW.md` §1a.**
+>
+> 1. **Crisis routing is separate from the red-flag exit.** Self-harm language in free text routes to a dedicated crisis-resources screen (988, Crisis Text Line), not the generic "see a doctor" exit. That is a distinct screen and a distinct tone, and it is a product requirement, not an implementation detail.
+> 2. **The claim surface changes if the preview page cites sources.** Phase 10 puts sourced clinical justification on screen. The defensible claim is *"this exercise satisfies a slot that a cited protocol calls for."* The indefensible one is *"this exercise treats your shoulder."* This moves the product closer to the SaMD line Track 0's counsel is reviewing — **a legal question before a design one.**
+>
+> Note also that §1a Phase 2 **fails closed** when the free-text classifier is unavailable, which is stricter than this document currently implies. See `ENG_PLAN.md` risk #4 for the operational dependency that creates.
+
 > **v2 note.** This document was rewritten at the start of the v2 build. The product thinking is carried forward largely intact — it held up. What changed is platform (mobile-first), infrastructure, and a more honest accounting of what the safety rules actually rest on. Decisions overturned from v1 are marked **[v2]**.
 
 ---
