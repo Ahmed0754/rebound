@@ -1,117 +1,57 @@
-# Rebound.ai
+# Rebound
 
-A bare-bones vertical slice: ask which body part hurts, get three exercises with sets and reps, picked by Gemini from a catalogue in Supabase.
+An AI coach that keeps athletes training instead of sidelined — no doctor's referral, no insurance, no waiting. Full product idea, safety rules, and long-term architecture are in [`documents/`](./documents).
 
-This is deliberately the smallest thing that works end to end. See [`documents/ENG_PLAN.md`](./documents/ENG_PLAN.md) for what exists and what doesn't, and [`documents/GAME_PLAN.md`](./documents/GAME_PLAN.md) for where it's going.
+## Project scope (current state)
 
-## Stack
+This repo is a **proof of concept**, not the real product yet. It proves one thing end to end: a user describes what hurts, and the app returns exercises with AI-assigned sets/reps.
 
-| | |
-|---|---|
-| `apps/web` | Next.js 16, React 19, App Router — port **3000** |
-| `apps/api` | Plain Node `node:http`, no framework — port **4000** |
-| Database | Supabase Postgres, via `pg`. No ORM, no migrations. |
-| LLM | Gemini, via `@google/genai` |
+**What it does:**
+- One screen — type a body part (e.g. "knee")
+- One API endpoint — looks up matching exercises, asks Gemini to pick 3 and dose them
+- Returns the 3 picks, rendered as cards
 
-## Prerequisites
+**What it deliberately does NOT have yet:** auth, onboarding, daily check-ins, weekly plan adjustments, or a safety-validation layer. Gemini's sets/reps are currently unvalidated — the real product wraps this in a deterministic rules check before anything reaches a user. See [`documents/GAME_PLAN.md`](./documents/GAME_PLAN.md) for the full roadmap.
 
-- Node.js v22.x
-- pnpm v11.x (`npm install -g pnpm@11.21.0`)
-- A Supabase project — https://supabase.com
-- A Gemini API key — https://aistudio.google.com/apikey
+## Tech stack
+
+**API** (`apps/api`)
+- Node.js `http` server (no framework)
+- [`pg`](https://node-postgres.com/) — direct Postgres driver
+- [`@google/genai`](https://github.com/googleapis/js-genai) — Gemini calls
+- TypeScript, run via `tsx`
+
+**Web** (`apps/web`)
+- [Next.js](https://nextjs.org/) (App Router)
+- React
+
+**Database**
+- Postgres, hosted on [Supabase](https://supabase.com)
+
+**Tooling**
+- pnpm workspaces (monorepo: `apps/api`, `apps/web`)
+- GitHub Actions CI — typechecks both apps and builds web on every push/PR to `main`
 
 ## Setup
 
-1. **Install dependencies.**
-
-   ```bash
+1. Create a free [Supabase](https://supabase.com) project.
+2. Copy `.env.example` to `.env` and fill in:
+   - `DATABASE_URL` — Supabase Dashboard → Connect → **Transaction pooler** (port 6543)
+   - `GEMINI_API_KEY` — from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+3. Install dependencies:
+   ```
    pnpm install
    ```
-
-2. **Create your env file.**
-
-   ```bash
-   cp .env.example .env
+4. Create and seed the database:
    ```
-
-   Fill in two values:
-
-   - `DATABASE_URL` — Supabase dashboard → **Connect** → **Transaction pooler** (port `6543`). Replace `[YOUR-PASSWORD]` with your database password; URL-encode it if it contains `@ : / ? # &`.
-   - `GEMINI_API_KEY` — from AI Studio.
-
-   Leave `GEMINI_MODEL`, `API_PORT`, and `NEXT_PUBLIC_API_URL` at their defaults.
-
-3. **Create and seed the database table.**
-
-   ```bash
    pnpm --filter @rebound/api run db:setup
    ```
-
-   Applies `apps/api/db/schema.sql` and seeds 30 mock exercises across 10 body
-   regions. Re-runnable — it replaces rows rather than appending, so you always
-   end at exactly 30.
-
-4. **Run both servers**, in two terminals:
-
-   ```bash
-   pnpm --filter @rebound/api run dev    # API on :4000
-   pnpm --filter web run dev             # web on :3000
+5. Start the API:
    ```
-
-5. Open http://localhost:3000, type `knee`, click **Get exercises**.
-
-## What "working" looks like
-
-Three exercises render, each with an AI-assigned sets/reps count. Seeded body
-regions: `knee`, `shoulder`, `lower_back`, `hamstring`, `ankle`, `hip`, `neck`,
-`wrist`, `elbow`, `calf`. Anything else returns a 404 and shows an error.
-
-Hitting the API directly:
-
-```bash
-curl http://localhost:4000/health
-
-curl -X POST http://localhost:4000/regime \
-  -H "Content-Type: application/json" \
-  -d '{"muscle":"knee"}'
-```
-
-Watch the API terminal while you click — it logs `raw picks from Gemini:` with
-the ids and sets/reps the model returned, *before* validation. That's how you
-tell "the model returned nothing" apart from "the model returned ids that don't
-exist."
-
-## Known rough edges
-
-- **Every dependency is pinned exactly, no carets.** pnpm here enforces a
-  `minimumReleaseAge` policy, so a package published in the last ~24h is
-  rejected — pin a slightly older version rather than adding an exclusion.
-  Changing `package.json` alone isn't enough if the lockfile is stale:
-  `pnpm clean --lockfile && pnpm install`.
-
-- **pnpm 11 blocks postinstall scripts by default.** A new dependency with a
-  native build step silently does nothing and fails later with no obvious
-  cause. Add it to `allowBuilds` in `pnpm-workspace.yaml` and check there first
-  when something inexplicably doesn't work.
-
-- **The API's port variable is `API_PORT`, not `PORT`.** `dotenv-cli` injects
-  the root `.env` into every app and Next.js claims `PORT` for itself, so the
-  two servers fight over one port. Don't rename it back.
-
-- **`.env` changes need a full restart**, not a hot reload — `dotenv-cli` reads
-  the file once, at process start.
-
-- **On Windows, a killed dev server can leave an orphaned process holding its
-  port**, still serving old code while looking healthy. Check
-  `netstat -ano | findstr :4000` before assuming a restart took effect.
-
-- **Gemini's sets/reps are not reviewed and vary run to run.** The same static
-  hold has come back assigned 1, 5, 10, and 30 reps across identical requests.
-  Expected: there is no safety layer yet. The real product wraps the LLM in
-  deterministic bounds instead of trusting its output — see
-  [`documents/PRD.md`](./documents/PRD.md).
-
-- **The `exercises` table has no RLS policy.** Supabase exposes `public` schema
-  tables through PostgREST, so it is reachable with the project anon key.
-  Harmless for mock data; must be settled before any real or user-owned data
-  lands. See `ENG_PLAN.md` risk #1.
+   pnpm --filter @rebound/api run dev
+   ```
+6. In a second terminal, start the web app:
+   ```
+   pnpm --filter web run dev
+   ```
+7. Open the URL Next.js prints, type a body part, click "Get exercises."
