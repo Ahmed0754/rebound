@@ -4,22 +4,21 @@
 
 > **When this document drifts from the actual schema, the schema wins.** Update this file in the same commit as the schema change.
 
-> **⚠️ Current state, 2026-09-01.** Everything below is the **target** model and is almost entirely unbuilt. There is no Prisma, no `packages/db`, and no migrations. The live Supabase database contains **exactly one table**, defined by hand in `apps/api/db/schema.sql`:
+> **⚠️ Current state, 2026-09-01 (updated same day, Phase C).** Migrations now exist —
+> `node-pg-migrate`, per ADR 0017 — and the live Supabase database has all 15 tables
+> from the User-owned and shared-library sections below, each with an explicit RLS
+> decision (`check:rls` passes) and a real cross-user isolation test proving those
+> policies actually hold. `exercises` also has its v2 AscendAPI-native columns
+> (migration `1756832400000`), but they're **all null** — it's still 30 hand-written
+> mock rows across 9 body regions, not real AscendAPI data. The `RetrievalEvent` and
+> `RegimeExerciseProvenance` tables under "Schema additions required by the Flow A
+> pipeline" below remain unbuilt, correctly — see that section's own note on why they
+> wait for the retrieval work itself.
 >
-> ```sql
-> create table if not exists exercises (
->   id          uuid primary key default gen_random_uuid(),
->   name        text        not null,
->   body_region text        not null,
->   description text        not null,
->   created_at  timestamptz not null default now()
-> );
-> create index if not exists exercises_body_region_idx on exercises (body_region);
-> ```
->
-> It holds 30 generated mock rows across 10 body regions, applied and reseeded by `pnpm --filter @rebound/api run db:setup`. Note it is **not** the `Exercise` entity described below — no AscendAPI fields, no media, no muscle tags, no risk metadata. It is a placeholder shaped for a demo.
->
-> **It also has no RLS decision.** Supabase exposes `public` schema tables through PostgREST, and a table without RLS is reachable with the project anon key. That is harmless for mock data and is the exact pattern that exposed seven tables in v1 — see the *RLS decisions* section below, which remains correct and unimplemented.
+> **What's still genuinely blocked**, and why, is in `documents/INGEST_RUNBOOK.md`:
+> real AscendAPI data, the vendored `exercises.json` snapshot, and the
+> `movementPattern`/`progressionGroup` enrichment all wait on Track 0's unresolved
+> AscendAPI licensing question — none of it is an engineering gap.
 
 > **v2 note.** Rewritten. The core entity design from v1 was sound and is carried forward. What changed: identity is ours, the exercise table is single-source, `media` and `frequency` are properly typed, and **every table gets an explicit RLS decision enforced by CI**.
 
@@ -27,10 +26,10 @@
 
 # Conventions
 
-- **Migrations, always.** Every schema change is a committed Prisma migration. **[v2]** v1 used `prisma db push` for its entire lifetime and had no migration history at all.
-- **Every new table requires an explicit RLS decision** recorded in `packages/db/sql/rls-policies.sql`, or `pnpm check:rls` fails the build. This is enforced, not a reminder — see the note under *RLS decisions* below for why.
+- **Migrations, always.** Every schema change is a committed `node-pg-migrate` migration (raw SQL, per ADR 0017 — this superseded Prisma). **[v2]** v1 used `prisma db push` for its entire lifetime and had no migration history at all.
+- **Every new table requires an explicit RLS decision** recorded in `apps/api/db/rls-policies.md`, or `pnpm --filter @rebound/api run check:rls` fails the build. This is enforced, not a reminder — see the note under *RLS decisions* below for why.
 - **Update this document in the same commit** as the migration it describes.
-- Prisma treats an explicit `undefined` as "don't touch," not "set null." This is relied on deliberately in onboarding upserts.
+- The onboarding-upsert semantics below ("an explicit `undefined` means don't touch, not set null") were a Prisma-client behavior. Now that queries are raw SQL, this needs re-implementing by hand in whatever function performs the upsert — worth flagging explicitly whenever that code is written, so it isn't silently lost in the ORM removal.
 
 ---
 

@@ -67,22 +67,31 @@ These change what gets built below. Settle them before writing code against any 
 
 ## Phase C — Data layer
 
-- [ ] All tables per `DATA_MODEL.md`: `User`, `Regime`, `RegimeExercise`, `WorkoutSession`, `WorkoutSessionExercise`, `SessionLog`, `AdjustmentEvent`, `RegimeGenerationJob`, `Preset`, `PresetExercise`, `PresetSlot`, `LlmCall`, `RateLimit`
-- [ ] Every table gets an explicit RLS decision **in the same migration that creates it**
-- [ ] Two-tier database roles: privileged (owns tables) and restricted (request-scoped, `SET LOCAL app.user_id`)
-- [ ] **Cross-user isolation test that genuinely runs in CI** and fails the build if credentials are missing rather than skipping
-- [ ] Hit the AscendAPI free tier once and **diff the real response against `DATA_MODEL.md`'s Exercise table** before building on it
-- [ ] `fetch-catalog.ts` — paginate at 25, ~2s delay, handle 429/503 with backoff, never fan out per-exercise
-- [ ] `data/exercises.json` — vendored, committed snapshot
-- [ ] Seed script reads the local snapshot only. Offline, deterministic, identical in CI
-- [ ] `media` as a typed column; one shared media-rendering helper
-- [ ] ⚖️ Decide whether `media` holds vendor URLs or self-hosted files. Vendor URLs = a runtime CDN dependency, and the reason every v1 exercise image was silently CSP-blocked
-- [ ] `frequency` as an enum
-- [ ] `movementPattern` enrichment — batch LLM classification with a stronger model, exact-id echo-back, human spot-check of 50–100 rows
-- [ ] `progressionGroup` enrichment — deterministic where possible
-- [ ] Ingest runbook, written down once
+> **Phase C partially done 2026-09-01.** Everything not gated on AscendAPI access is
+> complete and verified against the live Supabase database: all 13 tables, RLS on
+> every one of them (`check:rls` passes at 15/15), the `rebound_restricted` role
+> with a real password, and a cross-user isolation test that genuinely proves
+> isolation (5 tests, run against `rebound_restricted`, not mocked) — see
+> migrations `1756828800000` and `1756832400000`, and `adr/0020`. **Still blocked**:
+> everything downstream of Track 0's unresolved AscendAPI licensing item — see
+> `documents/INGEST_RUNBOOK.md` for exactly what and why.
 
-**Done when:** a clean machine yields a fully populated exercise library with media and **no network calls to any vendor**.
+- [x] All tables per `DATA_MODEL.md`: `User`, `Regime`, `RegimeExercise`, `WorkoutSession`, `WorkoutSessionExercise`, `SessionLog`, `AdjustmentEvent`, `RegimeGenerationJob`, `Preset`, `PresetExercise`, `PresetSlot`, `LlmCall`, `RateLimit`
+- [x] Every table gets an explicit RLS decision **in the same migration that creates it**
+- [x] Two-tier database roles: privileged (owns tables) and restricted (request-scoped, `SET LOCAL app.user_id`)
+- [x] **Cross-user isolation test that genuinely runs in CI** and fails the build if credentials are missing rather than skipping
+- [ ] ⛔ Hit the AscendAPI free tier once and **diff the real response against `DATA_MODEL.md`'s Exercise table** before building on it — blocked on Track 0's unresolved AscendAPI licence/access question
+- [ ] ⛔ `fetch-catalog.ts` — paginate at 25, ~2s delay, handle 429/503 with backoff, never fan out per-exercise — needs AscendAPI's real API docs to write against; the order it should follow is in `documents/INGEST_RUNBOOK.md`
+- [ ] ⛔ `data/exercises.json` — vendored, committed snapshot — depends on the above
+- [ ] Seed script reads the local snapshot only. Offline, deterministic, identical in CI — depends on the above
+- [ ] `media` as a typed column; one shared media-rendering helper — column exists (migration `1756832400000`); the rendering helper doesn't yet, since nothing renders exercise media anywhere in the app yet
+- [x] ⚖️ Decide whether `media` holds vendor URLs or self-hosted files. Vendor URLs = a runtime CDN dependency, and the reason every v1 exercise image was silently CSP-blocked — **self-hosted, via Supabase Storage**, see `adr/0020-self-hosted-exercise-media.md`
+- [x] `frequency` as an enum — `dosage_frequency`, on `regime_exercises` and `preset_exercises`
+- [ ] ⛔ `movementPattern` enrichment — batch LLM classification with a stronger model, exact-id echo-back, human spot-check of 50–100 rows — needs real exercise data first
+- [ ] ⛔ `progressionGroup` enrichment — deterministic where possible — needs real exercise data first
+- [x] Ingest runbook, written down once — `documents/INGEST_RUNBOOK.md`
+
+**Done when:** a clean machine yields a fully populated exercise library with media and **no network calls to any vendor**. *(Not yet — the data-layer half of this is done; the AscendAPI half needs Track 0 resolved first.)*
 
 ---
 

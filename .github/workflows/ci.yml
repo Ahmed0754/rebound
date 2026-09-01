@@ -74,3 +74,39 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm --filter @rebound/api run check:rls
+
+  # Same reasoning as the rls job above, for the cross-user isolation test:
+  # it needs a live database and a live rebound_restricted connection, and it
+  # must fail rather than skip if either secret is missing.
+  isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Fail if RESTRICTED_DATABASE_URL is absent
+        env:
+          RESTRICTED_DATABASE_URL: ${{ secrets.RESTRICTED_DATABASE_URL }}
+        run: |
+          if [ -z "$RESTRICTED_DATABASE_URL" ]; then
+            echo "RESTRICTED_DATABASE_URL secret is not set. The isolation test cannot run."
+            echo "This fails deliberately rather than skipping - see CONTRIBUTING.md."
+            exit 1
+          fi
+
+      - name: Cross-user RLS isolation test
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESTRICTED_DATABASE_URL: ${{ secrets.RESTRICTED_DATABASE_URL }}
+        run: pnpm --filter @rebound/api run test:isolation
