@@ -1,0 +1,20 @@
+{
+  "name": "@rebound/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "start": "dotenv -e ../../.env -- tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:setup": "dotenv -e ../../.env -- tsx scripts/setup-db.ts"
+  },
+  "dependencies": {
+    "@google/genai": "2.19.0",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "tsx": "4.23.13"
+  }
+}

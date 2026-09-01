@@ -24,17 +24,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm --filter @rebound/api run prisma:generate
-
       - name: Typecheck API
         run: pnpm --filter @rebound/api run typecheck
-
-      - name: Test API
-        run: pnpm --filter @rebound/api run test
 
       - name: Typecheck web
         run: pnpm --filter web run typecheck
 
       - name: Build web
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
         run: pnpm --filter web run build

@@ -2,10 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Dependencies allowed to run install scripts. pnpm 11 blocks postinstall by
+# default; if a newly added dependency mysteriously doesn't work, check here first.
 allowBuilds:
-  '@prisma/client': true
-  '@prisma/engines': true
-  prisma: true
   esbuild: true
   '@google/genai': true
   protobufjs: true
