@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img" aria-label="A user's browser sends a muscle name to the API, which queries Postgres for matching exercises, sends that pool to Gemini to pick three and assign sets and reps, then returns the finished regime to the browser.">
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .box-fill   { fill: #eaeeec; stroke: #b7c1bd; stroke-width: 1.3; }
+    .box-fill-x { fill: #dcf0ea; stroke: #a9d9cc; stroke-width: 1.3; }
+    .box-title  { font-weight: 600; font-size: 16px; fill: #17211e; }
+    .box-sub    { font-weight: 500; font-size: 11.5px; fill: #5d6864; }
+    .box-detail { font-size: 11px; fill: #838d89; }
+    .flow-line  { stroke: #838d89; stroke-width: 1.6; fill: none; }
+    .flow-arrow { fill: #838d89; }
+    .flow-label { font-size: 12px; fill: #5d6864; }
+    .flow-num   { font-weight: 700; fill: #0c7a68; }
+  </style>
+
+  <rect x="0" y="0" width="1000" height="620" fill="#f5f7f6"/>
+
+  <!-- Web App -->
+  <rect class="box-fill" x="340" y="20" width="320" height="86" rx="12"/>
+  <text class="box-title" x="500" y="52" text-anchor="middle">Web App</text>
+  <text class="box-sub mono" x="500" y="72" text-anchor="middle">Next.js · :3000</text>
+  <text class="box-detail" x="500" y="90" text-anchor="middle">user types a body part, e.g. "knee"</text>
+
+  <!-- API -->
+  <rect class="box-fill" x="340" y="270" width="320" height="86" rx="12"/>
+  <text class="box-title" x="500" y="302" text-anchor="middle">API</text>
+  <text class="box-sub mono" x="500" y="322" text-anchor="middle">Node http server · :4000</text>
+  <text class="box-detail mono" x="500" y="340" text-anchor="middle">POST /regime</text>
+
+  <!-- Postgres -->
+  <rect class="box-fill-x" x="30" y="470" width="300" height="110" rx="12"/>
+  <text class="box-title" x="180" y="502" text-anchor="middle">Postgres</text>
+  <text class="box-sub mono" x="180" y="522" text-anchor="middle">Supabase · hosted</text>
+  <text class="box-detail" x="180" y="540" text-anchor="middle">30 seeded rows,</text>
+  <text class="box-detail" x="180" y="555" text-anchor="middle">9 body regions</text>
+
+  <!-- Gemini -->
+  <rect class="box-fill-x" x="670" y="470" width="300" height="110" rx="12"/>
+  <text class="box-title" x="820" y="502" text-anchor="middle">Gemini</text>
+  <text class="box-sub mono" x="820" y="522" text-anchor="middle">gemini-3.5-flash-lite</text>
+  <text class="box-detail" x="820" y="540" text-anchor="middle">returns exerciseId,</text>
+  <text class="box-detail" x="820" y="555" text-anchor="middle">sets, reps per pick</text>
+
+  <!-- Browser -> API (request) -->
+  <line class="flow-line" x1="487" y1="110" x2="487" y2="260"/>
+  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(487,270) rotate(90)"/>
+  <text class="flow-label mono" x="545" y="172"><tspan class="flow-num">1</tspan> · muscle name</text>
+
+  <!-- API -> Browser (response) -->
+  <line class="flow-line" x1="513" y1="270" x2="513" y2="116"/>
+  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(513,106) rotate(270)"/>
+  <text class="flow-label mono" x="545" y="204"><tspan class="flow-num">4</tspan> · regime</text>
+
+  <!-- API -> Postgres (request) -->
+  <line class="flow-line" x1="400" y1="356" x2="159" y2="466"/>
+  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(150,470) rotate(155)"/>
+  <text class="flow-label mono" x="30" y="415"><tspan class="flow-num">2</tspan> · query</text>
+
+  <!-- Postgres -> API (response) -->
+  <line class="flow-line" x1="210" y1="470" x2="451" y2="360"/>
+  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(460,356) rotate(335)"/>
+  <text class="flow-label mono" x="30" y="437">← rows</text>
+
+  <!-- API -> Gemini (request) -->
+  <line class="flow-line" x1="600" y1="356" x2="841" y2="466"/>
+  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(850,470) rotate(25)"/>
+  <text class="flow-label mono" x="740" y="415"><tspan class="flow-num">3</tspan> · prompt</text>
+
+  <!-- Gemini -> API (response) -->
+  <line class="flow-line" x1="790" y1="470" x2="549" y2="360"/>
+  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(540,356) rotate(205)"/>
+  <text class="flow-label mono" x="740" y="437">← 3 picks</text>
+</svg>
