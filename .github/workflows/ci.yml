@@ -70,6 +70,11 @@ jobs:
             exit 1
           fi
 
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm --filter @rebound/api run db:migrate
+
       - name: Check RLS decisions
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -104,6 +109,11 @@ jobs:
             echo "This fails deliberately rather than skipping - see CONTRIBUTING.md."
             exit 1
           fi
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm --filter @rebound/api run db:migrate
 
       - name: Cross-user RLS isolation test
         env:
