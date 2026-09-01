@@ -12,6 +12,8 @@ A user describes what hurts, and the app returns exercises with AI-assigned sets
 
 There's no auth, onboarding, daily check-ins, weekly plan adjustments, or safety-validation layer yet — Gemini's sets/reps are currently unvalidated. See [`documents/GAME_PLAN.md`](./documents/GAME_PLAN.md) for what's next.
 
+![How the request flows: browser sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./documents/diagrams/request-flow.svg)
+
 ## Tech stack
 
 **API** (`apps/api`)
