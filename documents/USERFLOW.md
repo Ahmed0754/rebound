@@ -2,6 +2,8 @@
 
 *The paths a user takes through the product. For the screens themselves and design tone, see [`DESIGN_BRIEF.md`](./DESIGN_BRIEF.md). For the safety logic gating these flows, see [`PRD.md`](./PRD.md)'s Clinical Risk Framing. For the technical sequence behind each step, see [`TDD.md`](./TDD.md).*
 
+> **⚠️ Current state, 2026-09-01.** None of these flows are implemented, and the platform assumption below has changed: there is **no mobile app**, and Next.js web is currently the only surface. The one interaction that exists is *type a body part → see three exercises*, which corresponds to no flow in this document. See [`ENG_PLAN.md`](./ENG_PLAN.md).
+
 > **[v2] These are mobile flows.** The product is the Expo app. Web carries marketing, pricing, and legal only — it has no onboarding, no session player, no account loop. v1 implemented every one of these flows twice, on web and mobile in parallel, over the same API. That duplication is where most of its real bugs came from.
 
 ---

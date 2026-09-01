@@ -2,6 +2,8 @@
 
 *Product Requirements Document — what we're building, for whom, and why. For how it's built, see [`TDD.md`](./TDD.md). For the database schema, see [`DATA_MODEL.md`](./DATA_MODEL.md). For step-by-step user flows, see [`USERFLOW.md`](./USERFLOW.md). For screen inventory, brand tone, and design constraints, see [`DESIGN_BRIEF.md`](./DESIGN_BRIEF.md). For the implementation agenda, see [`GAME_PLAN.md`](./GAME_PLAN.md). For current build state, see [`ENG_PLAN.md`](./ENG_PLAN.md).*
 
+> **⚠️ Current state, 2026-09-01.** None of the product described here is built. The repo holds a bare-bones slice: one web screen that asks which body part hurts and lists three exercises a Gemini call picked from 30 mock rows. **No onboarding, no red-flag screening, no risk tiering, no regimes, no sessions, no accounts.** In particular, the safety architecture this document treats as non-negotiable — deterministic rules bounding what the LLM may prescribe — **does not exist yet**, and the LLM currently picks dose freely. That is the arrangement this document calls irresponsible to ship, and it is knowingly the current state of a demo with mock data. See [`ENG_PLAN.md`](./ENG_PLAN.md).
+
 > **v2 note.** This document was rewritten at the start of the v2 build. The product thinking is carried forward largely intact — it held up. What changed is platform (mobile-first), infrastructure, and a more honest accounting of what the safety rules actually rest on. Decisions overturned from v1 are marked **[v2]**.
 
 ---

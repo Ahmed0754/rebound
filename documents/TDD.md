@@ -2,11 +2,48 @@
 
 *Technical Design Document — architecture, stack, and system design. For product intent, see [`PRD.md`](./PRD.md). For the schema, see [`DATA_MODEL.md`](./DATA_MODEL.md). For the build agenda, see [`GAME_PLAN.md`](./GAME_PLAN.md). For current state, see [`ENG_PLAN.md`](./ENG_PLAN.md).*
 
+> **⚠️ Read this first — current state, 2026-09-01.** This document describes the **target** architecture. It is not a description of the code. As of 2026-09-01 the repo holds a deliberately bare-bones vertical slice, and most of what follows is unbuilt. See the *Current implementation* section immediately below for what actually exists, and [`ENG_PLAN.md`](./ENG_PLAN.md) for the authoritative running state.
+
+---
+
+# Current implementation
+
+**Decided 2026-09-01, on advisor guidance: start small.** The target below has not changed and remains the point of the project. What changed is the order — build the smallest working thing, then add complexity one deliberate piece at a time.
+
+```
+┌──────────────┐        ┌─────────────────────────┐       ┌──────────────┐
+│ apps/web     │ HTTP   │ apps/api                │  pg   │  Supabase    │
+│ Next.js      │ ─────▶ │ plain node:http         │ ────▶ │  Postgres    │
+│ React 19     │  JSON  │ no framework, no ORM    │       │  (hosted)    │
+│ :3000        │        │ :4000                   │       └──────────────┘
+└──────────────┘        │   GET  /health          │
+                        │   POST /regime  ────────┼──▶ Gemini (@google/genai)
+                        └─────────────────────────┘
+```
+
+| Layer | Target (below) | Actually built |
+|---|---|---|
+| Client | Expo mobile app; web is marketing only | **Next.js web app, the only surface** |
+| API | Containerized Hono/Fastify, REST + OpenAPI | **Plain `node:http`, no framework, no spec** |
+| Contracts | Zod → generated `openapi.json`, CI drift check | none |
+| Auth | Better Auth, self-hosted | **none — every request is anonymous** |
+| Database | Postgres in Docker, managed in prod | **Supabase hosted Postgres only** |
+| Data access | Prisma, committed migrations | **`pg` + hand-written `db/schema.sql`, no migrations** |
+| Safety | `packages/clinical-rules` validates every regime | **none — Gemini freely picks sets and reps** |
+| Packages | nine workspace packages | **two: `apps/api`, `apps/web`** |
+| Local dev | `docker compose up`, no external accounts | **no Docker; requires live Supabase + Gemini key** |
+
+**What this trade costs, stated plainly.** Dropping Docker and local Postgres reintroduces the condition this document calls *"the single worst part of the v1 codebase for onboarding a second person"* — a clone that cannot run without live external accounts. Dropping migrations reintroduces v1's `db push` problem. Dropping the safety layer is acceptable **only while the data is mock**. These are reasonable trades for a bare-bones slice and actively harmful to keep past it. Every one of them is recorded in `ENG_PLAN.md` under *Decisions made without an ADR — owed one*.
+
+---
+
 > **v2 note.** This is a rewrite. Every stack decision here is either newly made or newly re-confirmed, and each has an ADR in `adr/`. Where v1 made a different call, the reason for changing is stated — because v1's most expensive mistakes were decisions that got reversed after they'd been built on.
 
 ---
 
 # Architecture at a glance
+
+> **Target, not current.** See *Current implementation* above for what exists today.
 
 ```
 ┌─────────────┐         ┌──────────────────────────────────┐
@@ -34,6 +71,8 @@
 
 # Repo layout
 
+> **Target, not current.** The repo currently contains exactly two packages: `apps/api` and `apps/web`. None of `apps/mobile`, `apps/worker`, `packages/db`, `packages/contracts`, `packages/clinical-rules`, `packages/agents`, `packages/design-tokens`, or `adr/` exist.
+
 ```
 apps/api               Standalone REST API service. Its own Dockerfile.
 apps/mobile            Expo Router. THE product.
@@ -55,6 +94,8 @@ adr/                   Architecture decision records.
 ---
 
 # [v2] Backend: a standalone containerized API
+
+> **Superseded 2026-09-01 (partly).** The API is standalone and separate from the web app, as described. It is **plain `node:http`, not Hono or Fastify**, and it is **not containerized** — Docker was dropped. The framework choice below is still open.
 
 **Decision:** `apps/api` is its own Node service with its own Dockerfile, not route handlers inside the web app.
 
@@ -81,6 +122,8 @@ Two things to fix from v1: it **failed open** on database error, which under rea
 
 # [v2] Local development: Docker
 
+> **Superseded 2026-09-01.** Docker was removed from the project. Local development talks directly to hosted Supabase, which means a clean clone **does** require external accounts — the exact failure mode this section was written to prevent. Re-read this section before adding the second developer.
+
 **Decision:** `docker compose up` gives a complete, working stack. No external accounts required.
 
 ```yaml
@@ -106,6 +149,8 @@ The mobile app runs outside the container (Expo needs the host's network and a r
 
 # [v2] Auth: Better Auth, self-hosted
 
+> **Not built as of 2026-09-01.** There is no auth of any kind. No users, no sessions, no ownership. Everything below is target.
+
 **Decision:** Better Auth, tables in our own Postgres.
 
 **Why the change from a hosted provider:**
@@ -122,6 +167,8 @@ Mobile holds a bearer token; the API validates it. Session refresh is handled in
 ---
 
 # Database
+
+> **Superseded 2026-09-01.** Supabase hosted Postgres, accessed with `pg`. **No Prisma, no ORM, no migrations** — one hand-written `db/schema.sql`, applied by a re-runnable setup script. The three-client RLS design below is entirely unbuilt, and the `exercises` table currently has **no RLS decision at all** — see `ENG_PLAN.md` risk #1.
 
 - **Postgres.** Local in Docker, managed in production.
 - **Prisma** as the ORM.
@@ -301,6 +348,8 @@ Start at 20–30 fixtures, grow toward 100. v1 had 9, and its two worst-scoring 
 
 # Mobile
 
+> **Not started as of 2026-09-01.** No Expo, no mobile app. Expo Go + LAN networking remains completely unvalidated.
+
 - **Expo + Expo Router.** Bottom tabs from the start: Today · Progress · Plan · Account.
 - **Expo Go until a native module forces a dev build.** Fast iteration, and the co-founder needs no Apple Developer account.
 - **Zero new native dependencies without a real reason.** Every one costs a rebuild cycle. v1's global swipe-navigation feature burned **four EAS rebuild cycles** chasing a root cause that was never confirmed, and was then fully reverted — the underlying user problem (getting stuck on a screen) was solved by a back button.
@@ -322,6 +371,8 @@ Text scaling (~1.3×) and a 44px minimum tap target everywhere. Elderly users ar
 ---
 
 # Web
+
+> **Superseded 2026-09-01.** `apps/web` is Next.js and is currently **the product**, not marketing. It is the only client surface.
 
 Marketing, pricing, and legal only. Next.js, deployed independently of the API. It shares design tokens with mobile — **tokens, not components.** Sharing components across React and React Native was considered in v1 and correctly rejected.
 
@@ -347,6 +398,8 @@ Marketing, pricing, and legal only. Next.js, deployed independently of the API. 
 
 # CI
 
+> **Partly built as of 2026-09-01.** CI runs install → typecheck (api) → typecheck (web) → build (web). There is **no lint, no test, no RLS check, and no eval gate** — those commands do not exist in the repo.
+
 Install → generate → **lint** → typecheck → test → RLS coverage → OpenAPI drift.
 
 - **Lint runs.** v1 had a lint task CI never invoked and four standing errors nobody fixed.
@@ -357,6 +410,8 @@ Install → generate → **lint** → typecheck → test → RLS coverage → Op
 ---
 
 # Deployment
+
+> **Not started as of 2026-09-01.** Nothing is deployed. Note that dropping Docker removes the portability this section relies on.
 
 **[v2] Deferred by design.** Because the API is a container and the database is plain Postgres with real migrations, the production choice can be made at `GAME_PLAN.md` M14 with real requirements rather than assumed at the start. Avoid vendor-specific code until then.
 
