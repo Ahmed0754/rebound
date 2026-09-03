@@ -8,14 +8,11 @@
     "start": "dotenv -e ../../.env -- tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "dotenv -e ../../.env -- vitest run",
-    "test:isolation": "dotenv -e ../../.env -- vitest run --config vitest.isolation.config.ts",
     "lint": "eslint .",
     "db:migrate": "dotenv -e ../../.env -- node-pg-migrate up",
     "db:migrate:down": "dotenv -e ../../.env -- node-pg-migrate down",
     "db:seed": "dotenv -e ../../.env -- tsx scripts/seed.ts",
-    "db:setup": "pnpm run db:migrate && pnpm run db:seed",
-    "check:rls": "dotenv -e ../../.env -- tsx scripts/check-rls.ts",
-    "db:set-restricted-password": "dotenv -e ../../.env -- tsx scripts/set-restricted-password.ts"
+    "db:setup": "pnpm run db:migrate && pnpm run db:seed"
   },
   "dependencies": {
     "@google/genai": "2.19.0",
