@@ -79,4 +79,4 @@ It's seeded with 30 hand-written exercises across 9 body regions. When you searc
 
 ## Roadmap
 
-The full product idea — auth, daily check-ins, weekly AI plan adjustments, a safety-validation layer, and the database structure to support all of it — is planned out but **not built into this app yet**. That planning, plus the more advanced database work we prototyped and then intentionally set aside to stay in scope, lives entirely on the [`future-work`](../../tree/future-work) branch — not on `main`, and not wired into the app above.
+The full product idea — auth, daily check-ins, weekly AI plan adjustments, a safety-validation layer, and the database structure to support all of it — is planned out but **not built into this app yet**. That planning, plus the more advanced database work we prototyped and then intentionally set aside to stay in scope for this week, lives on the [`future-work`](../../tree/future-work) branch and in [`/roadmap`](./roadmap) — not wired into the app above.
