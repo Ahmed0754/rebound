@@ -8,6 +8,27 @@ This is a small toy version proving one idea end to end: you tell it what body p
 
 ![How the request flows: the web app sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./diagrams/request-flow.svg)
 
+## Tech stack
+
+**API** (`apps/api`)
+- Node.js `http` server — no framework, just plain Node
+- [`pg`](https://node-postgres.com/) — direct Postgres driver
+- [`@google/genai`](https://github.com/googleapis/js-genai) — Gemini calls
+- TypeScript, run via `tsx`
+
+**Web** (`apps/web`)
+- [Next.js](https://nextjs.org/) (App Router)
+- React
+
+**Database**
+- Postgres, hosted for free on [Supabase](https://supabase.com)
+- One migration tool, [`node-pg-migrate`](https://github.com/salsita/node-pg-migrate), for the one table this app uses
+
+**Tooling**
+- [pnpm](https://pnpm.io/) workspaces — monorepo with `apps/api` and `apps/web`
+- [Vitest](https://vitest.dev/) — the 10 tests in `server.test.ts`
+- ESLint
+
 ## How to run it locally
 
 1. Create a free [Supabase](https://supabase.com) project (this is just Postgres, hosted for free).
