@@ -6,6 +6,8 @@ An AI coach that keeps athletes training instead of sidelined — no doctor's re
 
 This is a small toy version proving one idea end to end: you tell it what body part hurts, and it returns a few exercises for it, with an AI-assigned number of sets and reps for each. One screen, one API endpoint, one database table.
 
+![How the request flows: the web app sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./diagrams/request-flow.svg)
+
 ## How to run it locally
 
 1. Create a free [Supabase](https://supabase.com) project (this is just Postgres, hosted for free).
