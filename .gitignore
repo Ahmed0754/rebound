@@ -8,3 +8,6 @@ next-env.d.ts
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Planning docs kept local / on future-work branch
+roadmap/
