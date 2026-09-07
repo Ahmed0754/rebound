@@ -32,12 +32,12 @@
   <text class="box-title" x="180" y="502" text-anchor="middle">Postgres</text>
   <text class="box-sub mono" x="180" y="522" text-anchor="middle">Supabase · hosted</text>
   <text class="box-detail" x="180" y="540" text-anchor="middle">30 seeded rows,</text>
-  <text class="box-detail" x="180" y="555" text-anchor="middle">9 body regions</text>
+  <text class="box-detail" x="180" y="555" text-anchor="middle">10 body regions</text>
 
   <!-- Gemini -->
   <rect class="box-fill-x" x="670" y="470" width="300" height="110" rx="12"/>
   <text class="box-title" x="820" y="502" text-anchor="middle">Gemini</text>
-  <text class="box-sub mono" x="820" y="522" text-anchor="middle">gemini-3.5-flash-lite</text>
+  <text class="box-sub mono" x="820" y="522" text-anchor="middle">gemini-3.7-flash</text>
   <text class="box-detail" x="820" y="540" text-anchor="middle">returns exerciseId,</text>
   <text class="box-detail" x="820" y="555" text-anchor="middle">sets, reps per pick</text>
 
