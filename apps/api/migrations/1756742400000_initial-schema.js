@@ -1,12 +1,11 @@
 /**
- * Initial schema. Captures the `exercises` table that previously lived in
- * db/schema.sql and was applied by a drop-and-reseed script.
+ * Creates the one table this app uses: `exercises`.
  *
- * RLS is enabled here, not left off. Supabase exposes tables in the `public`
- * schema through PostgREST, and a table without RLS is reachable with the
- * project's anon key regardless of what application code does. v1 shipped seven
- * tables exposed exactly this way. Shared-library tables get RLS *on* with a
- * permissive read policy — never RLS off.
+ * RLS is enabled with a read-only policy. Supabase exposes every table in the
+ * `public` schema over its HTTP API, so a table with RLS switched off is
+ * readable by anyone holding the project's anon key. Reads of the exercise
+ * library are meant to be public; writes are not, and no write policy exists,
+ * so only the table owner (the seed script) can change rows.
  */
 
 export const up = (pgm) => {

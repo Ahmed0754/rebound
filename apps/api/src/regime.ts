@@ -14,26 +14,31 @@ export type RegimeItem = {
 };
 
 /**
- * Picks exercises for a body region and asks Gemini to assign sets/reps.
- * Gemini only ever chooses from the rows we hand it, and every id it returns
- * is checked back against that pool before it reaches the caller.
+ * Finds the exercises stored for a body region and asks Gemini to pick three
+ * and assign sets/reps. Gemini only ever chooses from the rows we hand it, and
+ * every id it returns is checked back against those rows before it reaches the
+ * caller, so it cannot invent an exercise.
  */
 export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
-  const { rows: pool_ } = await pool.query<ExerciseRow>(
+  // body_region is stored with underscores ("lower_back"), but people type a
+  // space ("lower back"), so match the two forms.
+  const region = muscle.replace(/\s+/g, "_");
+
+  const { rows: candidates } = await pool.query<ExerciseRow>(
     `select id, name, body_region, description
        from exercises
       where body_region ilike '%' || $1 || '%'`,
-    [muscle]
+    [region]
   );
 
-  if (pool_.length === 0) {
+  if (candidates.length === 0) {
     return [];
   }
 
   const response = await ai.models.generateContent({
     model,
     contents: `A user says their "${muscle}" hurts. From this list of exercises, pick exactly 3 and assign sets and reps for each:\n\n${JSON.stringify(
-      pool_.map((e) => ({ id: e.id, name: e.name, description: e.description }))
+      candidates.map((e) => ({ id: e.id, name: e.name, description: e.description }))
     )}`,
     config: {
       responseMimeType: "application/json",
@@ -62,9 +67,7 @@ export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
     picks?: { exerciseId: string; sets: number; reps: number }[];
   };
 
-  console.log("raw picks from Gemini:", parsed.picks);
-
-  const byId = new Map(pool_.map((e) => [e.id, e]));
+  const byId = new Map(candidates.map((e) => [e.id, e]));
 
   return (parsed.picks ?? [])
     .filter((pick) => byId.has(pick.exerciseId))

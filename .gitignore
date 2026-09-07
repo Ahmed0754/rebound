@@ -11,3 +11,7 @@ next-env.d.ts
 
 # Planning docs kept local / on future-work branch
 roadmap/
+
+# Next.js writes these agent instruction files into apps/web on `next dev`
+AGENTS.md
+CLAUDE.md

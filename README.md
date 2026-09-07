@@ -11,24 +11,33 @@ Step by step:
 1. You open a webpage with one input box.
 2. You type a body part that hurts — like "knee."
 3. It sends that to a backend server.
-4. The server looks in a database for exercises tagged for that body part (30 exercises pre-loaded, across 9 body regions: knee, shoulder, lower back, hamstring, ankle, hip, neck, wrist, elbow, calf).
+4. The server looks in a database for exercises tagged for that body part (30 exercises pre-loaded, across 10 body regions: knee, shoulder, lower back, hamstring, ankle, hip, neck, wrist, elbow, calf).
 5. It hands that list of matching exercises to Google's Gemini AI and asks it: pick exactly 3 of these, and decide how many sets and reps of each.
 6. Gemini sends back its picks.
 7. The server sends those 3 exercises back to the webpage, which displays them as cards — name, description, and sets × reps.
 
-**What it deliberately does *not* do:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. That's intentional for a toy version — a real safety-checking layer is planned for later (see [`/roadmap`](./roadmap)), not built yet.
+**What it deliberately does *not* do:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. That's intentional for a toy version — a safety-checking layer is the obvious next step, but it is not built yet.
 
 ![How the request flows: the web app sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./diagrams/request-flow.svg)
 
 ## Team responsibilities
 
-*(fill in names/roles)*
+**Backend / API — Shahid Khan** (`apps/api`)
+The Node HTTP server and its two routes (`/health`, `/regime`), including input
+validation and error responses; the Postgres query that finds exercises for a
+body region; the Gemini call in `regime.ts` and the response schema it enforces;
+the migration that creates the `exercises` table and the seed script that fills
+it; the tests in `server.test.ts`.
 
-**Backend / API** —
+**Frontend / UI — Syed Ahmed Ali** (`apps/web`)
+The Next.js page: the input box and submit button, the `fetch` to `/regime`,
+loading and error states, and the cards that render each returned exercise with
+its sets and reps.
 
-**Frontend / UI** —
-
-**Shared decisions** —
+**Shared decisions — both**
+The request-flow diagram; the JSON shape `/regime` returns, since it is the
+contract between the two halves; the columns on the `exercises` table; and the
+scope of this toy version — what we deliberately left out.
 
 ## Tech stack
 
@@ -63,11 +72,7 @@ One table, `exercises`:
 | `description` | Plain-language instructions |
 | `created_at` | When the row was added |
 
-It's seeded with 30 hand-written exercises across 9 body regions. When you search "knee," the API pulls every row where `body_region` matches, hands that list to Gemini, and asks it to pick 3 and assign sets/reps.
-
-## Roadmap
-
-The full product idea — auth, daily check-ins, weekly AI plan adjustments, a safety-validation layer, and the database structure to support all of it — is planned out but **not built into this app yet**. That planning, plus the more advanced database work we prototyped and then intentionally set aside to stay in scope for this week, lives on the [`future-work`](../../tree/future-work) branch and in [`/roadmap`](./roadmap) — not wired into the app above.
+It's seeded with 30 hand-written exercises across 10 body regions. When you search "knee," the API pulls every row where `body_region` matches, hands that list to Gemini, and asks it to pick 3 and assign sets/reps.
 
 ## How to run it locally
 
