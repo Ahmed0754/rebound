@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
-import { buildRegime } from "./regime.js";
+import { buildRegime } from "../models/regime.js";
 
 const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:3000";
 

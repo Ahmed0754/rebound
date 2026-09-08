@@ -3,7 +3,7 @@
  * this script. Re-runnable: it replaces all rows rather than appending, so
  * running it twice leaves the same 30 rows rather than 60.
  */
-import { pool } from "../src/db.js";
+import { pool } from "../src/models/db.js";
 
 const exercises: [string, string, string][] = [
   ["knee", "Straight Leg Raise", "Lying on your back, tighten the thigh and lift the leg straight up to hip height."],

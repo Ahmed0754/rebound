@@ -7,10 +7,3 @@ export const pool = new pg.Pool({
   // chain for; the connection is still encrypted.
   ssl: { rejectUnauthorized: false },
 });
-
-export type ExerciseRow = {
-  id: string;
-  name: string;
-  body_region: string;
-  description: string;
-};

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { pool, type ExerciseRow } from "./db.js";
+import { findByRegion } from "./exercises.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const model = process.env.GEMINI_MODEL ?? "gemini-3.7-flash";
@@ -20,16 +20,7 @@ export type RegimeItem = {
  * caller, so it cannot invent an exercise.
  */
 export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
-  // body_region is stored with underscores ("lower_back"), but people type a
-  // space ("lower back"), so match the two forms.
-  const region = muscle.replace(/\s+/g, "_");
-
-  const { rows: candidates } = await pool.query<ExerciseRow>(
-    `select id, name, body_region, description
-       from exercises
-      where body_region ilike '%' || $1 || '%'`,
-    [region]
-  );
+  const candidates = await findByRegion(muscle);
 
   if (candidates.length === 0) {
     return [];
@@ -72,15 +63,5 @@ export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
   return (parsed.picks ?? [])
     .filter((pick) => byId.has(pick.exerciseId))
     .slice(0, 3)
-    .map((pick) => {
-      const exercise = byId.get(pick.exerciseId)!;
-      return {
-        id: exercise.id,
-        name: exercise.name,
-        bodyRegion: exercise.body_region,
-        description: exercise.description,
-        sets: pick.sets,
-        reps: pick.reps,
-      };
-    });
+    .map((pick) => ({ ...byId.get(pick.exerciseId)!, sets: pick.sets, reps: pick.reps }));
 }

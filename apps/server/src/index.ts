@@ -1,4 +1,4 @@
-import { createApiServer } from "./server.js";
+import { createApiServer } from "./controllers/server.js";
 
 const port = Number(process.env.API_PORT ?? 4000);
 
