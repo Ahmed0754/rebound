@@ -35,14 +35,14 @@ The whole bet is that most people don't need a clinician managing every decision
 
 ## Team responsibilities
 
-**Backend / API — Syed Ahmed Ali** (`apps/api`)
+**Backend / API — Shahid Khan** (`apps/api`)
 The Node HTTP server and its two routes (`/health`, `/regime`), including input
 validation and error responses; the Postgres query that finds exercises for a
 body region; the Gemini call in `regime.ts` and the response schema it enforces;
 the migration that creates the `exercises` table and the seed script that fills
 it; the tests in `server.test.ts`.
 
-**Frontend / UI — Shahid Khan** (`apps/web`)
+**Frontend / UI — Syed Ahmed Ali** (`apps/web`)
 The Next.js page: the input box and submit button, the `fetch` to `/regime`,
 loading and error states, and the cards that render each returned exercise with
 its sets and reps.
