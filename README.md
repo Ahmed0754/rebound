@@ -4,7 +4,7 @@ An AI coach that keeps athletes training instead of sidelined — no doctor's re
 
 ## What this does
 
-This is a small toy version proving one idea end to end: you tell it what body part hurts, and it returns a few exercises for it, with an AI-assigned number of sets and reps for each. One screen, one API endpoint, one database table.
+The first piece of Rebound is working end to end: you tell it what body part hurts, and it returns exercises for it, with an AI-assigned number of sets and reps for each. One screen, one API endpoint, one database table — the full request path that everything else gets built on top of.
 
 Step by step:
 
@@ -16,13 +16,13 @@ Step by step:
 6. Gemini sends back its picks.
 7. The server sends those 3 exercises back to the webpage, which displays them as cards — name, description, and sets × reps.
 
-**What it deliberately does *not* do:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. That's intentional for a toy version — a safety-checking layer is the obvious next step, but it is not built yet.
+**Not built yet:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. The safety layer is the next major piece of work; see below for why it matters more here than in a normal fitness app.
 
 ![How the request flows: the web app sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./diagrams/request-flow.svg)
 
-## The full vision (not built yet)
+## Where this is going
 
-The toy above proves one small piece works. The actual product it's a first step toward is bigger:
+What's described above is the working core. The product it's being built into is bigger:
 
 Rebound is meant to be a **mobile app** that keeps athletes training through nagging injuries instead of sidelined by them — no PT referral, no insurance, no waiting. The core idea is a twice-daily habit loop, like a workout version of a Duolingo streak:
 
@@ -50,7 +50,7 @@ its sets and reps.
 **Shared decisions — both**
 The request-flow diagram; the JSON shape `/regime` returns, since it is the
 contract between the two halves; the columns on the `exercises` table; and the
-scope of this toy version — what we deliberately left out.
+scope of each stage — what's working now and what comes next.
 
 ## Tech stack
 
@@ -75,7 +75,7 @@ scope of this toy version — what we deliberately left out.
 
 ## The database
 
-One table, `exercises`:
+Right now, one table — `exercises`:
 
 | Column | What it holds |
 |---|---|
