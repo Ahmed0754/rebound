@@ -20,6 +20,19 @@ Step by step:
 
 ![How the request flows: the web app sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./diagrams/request-flow.svg)
 
+## The full vision (not built yet)
+
+The toy above proves one small piece works. The actual product it's a first step toward is bigger:
+
+Rebound is meant to be a **mobile app** that keeps athletes training through nagging injuries instead of sidelined by them — no PT referral, no insurance, no waiting. The core idea is a twice-daily habit loop, like a workout version of a Duolingo streak:
+
+- **Onboarding, once**: a quick safety screen (any red-flag symptoms route straight to "see a doctor," no AI plan generated), then the AI builds a starting plan based on your goal and what hurts.
+- **Two short sessions a day, every day** — a morning session (bundled with a 10-second check-in: pain score, how it's feeling) and an evening session. Missing one doesn't break your streak; missing both does.
+- **Every 7 days, the AI reviews your trend** and rewrites the plan — harder if you're improving, held steady if you're plateauing, backed off if you're getting worse.
+- **A safety layer runs underneath all of it, in real time** — not just weekly. A pain spike or a "this made it worse" flag triggers an immediate rollback to your last safe plan and a "stop and consult a professional" message, without waiting for the weekly review.
+
+The whole bet is that most people don't need a clinician managing every decision — they need a plan that actually pays attention to them and adjusts, at a price and speed a clinician-staffed app can't match. That's also exactly why the safety layer matters more here than in a normal fitness app: there's no human backstop, so the rules bounding what the AI is allowed to prescribe have to be solid before this could responsibly have real users. That safety layer is planned but **not implemented** — it's one of the biggest pieces of what's left. Full planning docs for this live on the [`future-work`](../../tree/future-work) branch.
+
 ## Team responsibilities
 
 **Backend / API — Shahid Khan** (`apps/api`)
