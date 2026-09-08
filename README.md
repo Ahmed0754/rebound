@@ -31,7 +31,7 @@ Rebound is meant to be a **mobile app** that keeps athletes training through nag
 - **Every 7 days, the AI reviews your trend** and rewrites the plan — harder if you're improving, held steady if you're plateauing, backed off if you're getting worse.
 - **A safety layer runs underneath all of it, in real time** — not just weekly. A pain spike or a "this made it worse" flag triggers an immediate rollback to your last safe plan and a "stop and consult a professional" message, without waiting for the weekly review.
 
-The whole bet is that most people don't need a clinician managing every decision — they need a plan that actually pays attention to them and adjusts, at a price and speed a clinician-staffed app can't match. That's also exactly why the safety layer matters more here than in a normal fitness app: there's no human backstop, so the rules bounding what the AI is allowed to prescribe have to be solid before this could responsibly have real users. That safety layer is planned but **not implemented** — it's one of the biggest pieces of what's left. Full planning docs for this live on the [`future-work`](../../tree/future-work) branch.
+The whole bet is that most people don't need a clinician managing every decision — they need a plan that actually pays attention to them and adjusts, at a price and speed a clinician-staffed app can't match. That's also exactly why the safety layer matters more here than in a normal fitness app: there's no human backstop, so the rules bounding what the AI is allowed to prescribe have to be solid before this could responsibly have real users. That safety layer is planned but **not implemented** — it's one of the biggest pieces of what's left.
 
 ## Team responsibilities
 
