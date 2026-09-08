@@ -35,7 +35,7 @@ The whole bet is that most people don't need a clinician managing every decision
 
 ## Team responsibilities
 
-**Backend / API — Shahid Khan** (`apps/api`)
+**Backend / API — Shahid Khan** (`apps/server`)
 The Node HTTP server and its two routes (`/health`, `/regime`), including input
 validation and error responses; the Postgres query that finds exercises for a
 body region; the Gemini call in `regime.ts` and the response schema it enforces;
@@ -54,7 +54,7 @@ scope of each stage — what's working now and what comes next.
 
 ## Tech stack
 
-**API** (`apps/api`)
+**API** (`apps/server`)
 - Node.js `http` server — no framework, just plain Node
 - [`pg`](https://node-postgres.com/) — direct Postgres driver
 - [`@google/genai`](https://github.com/googleapis/js-genai) — Gemini calls
@@ -69,7 +69,7 @@ scope of each stage — what's working now and what comes next.
 - One migration tool, [`node-pg-migrate`](https://github.com/salsita/node-pg-migrate), for the one table this app uses
 
 **Tooling**
-- [pnpm](https://pnpm.io/) workspaces — monorepo with `apps/api` and `apps/web`
+- [pnpm](https://pnpm.io/) workspaces — monorepo with `apps/server` and `apps/web`
 - [Vitest](https://vitest.dev/) — the 10 tests in `server.test.ts`
 - ESLint
 
