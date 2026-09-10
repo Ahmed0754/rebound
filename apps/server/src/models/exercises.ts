@@ -1,3 +1,6 @@
+//This is the model for Data
+//The exercise type, SQL query
+
 import { pool } from "./db.js";
 
 export type Exercise = {

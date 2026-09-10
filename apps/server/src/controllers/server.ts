@@ -1,3 +1,7 @@
+//this is my ROUTER and CONTROLLER
+//it matches routes, input validation, status-code mapping, CORS, and JSON transport. 
+//
+
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
 import { buildRegime } from "../models/regime.js";
 
@@ -28,6 +32,9 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+//This is the important function
+//Router: matches routes and dispatches to the appropriate handler
+//Controller: handles the request, validates input, and returns a response
 export async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
 

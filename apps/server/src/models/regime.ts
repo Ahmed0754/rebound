@@ -1,3 +1,6 @@
+//This is buisness logic (buildRegime)
+//Asks data model for candidates, then sends to GEMINI with a forced shchema
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { findByRegion } from "./exercises.js";
 

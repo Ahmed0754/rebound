@@ -1,3 +1,6 @@
+//this has the shared pg.Pool
+//STRICTLY INFRASTRUCTURE
+
 import pg from "pg";
 
 // One connection pool, shared by the request handler and the seed script.
