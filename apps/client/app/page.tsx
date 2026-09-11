@@ -1,5 +1,8 @@
 "use client";
 
+//this is my VIEW + client-side CONTROLLER for the home page
+//it renders the form, holds UI state, calls the API, and shows the regime or an error.
+
 import { useState } from "react";
 
 type Exercise = {
@@ -19,6 +22,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  //This is the important function
+  //Controller: validates the input, POSTs to the server /regime route,
+  //then pushes the result into state for the view to render
   async function submit() {
     if (!muscle.trim()) return;
 
