@@ -1,12 +1,14 @@
 //this is my ROUTER and CONTROLLER
 //it matches routes, input validation, status-code mapping, CORS, and JSON transport. 
-//
+
 
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
 import { buildRegime } from "../models/regime.js";
 
+//since my api is on port 4000, and client is on port 3000, this is just a single origin point.
 const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:3000";
 
+//every response exits thru here, so its "centralizes" the JSON encoding
 function send(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
@@ -17,6 +19,7 @@ function send(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload);
 }
 
+// Read the request body as JSON
 async function readJson(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
   let size = 0;
@@ -83,7 +86,12 @@ export async function handleRequest(req: IncomingMessage, res: ServerResponse): 
     send(res, 500, { error: "internal server error" });
   }
 }
-
+//servers entry point, creates the server and returns to caller (index.ts)
 export function createApiServer(): Server {
   return createServer(handleRequest);
 }
+
+//turns HHTP requests into JSON response -->
+//Parses the URL -->
+//Handles the request and delegates to ONE model function-->
+//What ever comes back, gives status code and JSON response to the client.
