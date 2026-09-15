@@ -18,7 +18,7 @@ Step by step:
 
 **Not built yet:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. The safety layer is the next major piece of work; see below for why it matters more here than in a normal fitness app.
 
-![How the request flows: the web app sends a muscle name to the API, the API queries Postgres for matching exercises and Gemini for a 3-exercise regime, then returns it to the browser.](./diagrams/request-flow.svg)
+![Rebound architecture: the client POSTs a muscle name to the server's controller, which asks its models to query Postgres for matching exercises and Gemini to pick three with sets and reps, then returns the finished regime to the browser. Boxes are tagged with their MVC role.](./diagrams/request-flow.svg)
 
 ## Where this is going
 

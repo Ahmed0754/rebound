@@ -1,73 +1,111 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img" aria-label="A user's browser sends a muscle name to the API, which queries Postgres for matching exercises, sends that pool to Gemini to pick three and assign sets and reps, then returns the finished regime to the browser.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 580" role="img" aria-label="Rebound architecture: the client (layout.tsx, page.tsx) POSTs a muscle name to the server's controller, which asks its regime and exercises models to query Postgres for matching exercises and Gemini to pick three with sets and reps, then returns the finished regime to the browser. Boxes are tagged with their MVC role: view, controller, or model.">
   <style>
     text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .box-fill   { fill: #eaeeec; stroke: #b7c1bd; stroke-width: 1.3; }
-    .box-fill-x { fill: #dcf0ea; stroke: #a9d9cc; stroke-width: 1.3; }
-    .box-title  { font-weight: 600; font-size: 16px; fill: #17211e; }
-    .box-sub    { font-weight: 500; font-size: 11.5px; fill: #5d6864; }
-    .box-detail { font-size: 11px; fill: #838d89; }
-    .flow-line  { stroke: #838d89; stroke-width: 1.6; fill: none; }
-    .flow-arrow { fill: #838d89; }
-    .flow-label { font-size: 12px; fill: #5d6864; }
-    .flow-num   { font-weight: 700; fill: #0c7a68; }
+    .mono       { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .bg         { fill: #121210; }
+    .box        { fill: none; stroke: #EBE9DC; stroke-width: 1.5; }
+    .div        { stroke: #38372F; stroke-width: 1; }
+    .title      { font-weight: 700; font-size: 14px; fill: #EBE9DC; }
+    .sub        { font-size: 10.5px; fill: #7A786C; }
+    .body       { font-size: 11px; fill: #A9A79A; }
+    .bold       { font-weight: 700; fill: #EBE9DC; }
+    .tag        { font-weight: 600; font-size: 10.5px; }
+    .legend     { font-size: 11px; fill: #A9A79A; }
+    .arrow      { font-size: 20px; fill: #EBE9DC; }
+    .conn-label { font-size: 9.5px; fill: #A9A79A; }
+    .pipe-tag   { font-size: 9.5px; letter-spacing: 1px; fill: #7A786C; }
+    .pipe-code  { font-size: 12px; fill: #EBE9DC; }
+    .client { fill: #8C99F2; }
+    .server { fill: #4FBBA8; }
+    .db     { fill: #D290C6; }
+    .ai     { fill: #E08B5F; }
   </style>
 
-  <rect x="0" y="0" width="1000" height="620" fill="#f5f7f6"/>
+  <rect class="bg" x="0" y="0" width="1160" height="580"/>
 
-  <!-- Web App -->
-  <rect class="box-fill" x="340" y="20" width="320" height="86" rx="12"/>
-  <text class="box-title" x="500" y="52" text-anchor="middle">Web App</text>
-  <text class="box-sub mono" x="500" y="72" text-anchor="middle">Next.js · :3000</text>
-  <text class="box-detail" x="500" y="90" text-anchor="middle">user types a body part, e.g. "knee"</text>
+  <!-- legend -->
+  <text class="legend mono" x="40" y="30">mvc <tspan class="client tag">[view]</tspan> client-side ui  &#183;  <tspan class="server tag">[controller]</tspan> routing &amp; validation  &#183;  <tspan class="db tag">[model]</tspan> business logic &amp; data access</text>
+  <line class="div" x1="40" y1="44" x2="1120" y2="44"/>
 
-  <!-- API -->
-  <rect class="box-fill" x="340" y="270" width="320" height="86" rx="12"/>
-  <text class="box-title" x="500" y="302" text-anchor="middle">API</text>
-  <text class="box-sub mono" x="500" y="322" text-anchor="middle">Node http server · :4000</text>
-  <text class="box-detail mono" x="500" y="340" text-anchor="middle">POST /regime</text>
+  <!-- CLIENT -->
+  <rect class="box" x="40" y="54" width="1080" height="124" rx="2"/>
+  <text class="title client mono" x="60" y="74">apps/client &#8212; next.js</text>
+  <text class="sub mono" x="1100" y="74" text-anchor="end">localhost:3000</text>
+  <line class="div" x1="40" y1="86" x2="1120" y2="86" stroke="#EBE9DC" stroke-width="1.5"/>
+  <line class="div" x1="580" y1="86" x2="580" y2="178"/>
 
-  <!-- Postgres -->
-  <rect class="box-fill-x" x="30" y="470" width="300" height="110" rx="12"/>
-  <text class="box-title" x="180" y="502" text-anchor="middle">Postgres</text>
-  <text class="box-sub mono" x="180" y="522" text-anchor="middle">Supabase · hosted</text>
-  <text class="box-detail" x="180" y="540" text-anchor="middle">30 seeded rows,</text>
-  <text class="box-detail" x="180" y="555" text-anchor="middle">10 body regions</text>
+  <text class="bold mono" x="60" y="108">layout.tsx <tspan class="client tag">[view]</tspan></text>
+  <text class="body" x="60" y="124">Root HTML shell &amp; page metadata &#8212;</text>
+  <text class="body" x="60" y="140">wraps every page.</text>
 
-  <!-- Gemini -->
-  <rect class="box-fill-x" x="670" y="470" width="300" height="110" rx="12"/>
-  <text class="box-title" x="820" y="502" text-anchor="middle">Gemini</text>
-  <text class="box-sub mono" x="820" y="522" text-anchor="middle">gemini-3.7-flash</text>
-  <text class="box-detail" x="820" y="540" text-anchor="middle">returns exerciseId,</text>
-  <text class="box-detail" x="820" y="555" text-anchor="middle">sets, reps per pick</text>
+  <text class="bold mono" x="600" y="108">page.tsx <tspan class="client tag">[view + controller]</tspan></text>
+  <text class="body" x="600" y="124">Input box + cards (view). submit()</text>
+  <text class="body" x="600" y="140">validates, POSTs to the API, renders</text>
+  <text class="body" x="600" y="156">the result (controller).</text>
 
-  <!-- Browser -> API (request) -->
-  <line class="flow-line" x1="487" y1="110" x2="487" y2="260"/>
-  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(487,270) rotate(90)"/>
-  <text class="flow-label mono" x="545" y="172"><tspan class="flow-num">1</tspan> · muscle name</text>
+  <!-- request / response pipe -->
+  <text class="pipe-tag mono" x="500" y="198" text-anchor="middle">REQUEST</text>
+  <text class="pipe-code mono" x="500" y="216" text-anchor="middle">POST /regime { muscle }</text>
+  <text class="arrow" x="500" y="256" text-anchor="middle">&#8595;</text>
 
-  <!-- API -> Browser (response) -->
-  <line class="flow-line" x1="513" y1="270" x2="513" y2="116"/>
-  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(513,106) rotate(270)"/>
-  <text class="flow-label mono" x="545" y="204"><tspan class="flow-num">4</tspan> · regime</text>
+  <text class="pipe-tag mono" x="700" y="198" text-anchor="middle">RESPONSE</text>
+  <text class="pipe-code mono" x="700" y="216" text-anchor="middle">200 { muscle, regime: [...] }</text>
+  <text class="arrow" x="700" y="256" text-anchor="middle">&#8593;</text>
 
-  <!-- API -> Postgres (request) -->
-  <line class="flow-line" x1="400" y1="356" x2="159" y2="466"/>
-  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(150,470) rotate(155)"/>
-  <text class="flow-label mono" x="30" y="415"><tspan class="flow-num">2</tspan> · query</text>
+  <!-- DATABASE -->
+  <rect class="box" x="40" y="288" width="280" height="260" rx="2"/>
+  <text class="title db mono" x="60" y="312">database</text>
+  <text class="sub mono" x="300" y="312" text-anchor="end">postgres / supabase</text>
+  <line class="div" x1="40" y1="322" x2="320" y2="322"/>
+  <text class="body" x="60" y="344">exercises table &#8212; id, name,</text>
+  <text class="body" x="60" y="360">body_region (indexed),</text>
+  <text class="body" x="60" y="376">description.</text>
+  <text class="body" x="60" y="400">30 rows seeded across 10</text>
+  <text class="body" x="60" y="416">regions. Public read-only</text>
+  <text class="body" x="60" y="432">via row-level security.</text>
 
-  <!-- Postgres -> API (response) -->
-  <line class="flow-line" x1="210" y1="470" x2="451" y2="360"/>
-  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(460,356) rotate(335)"/>
-  <text class="flow-label mono" x="30" y="437">← rows</text>
+  <!-- connector: db <-> server -->
+  <text class="arrow" x="350" y="380" text-anchor="middle">&#8592;</text>
+  <text class="conn-label mono" x="350" y="396" text-anchor="middle">ILIKE query</text>
+  <text class="arrow" x="350" y="440" text-anchor="middle">&#8594;</text>
+  <text class="conn-label mono" x="350" y="456" text-anchor="middle">candidates</text>
 
-  <!-- API -> Gemini (request) -->
-  <line class="flow-line" x1="600" y1="356" x2="841" y2="466"/>
-  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(850,470) rotate(25)"/>
-  <text class="flow-label mono" x="740" y="415"><tspan class="flow-num">3</tspan> · prompt</text>
+  <!-- SERVER -->
+  <rect class="box" x="380" y="288" width="400" height="260" rx="2"/>
+  <text class="title server mono" x="400" y="312">apps/server</text>
+  <text class="sub mono" x="760" y="312" text-anchor="end">node http &#183; :4000</text>
+  <line class="div" x1="380" y1="322" x2="780" y2="322"/>
 
-  <!-- Gemini -> API (response) -->
-  <line class="flow-line" x1="790" y1="470" x2="549" y2="360"/>
-  <polygon class="flow-arrow" points="10,0 -3,-4.5 -3,4.5" transform="translate(540,356) rotate(205)"/>
-  <text class="flow-label mono" x="740" y="437">← 3 picks</text>
+  <text class="bold mono" x="400" y="340">controllers/server.ts <tspan class="server tag">[controller]</tspan></text>
+  <text class="body" x="400" y="356">Routes /health + /regime, validates</text>
+  <text class="body" x="400" y="372">input, maps errors to status, CORS.</text>
+  <line class="div" x1="380" y1="384" x2="780" y2="384"/>
+
+  <text class="bold mono" x="400" y="402">models/regime.ts <tspan class="db tag">[model]</tspan></text>
+  <text class="body" x="400" y="418">buildRegime() &#8212; gets candidates, asks</text>
+  <text class="body" x="400" y="434">Gemini to pick 3 + sets/reps, verifies picks.</text>
+  <line class="div" x1="380" y1="446" x2="780" y2="446"/>
+
+  <text class="bold mono" x="400" y="464">models/exercises.ts <tspan class="db tag">[model]</tspan></text>
+  <text class="body" x="400" y="480">findByRegion() &#8212; the one SQL query,</text>
+  <text class="body" x="400" y="496">mapped to camelCase.</text>
+
+  <!-- connector: server <-> gemini -->
+  <text class="arrow" x="810" y="380" text-anchor="middle">&#8594;</text>
+  <text class="conn-label mono" x="810" y="396" text-anchor="middle">candidates</text>
+  <text class="conn-label mono" x="810" y="408" text-anchor="middle">+ prompt</text>
+  <text class="arrow" x="810" y="446" text-anchor="middle">&#8592;</text>
+  <text class="conn-label mono" x="810" y="462" text-anchor="middle">picks[]</text>
+
+  <!-- GEMINI -->
+  <rect class="box" x="840" y="288" width="280" height="260" rx="2"/>
+  <text class="title ai mono" x="860" y="312">gemini</text>
+  <text class="sub mono" x="1100" y="312" text-anchor="end">gemini-3.7-flash</text>
+  <line class="div" x1="840" y1="322" x2="1120" y2="322"/>
+  <text class="body" x="860" y="344">Picks exactly 3 exercises</text>
+  <text class="body" x="860" y="360">from the candidates given</text>
+  <text class="body" x="860" y="376">and assigns sets/reps,</text>
+  <text class="body" x="860" y="392">forced into a strict JSON</text>
+  <text class="body" x="860" y="408">schema &#8212; it can't invent</text>
+  <text class="body" x="860" y="424">an exercise.</text>
 </svg>
