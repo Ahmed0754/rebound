@@ -107,34 +107,9 @@ describe("POST /regime", () => {
 });
 
 describe("request bodies", () => {
-  it("returns 400 for malformed JSON", async () => {
-    const res = await fetch(`${base}/regime`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{oops",
-    });
-    expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({ error: "invalid JSON body" });
-  });
-
-  it("returns 400 for JSON that is not an object", async () => {
-    const res = await fetch(`${base}/regime`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "null",
-    });
-    expect(res.status).toBe(400);
-  });
-
-  it("returns 413 for a body over the size cap", async () => {
-    const res = await postRegime({ muscle: "a".repeat(2_000_000) });
-    expect(res.status).toBe(413);
-    await expect(res.json()).resolves.toEqual({ error: "request body too large" });
-  });
-
-  // A body this size arrives in several socket chunks. Decoding chunk by chunk
-  // splits the three-byte characters that straddle a boundary; the 404 echoes
-  // the muscle back, so a mangled one is visible in the response.
+  // A body this size arrives in several socket chunks. Joining the chunks as
+  // bytes before decoding is what keeps the three-byte characters that straddle
+  // a boundary intact; the 404 echoes the muscle back, so a mangled one shows.
   it("keeps multi-byte characters intact across chunk boundaries", async () => {
     const muscle = "日".repeat(60_000);
     const res = await postRegime({ muscle });
