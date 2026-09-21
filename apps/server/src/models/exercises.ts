@@ -34,19 +34,45 @@ function toExercise(row: ExerciseRow): Exercise {
 // "knees" and "knee" are the same word. Short words keep their "s": "abs" is
 // not "ab".
 function words(text: string): string[] {
-  return text
+  const cleaned = text
     .toLowerCase()
     .replace(/[^a-z\s_]/g, " ")
-    .replace(/_/g, " ")
-    .split(/\s+/)
-    .filter((word) => word !== "")
-    .map((word) => (word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word));
+    .replace(/_/g, " ");
+
+  const pieces = cleaned.split(/\s+/);
+  const result: string[] = [];
+
+  for (const piece of pieces) {
+    // Splitting can leave empty strings at either end, so skip those.
+    if (piece === "") {
+      continue;
+    }
+
+    if (piece.length > 3 && piece.endsWith("s")) {
+      result.push(piece.slice(0, -1));
+    } else {
+      result.push(piece);
+    }
+  }
+
+  return result;
 }
 
 // True when `needle` appears in `haystack` as consecutive whole words.
 function containsInOrder(haystack: string[], needle: string[]): boolean {
+  // Try every position in `haystack` where `needle` would still fit.
   for (let i = 0; i + needle.length <= haystack.length; i++) {
-    if (needle.every((word, j) => haystack[i + j] === word)) {
+    let allMatch = true;
+
+    // Compare the needle's words against the haystack's, starting at i.
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        allMatch = false;
+        break;
+      }
+    }
+
+    if (allMatch) {
       return true;
     }
   }
@@ -69,23 +95,50 @@ export function matchRegion(muscle: string, regions: string[]): string | null {
     return null;
   }
 
-  const whole = regions.filter((region) => containsInOrder(spoken, words(region)));
+  // First pass: a region whose whole name appears in what they said. Keep the
+  // longest match, so "lower_back" wins over "back" when both fit.
+  let best: string | null = null;
+  let bestLength = 0;
 
-  if (whole.length > 0) {
-    return whole.sort((a, b) => words(b).length - words(a).length)[0];
+  for (const region of regions) {
+    const regionWords = words(region);
+
+    if (containsInOrder(spoken, regionWords) && regionWords.length > bestLength) {
+      best = region;
+      bestLength = regionWords.length;
+    }
   }
 
-  const partial = regions.filter((region) => words(region).some((word) => spoken.includes(word)));
+  if (best !== null) {
+    return best;
+  }
 
-  return partial[0] ?? null;
+  // Second pass: nothing matched outright, so settle for the first region that
+  // shares any single word with what they said.
+  for (const region of regions) {
+    for (const word of words(region)) {
+      if (spoken.includes(word)) {
+        return region;
+      }
+    }
+  }
+
+  return null;
 }
 
 export async function findByRegion(muscle: string): Promise<Exercise[]> {
-  const { rows: regionRows } = await pool.query<{ body_region: string }>(
+  const regionResult = await pool.query<{ body_region: string }>(
     "select distinct body_region from exercises"
   );
 
-  const region = matchRegion(muscle, regionRows.map((row) => row.body_region));
+  // matchRegion compares plain strings, so pull the names out of the rows.
+  const regions: string[] = [];
+
+  for (const row of regionResult.rows) {
+    regions.push(row.body_region);
+  }
+
+  const region = matchRegion(muscle, regions);
 
   if (region === null) {
     return [];
@@ -93,12 +146,18 @@ export async function findByRegion(muscle: string): Promise<Exercise[]> {
 
   // An exact match on a region name we just read back out of the table, so
   // nothing the user typed reaches the query as a pattern.
-  const { rows } = await pool.query<ExerciseRow>(
+  const exerciseResult = await pool.query<ExerciseRow>(
     `select id, name, body_region, description
        from exercises
       where body_region = $1`,
     [region]
   );
 
-  return rows.map(toExercise);
+  const exercises: Exercise[] = [];
+
+  for (const row of exerciseResult.rows) {
+    exercises.push(toExercise(row));
+  }
+
+  return exercises;
 }

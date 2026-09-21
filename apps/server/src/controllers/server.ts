@@ -27,6 +27,7 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
 }
 
 export async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  
   // Set before any routing, so every reply below carries them - errors included.
   res.setHeader("Access-Control-Allow-Origin", webOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
