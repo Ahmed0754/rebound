@@ -1,8 +1,7 @@
 "use client";
 
-// This is the whole webpage: the input box, the button, and the cards that
-// show the results. It also holds the logic that calls the API and reacts
-// to loading/success/error.
+//this is my VIEW + client-side CONTROLLER for the home page
+//it renders the form, holds UI state, calls the API, and shows the regime or an error.
 
 import { useState } from "react";
 
@@ -23,9 +22,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Runs when the user clicks the button (or presses Enter).
-  // Sends what they typed to the server, then updates the page with either
-  // the exercises that came back or an error message.
+  //This is the important function
+  //Controller: validates the input, POSTs to the server /regime route,
+  //then pushes the result into state for the view to render
   async function submit() {
     if (!muscle.trim()) return;
 
@@ -41,18 +40,15 @@ export default function Home() {
 
       const data = await res.json();
 
-      // Server responded with an error status - show its message.
       if (!res.ok) {
         throw new Error(data?.error ?? `Request failed: ${res.status}`);
       }
 
-      // Success - save the exercises so the page can render them.
       setRegime(data.regime ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setRegime([]);
     } finally {
-      // Runs whether it succeeded or failed - always stop the loading state.
       setLoading(false);
     }
   }

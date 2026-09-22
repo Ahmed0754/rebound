@@ -1,10 +1,8 @@
-// This file talks to the database. It turns whatever body part the user typed
-// (like "my knees hurt") into a real match in the database, then fetches every
-// exercise stored for that body part.
+//This is the model for Data
+//The exercise type, SQL query
 
 import { pool } from "./db.js";
 
-// The shape used everywhere else in the app.
 export type Exercise = {
   id: string;
   name: string;
@@ -12,7 +10,6 @@ export type Exercise = {
   description: string;
 };
 
-// The shape the row actually comes back as from Postgres.
 type ExerciseRow = {
   id: string;
   name: string;
@@ -20,8 +17,8 @@ type ExerciseRow = {
   description: string;
 };
 
-// Postgres uses snake_case column names (body_region); the rest of the app
-// uses camelCase (bodyRegion). This is the one place that converts between them.
+// Postgres columns are snake_case; the rest of the app uses camelCase.
+// Translating here means no other file ever sees `body_region`.
 function toExercise(row: ExerciseRow): Exercise {
   return {
     id: row.id,
@@ -31,11 +28,11 @@ function toExercise(row: ExerciseRow): Exercise {
   };
 }
 
-// Breaks a sentence down into a clean list of words so it can be compared.
-// Example: "My knees hurt!" becomes ["my", "knee", "hurt"].
-// - punctuation is removed
-// - underscores (like in "lower_back") become spaces
-// - a trailing "s" is dropped so "knees" matches "knee" (but "abs" stays "abs")
+// Splits free text into comparable words: "My knees hurt!" -> ["my", "knee",
+// "hurt"]. Punctuation goes (which is also what disarms `%` and `_`), stored
+// regions lose their underscores, and a trailing plural "s" is dropped so
+// "knees" and "knee" are the same word. Short words keep their "s": "abs" is
+// not "ab".
 function words(text: string): string[] {
   const cleaned = text
     .toLowerCase()
@@ -61,8 +58,7 @@ function words(text: string): string[] {
   return result;
 }
 
-// Checks whether the words in "needle" appear together, in order, inside "haystack".
-// This is what lets a two-word region like "lower back" get matched as one phrase.
+// True when `needle` appears in `haystack` as consecutive whole words.
 function containsInOrder(haystack: string[], needle: string[]): boolean {
   // Try every position in `haystack` where `needle` would still fit.
   for (let i = 0; i + needle.length <= haystack.length; i++) {
@@ -84,9 +80,14 @@ function containsInOrder(haystack: string[], needle: string[]): boolean {
   return false;
 }
 
-// Figures out which stored body region the user meant, or null if none match.
-// First tries to match the full region name (e.g. "lower back"), and only
-// falls back to matching just one word if nothing matched fully.
+/**
+ * Picks the body region the user meant, or null if nothing fits.
+ *
+ * Matching is on whole words, so "my knees hurt" finds "knee" and "lower back
+ * pain" finds "lower_back", while a stray "e" finds nothing. A region's full
+ * name wins over one of its parts, so a two-word region is only reached by a
+ * single word ("back") when nothing matched it outright.
+ */
 export function matchRegion(muscle: string, regions: string[]): string | null {
   const spoken = words(muscle);
 
@@ -94,8 +95,8 @@ export function matchRegion(muscle: string, regions: string[]): string | null {
     return null;
   }
 
-  // First pass: try to match a region's full name. Keep the longest match, so
-  // "lower_back" wins over "back" when both fit.
+  // First pass: a region whose whole name appears in what they said. Keep the
+  // longest match, so "lower_back" wins over "back" when both fit.
   let best: string | null = null;
   let bestLength = 0;
 
@@ -125,9 +126,7 @@ export function matchRegion(muscle: string, regions: string[]): string | null {
   return null;
 }
 
-// Main function: takes what the user typed and returns the matching exercises.
 export async function findByRegion(muscle: string): Promise<Exercise[]> {
-  // First, get the list of body regions that actually exist in the database.
   const regionResult = await pool.query<{ body_region: string }>(
     "select distinct body_region from exercises"
   );
@@ -145,8 +144,8 @@ export async function findByRegion(muscle: string): Promise<Exercise[]> {
     return [];
   }
 
-  // Fetch every exercise for that region. The region value is passed in
-  // safely as a parameter ($1) rather than pasted into the query string.
+  // An exact match on a region name we just read back out of the table, so
+  // nothing the user typed reaches the query as a pattern.
   const exerciseResult = await pool.query<ExerciseRow>(
     `select id, name, body_region, description
        from exercises
