@@ -1,5 +1,6 @@
-//This is buisness logic (buildRegime)
-//Asks data model for candidates, then sends to GEMINI with a forced shchema
+// This is the "brain" of the app. It takes a body part, gets the matching
+// exercises from the database, and asks Gemini (Google's AI) to pick 3 of
+// them and decide how many sets/reps for each.
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { findByRegion, type Exercise } from "./exercises.js";
@@ -7,6 +8,7 @@ import { findByRegion, type Exercise } from "./exercises.js";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const model = process.env.GEMINI_MODEL ?? "gemini-3.7-flash";
 
+// The final shape returned to the user: a real exercise plus the AI's sets/reps.
 export type RegimeItem = {
   id: string;
   name: string;
@@ -16,15 +18,14 @@ export type RegimeItem = {
   reps: number;
 };
 
-/**
- * Finds the exercises stored for a body region and asks Gemini to pick three
- * and assign sets/reps. Gemini only ever chooses from the rows we hand it, and
- * every id it returns is checked back against those rows before it reaches the
- * caller, so it cannot invent an exercise.
- */
+// Looks up exercises for the body part, then asks Gemini to pick 3 and assign
+// sets/reps. Gemini can only choose from the exercises we send it - and we
+// double check its picks against that same list before returning anything,
+// so it can never make up an exercise that doesn't actually exist.
 export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
   const candidates = await findByRegion(muscle);
 
+  // Nothing in the database for this body part - don't even bother asking the AI.
   if (candidates.length === 0) {
     return [];
   }
@@ -41,6 +42,9 @@ export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
     });
   }
 
+  // Ask Gemini to pick 3 exercises from the shortlist and assign sets/reps.
+  // responseSchema forces Gemini to reply in exactly this shape - no free text,
+  // no missing fields.
   const response = await ai.models.generateContent({
     model,
     contents: `A user says their "${muscle}" hurts. From this list of exercises, pick exactly 3 and assign sets and reps for each:\n\n${JSON.stringify(
@@ -69,6 +73,7 @@ export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
     },
   });
 
+  // Turn Gemini's JSON text reply into a real object.
   const parsed = JSON.parse(response.text ?? "{}") as {
     picks?: { exerciseId: string; sets: number; reps: number }[];
   };
@@ -80,6 +85,8 @@ export async function buildRegime(muscle: string): Promise<RegimeItem[]> {
     byId.set(candidate.id, candidate);
   }
 
+  // Keep only picks that match a real exercise, limit to 3, and build the final
+  // result using the real exercise data plus Gemini's sets/reps numbers.
   const picks = parsed.picks ? parsed.picks : [];
   const regime: RegimeItem[] = [];
 
