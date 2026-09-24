@@ -26,6 +26,13 @@ vi.mock("../models/regime.js", () => ({
   buildRegime: vi.fn(async (muscle: string) => (muscle === "knee" ? knee : [])),
 }));
 
+// Mocked for the same reason, and for one more: without it these tests write a
+// row to the real database on every run.
+vi.mock("../models/regimes.js", () => ({
+  saveRegime: vi.fn(async () => "00000000-0000-0000-0000-000000000000"),
+  findLatestRegime: vi.fn(async () => null),
+}));
+
 const { createApiServer } = await import("./server.js");
 
 let base: string;
@@ -65,6 +72,22 @@ describe("GET /health", () => {
   });
 });
 
+describe("GET /regime/latest", () => {
+  it("404s when nothing has been saved", async () => {
+    const res = await fetch(`${base}/regime/latest`);
+
+    // An empty database is an ordinary state, not a server fault, so this must
+    // not come back as a 500.
+    expect(res.status).toBe(404);
+    expect((await json<{ error: string }>(res)).error).toBe("no regime saved yet");
+  });
+
+  it("does not answer the POST route's path", async () => {
+    // Method and path both have to match, so a GET to /regime is not a regime.
+    expect((await fetch(`${base}/regime`)).status).toBe(404);
+  });
+});
+
 describe("POST /regime", () => {
   it("returns 400 when muscle is missing", async () => {
     const res = await postRegime({});
@@ -80,6 +103,14 @@ describe("POST /regime", () => {
   it("returns 400 when muscle is not a string", async () => {
     const res = await postRegime({ muscle: 42 });
     expect(res.status).toBe(400);
+  });
+
+  it("returns the id the regime was saved under", async () => {
+    const body = await json<{ id: string }>(await postRegime({ muscle: "knee" }));
+
+    // The client needs this to fetch the regime back later, so a response
+    // without it is a broken contract even when the exercises are right.
+    expect(body.id).toBe("00000000-0000-0000-0000-000000000000");
   });
 
   it("returns a regime for a known body region", async () => {

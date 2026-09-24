@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
 import { buildRegime } from "../models/regime.js";
+import { saveRegime, findLatestRegime } from "../models/regimes.js";
 
 // The page runs on :3000 and this API on :4000, so the browser must be told :3000 is allowed.
 const webOrigin = process.env.WEB_ORIGIN || "http://localhost:3000";
@@ -52,13 +53,31 @@ async function postRegime(req: IncomingMessage, res: ServerResponse): Promise<vo
     return;
   }
 
-  send(res, 200, { muscle, regime });
+  // Saved before it is sent, so the id in the response is one that can actually
+  // be fetched back. Saving afterwards would sometimes hand out an id for a
+  // regime that failed to store.
+  const id = await saveRegime(muscle, regime);
+
+  send(res, 200, { id, muscle, regime });
+}
+
+async function getLatestRegime(_req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const latest = await findLatestRegime();
+
+  // Nothing saved yet is not an error - there is simply nothing to show.
+  if (latest === null) {
+    send(res, 404, { error: "no regime saved yet" });
+    return;
+  }
+
+  send(res, 200, latest);
 }
 
 // The public-facing API surface: every route this server exposes, in one place.
 const routes: { method: string; path: string; handler: Handler }[] = [
   { method: "GET", path: "/health", handler: getHealth },
   { method: "POST", path: "/regime", handler: postRegime },
+  { method: "GET", path: "/regime/latest", handler: getLatestRegime },
 ];
 
 export async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
