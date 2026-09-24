@@ -26,8 +26,43 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+type Handler = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
+
+async function getHealth(_req: IncomingMessage, res: ServerResponse): Promise<void> {
+  send(res, 200, { ok: true });
+}
+
+async function postRegime(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await readJson(req);
+
+  // Anything that is not a string becomes "", so there is only one way to be invalid.
+  const muscle = typeof body.muscle === "string" ? body.muscle.trim().toLowerCase() : "";
+
+  if (muscle === "") {
+    send(res, 400, { error: "muscle is required" });
+    return;
+  }
+
+  // The one line where HTTP hands off to the model layer.
+  const regime = await buildRegime(muscle);
+
+  // Not an error - the request was fine, there is just nothing stored for that region.
+  if (regime.length === 0) {
+    send(res, 404, { error: `no exercises found for "${muscle}"` });
+    return;
+  }
+
+  send(res, 200, { muscle, regime });
+}
+
+// The public-facing API surface: every route this server exposes, in one place.
+const routes: { method: string; path: string; handler: Handler }[] = [
+  { method: "GET", path: "/health", handler: getHealth },
+  { method: "POST", path: "/regime", handler: postRegime },
+];
+
 export async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  
+
   // Set before any routing, so every reply below carries them - errors included.
   res.setHeader("Access-Control-Allow-Origin", webOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -44,37 +79,14 @@ export async function handleRequest(req: IncomingMessage, res: ServerResponse): 
   const path = (req.url || "/").split("?")[0];
 
   try {
-    if (req.method === "GET" && path === "/health") {
-      send(res, 200, { ok: true });
+    const route = routes.find((r) => r.method === req.method && r.path === path);
+
+    if (route === undefined) {
+      send(res, 404, { error: "not found" });
       return;
     }
 
-    if (req.method === "POST" && path === "/regime") {
-      const body = await readJson(req);
-
-      // Anything that is not a string becomes "", so there is only one way to be invalid.
-      const muscle = typeof body.muscle === "string" ? body.muscle.trim().toLowerCase() : "";
-
-      if (muscle === "") {
-        send(res, 400, { error: "muscle is required" });
-        return;
-      }
-
-      // The one line where HTTP hands off to the model layer.
-      const regime = await buildRegime(muscle);
-
-      // Not an error - the request was fine, there is just nothing stored for that region.
-      if (regime.length === 0) {
-        send(res, 404, { error: `no exercises found for "${muscle}"` });
-        return;
-      }
-
-      send(res, 200, { muscle, regime });
-      return;
-    }
-
-    // Reached only when no route above matched, because each match ends in a return.
-    send(res, 404, { error: "not found" });
+    await route.handler(req, res);
   } catch (error) {
     // The real error goes to your terminal; the browser only ever sees this fixed sentence.
     console.error(error);

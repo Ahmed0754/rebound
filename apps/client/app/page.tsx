@@ -4,17 +4,7 @@
 //it renders the form, holds UI state, calls the API, and shows the regime or an error.
 
 import { useState } from "react";
-
-type Exercise = {
-  id: string;
-  name: string;
-  bodyRegion: string;
-  description: string;
-  sets: number;
-  reps: number;
-};
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { getRegime, type Exercise } from "@/lib/api";
 
 export default function Home() {
   const [muscle, setMuscle] = useState("");
@@ -32,19 +22,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_URL}/regime`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ muscle }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error ?? `Request failed: ${res.status}`);
-      }
-
-      setRegime(data.regime ?? []);
+      setRegime(await getRegime(muscle));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setRegime([]);
