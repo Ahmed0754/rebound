@@ -1,5 +1,5 @@
 //This is the model for Data
-//The exercise type, SQL query
+//The exercise type, the body-region mapping, and the SQL query
 
 import { pool } from "./db.js";
 
@@ -13,18 +13,41 @@ export type Exercise = {
 type ExerciseRow = {
   id: string;
   name: string;
-  body_region: string;
-  description: string;
+  instructions: string[];
 };
 
-// Postgres columns are snake_case; the rest of the app uses camelCase.
-// Translating here means no other file ever sees `body_region`.
-function toExercise(row: ExerciseRow): Exercise {
+/**
+ * The body regions this app accepts, and the muscles worth training for each.
+ *
+ * No exercise catalogue ships this mapping. Every one of them indexes by the
+ * muscle a movement trains, because they are built for people planning
+ * workouts. We are asked about the joint that hurts, so "knee" has to be
+ * translated into the muscles around it before the library can be searched.
+ *
+ * These are plausible groupings, not clinically reviewed ones. A real version
+ * of this is authored with a physiotherapist.
+ */
+const REGION_MUSCLES: Record<string, string[]> = {
+  knee: ["quadriceps", "hamstrings", "glutes", "calves"],
+  hip: ["glutes", "abductors", "adductors", "quadriceps"],
+  hamstring: ["hamstrings", "glutes"],
+  calf: ["calves"],
+  ankle: ["calves"],
+  "lower back": ["lower back", "abdominals", "glutes"],
+  shoulder: ["shoulders", "traps"],
+  neck: ["neck", "traps"],
+  elbow: ["biceps", "triceps", "forearms"],
+  wrist: ["forearms"],
+};
+
+// The catalogue stores instructions as steps; the rest of the app wants one
+// string. Joining here means no other file ever sees the array.
+function toExercise(row: ExerciseRow, bodyRegion: string): Exercise {
   return {
     id: row.id,
     name: row.name,
-    bodyRegion: row.body_region,
-    description: row.description,
+    bodyRegion,
+    description: row.instructions.join(" "),
   };
 }
 
@@ -127,36 +150,35 @@ export function matchRegion(muscle: string, regions: string[]): string | null {
 }
 
 export async function findByRegion(muscle: string): Promise<Exercise[]> {
-  const regionResult = await pool.query<{ body_region: string }>(
-    "select distinct body_region from exercises"
-  );
-
-  // matchRegion compares plain strings, so pull the names out of the rows.
-  const regions: string[] = [];
-
-  for (const row of regionResult.rows) {
-    regions.push(row.body_region);
-  }
-
-  const region = matchRegion(muscle, regions);
+  // The regions are a constant now, so picking one costs no database round trip.
+  const region = matchRegion(muscle, Object.keys(REGION_MUSCLES));
 
   if (region === null) {
     return [];
   }
 
-  // An exact match on a region name we just read back out of the table, so
-  // nothing the user typed reaches the query as a pattern.
+  // `&&` is array overlap: keep a row if any muscle it trains is one this
+  // region cares about. The muscle names come from REGION_MUSCLES, not from
+  // the user, so nothing typed reaches the query as a pattern.
+  //
+  // The 20 are picked at random because nothing here knows which exercises
+  // suit this particular person - there is no onboarding yet, so no injury
+  // detail to rank on. Random at least varies what gets offered instead of
+  // always sending the same rows. Replacing this with a real ranking is the
+  // point of the planned judge step, once onboarding exists to feed it.
   const exerciseResult = await pool.query<ExerciseRow>(
-    `select id, name, body_region, description
+    `select id, name, instructions
        from exercises
-      where body_region = $1`,
-    [region]
+      where primary_muscles && $1
+      order by random()
+      limit 20`,
+    [REGION_MUSCLES[region]]
   );
 
   const exercises: Exercise[] = [];
 
   for (const row of exerciseResult.rows) {
-    exercises.push(toExercise(row));
+    exercises.push(toExercise(row, region));
   }
 
   return exercises;
