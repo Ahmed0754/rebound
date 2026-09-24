@@ -22,7 +22,7 @@ const knee = [
 
 // No database and no Gemini key needed: the endpoint's routing, validation and
 // error mapping are what these tests are about.
-vi.mock("../models/regime.js", () => ({
+vi.mock("./models/regime.js", () => ({
   buildRegime: vi.fn(async (muscle: string) => (muscle === "knee" ? knee : [])),
 }));
 
@@ -36,7 +36,7 @@ const saved = {
   regime: knee,
 };
 
-vi.mock("../models/regimes.js", () => ({
+vi.mock("./models/regimes.js", () => ({
   saveRegime: vi.fn(async () => "00000000-0000-0000-0000-000000000000"),
   findLatestRegime: vi.fn(async () => null),
   findRegimeById: vi.fn(async (id: string) =>
