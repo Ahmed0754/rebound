@@ -1,5 +1,9 @@
-//This is buisness logic (buildRegime)
-//Asks data model for candidates, then sends to GEMINI with a forced shchema
+//This is business logic, not a model: `buildRegime` makes a regime rather than
+//storing one. It asks exercises.ts for candidates, then sends them to Gemini
+//with a forced schema.
+//
+//Named for what it does, because `models/regimes.ts` - one letter away - is the
+//one that saves and loads them. Generate here, persist there.
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { findByRegion, type Exercise } from "./exercises.js";

@@ -4,7 +4,7 @@
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { send, readJson, type Params } from "../http.js";
-import { buildRegime } from "../models/regime.js";
+import { buildRegime } from "../models/generate-regime.js";
 import { saveRegime, findLatestRegime, findRegimeById } from "../models/regimes.js";
 
 export async function postRegime(req: IncomingMessage, res: ServerResponse): Promise<void> {

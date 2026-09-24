@@ -2,7 +2,7 @@
 //Writing one to the database, and reading the most recent one back.
 
 import { pool } from "./db.js";
-import type { RegimeItem } from "./regime.js";
+import type { RegimeItem } from "./generate-regime.js";
 
 export type SavedRegime = {
   id: string;
