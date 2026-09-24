@@ -49,6 +49,18 @@ export async function createRegime(muscle: string): Promise<Regime> {
   return readOrThrow(res);
 }
 
+// Reads back one regime by the id `createRegime` returned. Null when no regime
+// has that id, for the same reason as below.
+export async function getRegimeById(id: string): Promise<Regime | null> {
+  const res = await fetch(`${API_URL}/regime/${encodeURIComponent(id)}`);
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  return readOrThrow(res);
+}
+
 // Reads back the most recently saved regime. There is one global "latest"
 // because there are no accounts yet.
 //

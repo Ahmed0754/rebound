@@ -92,6 +92,15 @@ export async function saveRegime(muscle: string, items: RegimeItem[]): Promise<s
   }
 }
 
+// Postgres rejects anything that is not a uuid when comparing against a uuid
+// column, which would surface as a 500 for what is really just a bad URL. This
+// is checked before the query so a typo comes back as an honest 404.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isRegimeId(value: string): boolean {
+  return UUID.test(value);
+}
+
 /**
  * The most recently saved regime, or null when nothing has been saved yet.
  *
@@ -111,8 +120,37 @@ export async function findLatestRegime(): Promise<SavedRegime | null> {
     return null;
   }
 
-  const row = found.rows[0];
+  return withExercises(found.rows[0]);
+}
 
+/**
+ * One regime by its id, or null when no regime has that id.
+ *
+ * A malformed id is not an error either: it just cannot match anything, so it
+ * is the same "not found" as an id that is well-formed but unused.
+ */
+export async function findRegimeById(id: string): Promise<SavedRegime | null> {
+  if (!isRegimeId(id)) {
+    return null;
+  }
+
+  const found = await pool.query<SavedRow>(
+    `select id, muscle, body_region, created_at
+       from regimes
+      where id = $1`,
+    [id]
+  );
+
+  if (found.rows.length === 0) {
+    return null;
+  }
+
+  return withExercises(found.rows[0]);
+}
+
+// The two reads above differ only in how they pick the regime row. Once one is
+// picked, loading its exercises is identical, so that half lives here.
+async function withExercises(row: SavedRow): Promise<SavedRegime> {
   // `position` is what makes this come back in the order it was shown.
   const items = await pool.query<ItemRow>(
     `select exercise_id, name, description, sets, reps

@@ -28,9 +28,20 @@ vi.mock("../models/regime.js", () => ({
 
 // Mocked for the same reason, and for one more: without it these tests write a
 // row to the real database on every run.
+const saved = {
+  id: "11111111-2222-3333-4444-555555555555",
+  muscle: "knee",
+  bodyRegion: "knee",
+  createdAt: "2026-09-24T00:00:00.000Z",
+  regime: knee,
+};
+
 vi.mock("../models/regimes.js", () => ({
   saveRegime: vi.fn(async () => "00000000-0000-0000-0000-000000000000"),
   findLatestRegime: vi.fn(async () => null),
+  findRegimeById: vi.fn(async (id: string) =>
+    id === "11111111-2222-3333-4444-555555555555" ? saved : null
+  ),
 }));
 
 const { createApiServer } = await import("./server.js");
@@ -85,6 +96,51 @@ describe("GET /regime/latest", () => {
   it("does not answer the POST route's path", async () => {
     // Method and path both have to match, so a GET to /regime is not a regime.
     expect((await fetch(`${base}/regime`)).status).toBe(404);
+  });
+
+  it("is not swallowed by the /regime/:id route", async () => {
+    // "/regime/:id" would match "/regime/latest" with id = "latest", so this
+    // fails the moment the two routes are listed in the wrong order.
+    const res = await fetch(`${base}/regime/latest`);
+    expect(await json<{ error: string }>(res)).toEqual({ error: "no regime saved yet" });
+  });
+});
+
+describe("GET /regime/:id", () => {
+  it("returns the regime with that id", async () => {
+    const res = await fetch(`${base}/regime/11111111-2222-3333-4444-555555555555`);
+
+    expect(res.status).toBe(200);
+    const body = await json<{ id: string; regime: unknown[] }>(res);
+    expect(body.id).toBe("11111111-2222-3333-4444-555555555555");
+    expect(body.regime).toHaveLength(2);
+  });
+
+  it("404s for an id that exists in no regime", async () => {
+    const res = await fetch(`${base}/regime/99999999-9999-9999-9999-999999999999`);
+    expect(res.status).toBe(404);
+  });
+
+  it("404s for a malformed id rather than failing", async () => {
+    // Postgres rejects a non-uuid outright, so without the guard in the model
+    // this would surface as a 500 for what is only a bad URL.
+    const res = await fetch(`${base}/regime/not-a-uuid`);
+    expect(res.status).toBe(404);
+    expect((await json<{ error: string }>(res)).error).toBe("no regime with that id");
+  });
+
+  it("does not match a path with an extra segment", async () => {
+    // Segment counts must agree, so ":id" captures one segment and never two.
+    const res = await fetch(`${base}/regime/11111111-2222-3333-4444-555555555555/extra`);
+    expect(res.status).toBe(404);
+    expect((await json<{ error: string }>(res)).error).toBe("not found");
+  });
+
+  it("does not match an empty id", async () => {
+    // "/regime/" must not capture "" and look like a valid lookup.
+    const res = await fetch(`${base}/regime/`);
+    expect(res.status).toBe(404);
+    expect((await json<{ error: string }>(res)).error).toBe("not found");
   });
 });
 
