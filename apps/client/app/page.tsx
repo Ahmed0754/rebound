@@ -3,8 +3,16 @@
 //this is my VIEW + client-side CONTROLLER for the home page
 //it renders the form, holds UI state, calls the API, and shows the regime or an error.
 
-import { useState } from "react";
-import { createRegime, getLatestRegime, type Exercise } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { createRegime, getLatestRegime, getRegimeById, type Exercise } from "@/lib/api";
+
+//Ids generated in this browser, newest first, so a past regime can be pulled
+//back up without hitting "Show last saved" over and over. Session-local: no
+//accounts yet, so there is nowhere server-side to keep this per person.
+const HISTORY_KEY = "rebound.regimeHistory";
+const HISTORY_LIMIT = 10;
+
+type HistoryEntry = { id: string; muscle: string };
 
 export default function Home() {
   const [muscle, setMuscle] = useState("");
@@ -15,6 +23,28 @@ export default function Home() {
   //was just generated or fetched back. Both are only for the line above the list.
   const [regimeId, setRegimeId] = useState<string | null>(null);
   const [source, setSource] = useState<"new" | "saved" | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_KEY);
+      if (raw) setHistory(JSON.parse(raw));
+    } catch {
+      // Corrupt or inaccessible storage is not worth surfacing - just start empty.
+    }
+  }, []);
+
+  function remember(entry: HistoryEntry) {
+    setHistory((prev) => {
+      const next = [entry, ...prev.filter((h) => h.id !== entry.id)].slice(0, HISTORY_LIMIT);
+      try {
+        window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // Private browsing or a full quota: history just won't persist.
+      }
+      return next;
+    });
+  }
 
   //This is the important function
   //Controller: validates the input, POSTs to the server /regime route,
@@ -30,6 +60,7 @@ export default function Home() {
       setRegime(saved.regime);
       setRegimeId(saved.id);
       setSource("new");
+      remember({ id: saved.id, muscle: saved.muscle });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setRegime([]);
@@ -62,6 +93,31 @@ export default function Home() {
       setMuscle(latest.muscle);
       setRegime(latest.regime);
       setRegimeId(latest.id);
+      setSource("saved");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  //Controller: GETs one specific past regime by id and shows it. This is what
+  //makes `history` more than a list of ids - it is the round-trip back.
+  async function loadFromHistory(entry: HistoryEntry) {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const found = await getRegimeById(entry.id);
+
+      if (found === null) {
+        setError("That regime is no longer in the database.");
+        return;
+      }
+
+      setMuscle(found.muscle);
+      setRegime(found.regime);
+      setRegimeId(found.id);
       setSource("saved");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -124,6 +180,30 @@ export default function Home() {
           Show last saved
         </button>
       </div>
+
+      {history.length > 0 && (
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          {history.map((entry) => (
+            <button
+              key={entry.id}
+              onClick={() => loadFromHistory(entry)}
+              disabled={loading}
+              title={entry.id}
+              style={{
+                padding: "6px 12px",
+                border: "1px solid #ccc",
+                borderRadius: 999,
+                background: regimeId === entry.id ? "#eee" : "#fff",
+                color: loading ? "#999" : "#333",
+                fontSize: 13,
+                cursor: loading ? "default" : "pointer",
+              }}
+            >
+              {entry.muscle}
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && <p style={{ color: "#b00020", marginTop: 16 }}>{error}</p>}
 
