@@ -24,6 +24,10 @@ export default function Home() {
   const [regimeId, setRegimeId] = useState<string | null>(null);
   const [source, setSource] = useState<"new" | "saved" | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  //Stand-in for accounts: until a regime belongs to a signed-in user, this is
+  //how someone gets back to one that isn't in this browser's own history -
+  //paste the id you were given and look it up directly.
+  const [lookupId, setLookupId] = useState("");
 
   useEffect(() => {
     try {
@@ -71,17 +75,18 @@ export default function Home() {
     }
   }
 
-  //Controller: GETs one specific past regime by id and shows it. This is what
-  //makes `history` more than a list of ids - it is the round-trip back.
-  async function loadFromHistory(entry: HistoryEntry) {
+  //Controller: GETs one specific past regime by id and shows it. Backs both
+  //the history pills and the id search bar below - they differ only in where
+  //the id comes from.
+  async function loadById(id: string) {
     setLoading(true);
     setError(null);
 
     try {
-      const found = await getRegimeById(entry.id);
+      const found = await getRegimeById(id);
 
       if (found === null) {
-        setError("That regime is no longer in the database.");
+        setError("No regime with that id.");
         return;
       }
 
@@ -94,6 +99,12 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function lookup() {
+    const id = lookupId.trim();
+    if (!id) return;
+    loadById(id);
   }
 
   return (
@@ -140,7 +151,7 @@ export default function Home() {
           {history.map((entry) => (
             <button
               key={entry.id}
-              onClick={() => loadFromHistory(entry)}
+              onClick={() => loadById(entry.id)}
               disabled={loading}
               title={entry.id}
               style={{
@@ -158,6 +169,42 @@ export default function Home() {
           ))}
         </div>
       )}
+
+      <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+        <input
+          value={lookupId}
+          onChange={(e) => setLookupId(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") lookup();
+          }}
+          placeholder="Look up a regime by id"
+          style={{
+            flex: 1,
+            minWidth: 200,
+            padding: "8px 10px",
+            boxSizing: "border-box",
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            fontSize: 14,
+          }}
+        />
+
+        <button
+          onClick={lookup}
+          disabled={loading}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #111",
+            borderRadius: 8,
+            background: "#fff",
+            color: loading ? "#999" : "#111",
+            fontSize: 14,
+            cursor: loading ? "default" : "pointer",
+          }}
+        >
+          Find
+        </button>
+      </div>
 
       {error && <p style={{ color: "#b00020", marginTop: 16 }}>{error}</p>}
 
