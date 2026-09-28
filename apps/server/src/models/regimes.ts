@@ -1,5 +1,5 @@
 //This is the model for saved regimes
-//Writing one to the database, and reading the most recent one back.
+//Writing one to the database, and reading one back by its id.
 
 import { pool } from "./db.js";
 import type { RegimeItem } from "./generate-regime.js";
@@ -102,28 +102,6 @@ export function isRegimeId(value: string): boolean {
 }
 
 /**
- * The most recently saved regime, or null when nothing has been saved yet.
- *
- * There is one global "latest" because there are no accounts yet. Once a
- * regime belongs to a user, this takes a user id and the ordering stays
- * the same.
- */
-export async function findLatestRegime(): Promise<SavedRegime | null> {
-  const found = await pool.query<SavedRow>(
-    `select id, muscle, body_region, created_at
-       from regimes
-      order by created_at desc
-      limit 1`
-  );
-
-  if (found.rows.length === 0) {
-    return null;
-  }
-
-  return withExercises(found.rows[0]);
-}
-
-/**
  * One regime by its id, or null when no regime has that id.
  *
  * A malformed id is not an error either: it just cannot match anything, so it
@@ -148,8 +126,8 @@ export async function findRegimeById(id: string): Promise<SavedRegime | null> {
   return withExercises(found.rows[0]);
 }
 
-// The two reads above differ only in how they pick the regime row. Once one is
-// picked, loading its exercises is identical, so that half lives here.
+// Picking the regime row and loading its exercises are separate jobs, so the
+// second half lives here rather than inline in the lookup above.
 async function withExercises(row: SavedRow): Promise<SavedRegime> {
   // `position` is what makes this come back in the order it was shown.
   const items = await pool.query<ItemRow>(

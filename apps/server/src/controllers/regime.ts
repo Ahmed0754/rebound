@@ -5,7 +5,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { send, readJson, type Params } from "../http.js";
 import { buildRegime } from "../models/generate-regime.js";
-import { saveRegime, findLatestRegime, findRegimeById } from "../models/regimes.js";
+import { saveRegime, findRegimeById } from "../models/regimes.js";
 
 export async function postRegime(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const body = await readJson(req);
@@ -33,18 +33,6 @@ export async function postRegime(req: IncomingMessage, res: ServerResponse): Pro
   const id = await saveRegime(muscle, regime);
 
   send(res, 200, { id, muscle, regime });
-}
-
-export async function getLatestRegime(_req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const latest = await findLatestRegime();
-
-  // Nothing saved yet is not an error - there is simply nothing to show.
-  if (latest === null) {
-    send(res, 404, { error: "no regime saved yet" });
-    return;
-  }
-
-  send(res, 200, latest);
 }
 
 export async function getRegimeById(

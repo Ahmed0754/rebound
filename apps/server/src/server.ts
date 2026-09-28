@@ -5,7 +5,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
 import { send, matchPath, type Handler } from "./http.js";
-import { postRegime, getLatestRegime, getRegimeById } from "./controllers/regime.js";
+import { postRegime, getRegimeById } from "./controllers/regime.js";
 
 // The page runs on :3000 and this API on :4000, so the browser must be told :3000 is allowed.
 const webOrigin = process.env.WEB_ORIGIN || "http://localhost:3000";
@@ -18,14 +18,12 @@ async function getHealth(_req: IncomingMessage, res: ServerResponse): Promise<vo
 
 // The public-facing API surface: every route this server exposes, in one place.
 //
-// ORDER MATTERS from here on. The first match wins, and "/regime/:id" would
-// happily match "/regime/latest" with id = "latest", so the literal route has
-// to come first. Any new literal route under an existing `:param` route goes
-// above it for the same reason.
+// ORDER MATTERS. The first match wins, and "/regime/:id" matches any single
+// segment in that position - "/regime/anything" included - so a literal route
+// under it would never be reached unless it is listed above it.
 const routes: { method: string; path: string; handler: Handler }[] = [
   { method: "GET", path: "/health", handler: getHealth },
   { method: "POST", path: "/regime", handler: postRegime },
-  { method: "GET", path: "/regime/latest", handler: getLatestRegime },
   { method: "GET", path: "/regime/:id", handler: getRegimeById },
 ];
 

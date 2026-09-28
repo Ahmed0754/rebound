@@ -49,26 +49,13 @@ export async function createRegime(muscle: string): Promise<Regime> {
   return readOrThrow(res);
 }
 
-// Reads back one regime by the id `createRegime` returned. Null when no regime
-// has that id, for the same reason as below.
+// Reads back one regime by the id `createRegime` returned.
+//
+// Returns null rather than throwing when no regime has that id: an id that
+// matches nothing is an ordinary miss - a typo, or a regime from a database
+// that has since been reset - not a failure worth showing as an error.
 export async function getRegimeById(id: string): Promise<Regime | null> {
   const res = await fetch(`${API_URL}/regime/${encodeURIComponent(id)}`);
-
-  if (res.status === 404) {
-    return null;
-  }
-
-  return readOrThrow(res);
-}
-
-// Reads back the most recently saved regime. There is one global "latest"
-// because there are no accounts yet.
-//
-// Returns null rather than throwing when nothing has been saved: an empty
-// database is an ordinary state on a fresh checkout, not a failure worth
-// showing as an error.
-export async function getLatestRegime(): Promise<Regime | null> {
-  const res = await fetch(`${API_URL}/regime/latest`);
 
   if (res.status === 404) {
     return null;

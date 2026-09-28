@@ -4,7 +4,7 @@
 //it renders the form, holds UI state, calls the API, and shows the regime or an error.
 
 import { useEffect, useState } from "react";
-import { createRegime, getLatestRegime, getRegimeById, type Exercise } from "@/lib/api";
+import { createRegime, getRegimeById, type Exercise } from "@/lib/api";
 
 //Ids generated in this browser, newest first, so a past regime can be pulled
 //back up without hitting "Show last saved" over and over. Session-local: no
@@ -71,36 +71,6 @@ export default function Home() {
     }
   }
 
-  //Controller: GETs the most recently saved regime and shows it. Proves the
-  //regime outlived the request that made it - reload the page and it is still there.
-  async function showLatest() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const latest = await getLatestRegime();
-
-      //Nothing saved yet is not an error, so say so plainly rather than
-      //leaving the screen unchanged with no explanation.
-      if (latest === null) {
-        setError("Nothing saved yet - generate a regime first.");
-        setRegime([]);
-        setRegimeId(null);
-        setSource(null);
-        return;
-      }
-
-      setMuscle(latest.muscle);
-      setRegime(latest.regime);
-      setRegimeId(latest.id);
-      setSource("saved");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  }
-
   //Controller: GETs one specific past regime by id and shows it. This is what
   //makes `history` more than a list of ids - it is the round-trip back.
   async function loadFromHistory(entry: HistoryEntry) {
@@ -162,22 +132,6 @@ export default function Home() {
           }}
         >
           {loading ? "Loading..." : "Get exercises"}
-        </button>
-
-        <button
-          onClick={showLatest}
-          disabled={loading}
-          style={{
-            padding: "10px 18px",
-            border: "1px solid #111",
-            borderRadius: 8,
-            background: "#fff",
-            color: loading ? "#999" : "#111",
-            fontSize: 15,
-            cursor: loading ? "default" : "pointer",
-          }}
-        >
-          Show last saved
         </button>
       </div>
 

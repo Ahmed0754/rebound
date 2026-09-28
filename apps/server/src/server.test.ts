@@ -38,7 +38,6 @@ const saved = {
 
 vi.mock("./models/regimes.js", () => ({
   saveRegime: vi.fn(async () => "00000000-0000-0000-0000-000000000000"),
-  findLatestRegime: vi.fn(async () => null),
   findRegimeById: vi.fn(async (id: string) =>
     id === "11111111-2222-3333-4444-555555555555" ? saved : null
   ),
@@ -83,30 +82,12 @@ describe("GET /health", () => {
   });
 });
 
-describe("GET /regime/latest", () => {
-  it("404s when nothing has been saved", async () => {
-    const res = await fetch(`${base}/regime/latest`);
-
-    // An empty database is an ordinary state, not a server fault, so this must
-    // not come back as a 500.
-    expect(res.status).toBe(404);
-    expect((await json<{ error: string }>(res)).error).toBe("no regime saved yet");
-  });
-
+describe("GET /regime/:id", () => {
   it("does not answer the POST route's path", async () => {
     // Method and path both have to match, so a GET to /regime is not a regime.
     expect((await fetch(`${base}/regime`)).status).toBe(404);
   });
 
-  it("is not swallowed by the /regime/:id route", async () => {
-    // "/regime/:id" would match "/regime/latest" with id = "latest", so this
-    // fails the moment the two routes are listed in the wrong order.
-    const res = await fetch(`${base}/regime/latest`);
-    expect(await json<{ error: string }>(res)).toEqual({ error: "no regime saved yet" });
-  });
-});
-
-describe("GET /regime/:id", () => {
   it("returns the regime with that id", async () => {
     const res = await fetch(`${base}/regime/11111111-2222-3333-4444-555555555555`);
 
