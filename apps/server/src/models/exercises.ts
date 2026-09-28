@@ -1,12 +1,11 @@
-//This is the model for Data
-//The exercise type, the body-region mapping, and the SQL query
+// The model for the exercise catalogue: the Exercise type, the body-region
+// mapping, and the one query that reads it.
 
 import { pool } from "./db.js";
 
 export type Exercise = {
   id: string;
   name: string;
-  bodyRegion: string;
   description: string;
 };
 
@@ -42,119 +41,65 @@ const REGION_MUSCLES: Record<string, string[]> = {
 
 // The catalogue stores instructions as steps; the rest of the app wants one
 // string. Joining here means no other file ever sees the array.
-function toExercise(row: ExerciseRow, bodyRegion: string): Exercise {
+function fromDbRow(row: ExerciseRow): Exercise {
   return {
     id: row.id,
     name: row.name,
-    bodyRegion,
     description: row.instructions.join(" "),
   };
 }
 
-// Splits free text into comparable words: "My knees hurt!" -> ["my", "knee",
-// "hurt"]. Punctuation goes (which is also what disarms `%` and `_`), stored
-// regions lose their underscores, and a trailing plural "s" is dropped so
-// "knees" and "knee" are the same word. Short words keep their "s": "abs" is
-// not "ab".
-function words(text: string): string[] {
-  const cleaned = text
+/**
+ * Picks the body region the user meant, or null when nothing fits.
+ *
+ * "my knees hurt" finds "knee" and "lower_back pain" finds "lower back", while
+ * "lower leg" finds nothing rather than guessing. Matching is on whole words,
+ * so "hip" is not found inside "ship". Irregular plurals are not handled:
+ * "calves" finds nothing.
+ */
+function matchRegion(text: string): string | null {
+  const words = text
     .toLowerCase()
-    .replace(/[^a-z\s_]/g, " ")
-    .replace(/_/g, " ");
+    // Anything that is not a letter becomes a gap, which also disarms `%`,
+    // `_` and the rest before the value is ever used.
+    .replace(/[^a-z]+/g, " ")
+    .trim()
+    .split(" ")
+    // "knees" and "knee" should be the same word. Short words keep their "s",
+    // so "abs" does not become "ab".
+    .map((word) => (word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word));
 
-  const pieces = cleaned.split(/\s+/);
-  const result: string[] = [];
+  // Padded so a region only matches whole words: " hip " is not in " ship ".
+  const padded = ` ${words.join(" ")} `;
+  let best: string | null = null;
+  let bestAt = Infinity;
 
-  for (const piece of pieces) {
-    // Splitting can leave empty strings at either end, so skip those.
-    if (piece === "") {
-      continue;
-    }
+  // When two regions are named, the one mentioned first wins: someone typing
+  // "knee and shoulder" is asking about the knee.
+  for (const region of Object.keys(REGION_MUSCLES)) {
+    const at = padded.indexOf(` ${region} `);
 
-    if (piece.length > 3 && piece.endsWith("s")) {
-      result.push(piece.slice(0, -1));
-    } else {
-      result.push(piece);
-    }
-  }
-
-  return result;
-}
-
-// True when `needle` appears in `haystack` as consecutive whole words.
-function containsInOrder(haystack: string[], needle: string[]): boolean {
-  // Try every position in `haystack` where `needle` would still fit.
-  for (let i = 0; i + needle.length <= haystack.length; i++) {
-    let allMatch = true;
-
-    // Compare the needle's words against the haystack's, starting at i.
-    for (let j = 0; j < needle.length; j++) {
-      if (haystack[i + j] !== needle[j]) {
-        allMatch = false;
-        break;
-      }
-    }
-
-    if (allMatch) {
-      return true;
+    if (at !== -1 && at < bestAt) {
+      best = region;
+      bestAt = at;
     }
   }
 
-  return false;
+  return best;
 }
 
 /**
- * Picks the body region the user meant, or null if nothing fits.
- *
- * Matching is on whole words, so "my knees hurt" finds "knee" and "lower back
- * pain" finds "lower_back", while a stray "e" finds nothing. A region's full
- * name wins over one of its parts, so a two-word region is only reached by a
- * single word ("back") when nothing matched it outright.
+ * The exercises worth offering for what the user typed, with the region they
+ * were matched for. Null when the text names no region this app knows.
  */
-export function matchRegion(muscle: string, regions: string[]): string | null {
-  const spoken = words(muscle);
-
-  if (spoken.length === 0) {
-    return null;
-  }
-
-  // First pass: a region whose whole name appears in what they said. Keep the
-  // longest match, so "lower_back" wins over "back" when both fit.
-  let best: string | null = null;
-  let bestLength = 0;
-
-  for (const region of regions) {
-    const regionWords = words(region);
-
-    if (containsInOrder(spoken, regionWords) && regionWords.length > bestLength) {
-      best = region;
-      bestLength = regionWords.length;
-    }
-  }
-
-  if (best !== null) {
-    return best;
-  }
-
-  // Second pass: nothing matched outright, so settle for the first region that
-  // shares any single word with what they said.
-  for (const region of regions) {
-    for (const word of words(region)) {
-      if (spoken.includes(word)) {
-        return region;
-      }
-    }
-  }
-
-  return null;
-}
-
-export async function findByRegion(muscle: string): Promise<Exercise[]> {
-  // The regions are a constant now, so picking one costs no database round trip.
-  const region = matchRegion(muscle, Object.keys(REGION_MUSCLES));
+export async function getByRegion(
+  muscle: string
+): Promise<{ region: string; exercises: Exercise[] } | null> {
+  // The regions are a constant, so picking one costs no database round trip.
+  const region = matchRegion(muscle);
 
   if (region === null) {
-    return [];
+    return null;
   }
 
   // `&&` is array overlap: keep a row if any muscle it trains is one this
@@ -166,7 +111,7 @@ export async function findByRegion(muscle: string): Promise<Exercise[]> {
   // detail to rank on. Random at least varies what gets offered instead of
   // always sending the same rows. Replacing this with a real ranking is the
   // point of the planned judge step, once onboarding exists to feed it.
-  const exerciseResult = await pool.query<ExerciseRow>(
+  const result = await pool.query<ExerciseRow>(
     `select id, name, instructions
        from exercises
       where primary_muscles && $1
@@ -175,11 +120,5 @@ export async function findByRegion(muscle: string): Promise<Exercise[]> {
     [REGION_MUSCLES[region]]
   );
 
-  const exercises: Exercise[] = [];
-
-  for (const row of exerciseResult.rows) {
-    exercises.push(toExercise(row, region));
-  }
-
-  return exercises;
+  return { region, exercises: result.rows.map(fromDbRow) };
 }

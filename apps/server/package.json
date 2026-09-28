@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "@google/genai": "2.19.0",
+    "express": "5.2.1",
     "pg": "8.23.0"
   },
   "devDependencies": {
+    "@types/express": "5.0.6",
     "@types/pg": "8.23.1",
     "node-pg-migrate": "9.0.0",
     "tsx": "4.23.13",

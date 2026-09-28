@@ -1,10 +1,11 @@
-//This is the model for saved regimes
-//Writing one to the database, and reading one back by its id.
+// The model for regimes: building one and saving it, and reading one back by id.
 
 import { pool } from "./db.js";
-import type { RegimeItem } from "./generate-regime.js";
+import { getByRegion } from "./exercises.js";
+import { pickExercises } from "./gemini.js";
+import type { RegimeItem } from "../types/index.js";
 
-export type SavedRegime = {
+export type Regime = {
   id: string;
   muscle: string;
   bodyRegion: string;
@@ -12,7 +13,7 @@ export type SavedRegime = {
   regime: RegimeItem[];
 };
 
-type SavedRow = {
+type RegimeRow = {
   id: string;
   muscle: string;
   body_region: string;
@@ -27,16 +28,35 @@ type ItemRow = {
   reps: number;
 };
 
+function fromDbRow(row: RegimeRow, items: RegimeItem[]): Regime {
+  return {
+    id: row.id,
+    muscle: row.muscle,
+    bodyRegion: row.body_region,
+    createdAt: row.created_at.toISOString(),
+    regime: items,
+  };
+}
+
 /**
- * Writes a regime and its exercises, and returns the new regime's id.
+ * Builds a regime for `muscle`, saves it, and returns it, or null when there
+ * is nothing to build one from.
  *
- * Both inserts run inside one transaction: a regime row with no exercises is
- * not a regime, so either the whole thing lands or none of it does.
+ * Saved before it is returned, so the id the caller hands out is one that can
+ * actually be fetched back.
  */
-export async function saveRegime(muscle: string, items: RegimeItem[]): Promise<string> {
-  // Every item carries the region it was matched for, so the regime's own
-  // region is just the one they all share.
-  const bodyRegion = items[0].bodyRegion;
+export async function create(muscle: string): Promise<Regime | null> {
+  const match = await getByRegion(muscle);
+
+  if (match === null || match.exercises.length === 0) {
+    return null;
+  }
+
+  const items = await pickExercises(muscle, match.exercises);
+
+  if (items.length === 0) {
+    return null;
+  }
 
   // A transaction needs one connection for every statement, so take a client
   // out of the pool rather than using the pool's one-shot query.
@@ -45,45 +65,37 @@ export async function saveRegime(muscle: string, items: RegimeItem[]): Promise<s
   try {
     await client.query("begin");
 
-    const created = await client.query<{ id: string }>(
+    const created = await client.query<RegimeRow>(
       `insert into regimes (muscle, body_region)
        values ($1, $2)
-       returning id`,
-      [muscle, bodyRegion]
+       returning id, muscle, body_region, created_at`,
+      [muscle, match.region]
     );
 
-    const id = created.rows[0].id;
-
-    const positions: number[] = [];
-    const exerciseIds: string[] = [];
-    const names: string[] = [];
-    const descriptions: string[] = [];
-    const sets: number[] = [];
-    const reps: number[] = [];
-
-    for (let i = 0; i < items.length; i++) {
-      // 1-based, because it is the position a person would read out loud.
-      positions.push(i + 1);
-      exerciseIds.push(items[i].id);
-      names.push(items[i].name);
-      descriptions.push(items[i].description);
-      sets.push(items[i].sets);
-      reps.push(items[i].reps);
-    }
+    const row = created.rows[0];
 
     // One insert with unnested arrays, rather than one round trip per exercise.
+    // Positions are 1-based: the order the user was shown them in.
     await client.query(
       `insert into regime_exercises
          (regime_id, position, exercise_id, name, description, sets, reps)
        select $1, * from unnest($2::int[], $3::text[], $4::text[], $5::text[], $6::int[], $7::int[])`,
-      [id, positions, exerciseIds, names, descriptions, sets, reps]
+      [
+        row.id,
+        items.map((_, i) => i + 1),
+        items.map((item) => item.id),
+        items.map((item) => item.name),
+        items.map((item) => item.description),
+        items.map((item) => item.sets),
+        items.map((item) => item.reps),
+      ]
     );
 
     await client.query("commit");
 
-    return id;
+    return fromDbRow(row, items);
   } catch (error) {
-    // Leave nothing half-written behind for the next request to trip over.
+    // A regime row with no exercises is not a regime, so none of it is kept.
     await client.query("rollback");
     throw error;
   } finally {
@@ -92,27 +104,17 @@ export async function saveRegime(muscle: string, items: RegimeItem[]): Promise<s
   }
 }
 
-// Postgres rejects anything that is not a uuid when comparing against a uuid
-// column, which would surface as a 500 for what is really just a bad URL. This
-// is checked before the query so a typo comes back as an honest 404.
+// Postgres rejects a non-uuid compared against a uuid column, which would
+// surface as a 500 for what is only a bad URL. Checked first, so it is a 404.
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function isRegimeId(value: string): boolean {
-  return UUID.test(value);
-}
-
-/**
- * One regime by its id, or null when no regime has that id.
- *
- * A malformed id is not an error either: it just cannot match anything, so it
- * is the same "not found" as an id that is well-formed but unused.
- */
-export async function findRegimeById(id: string): Promise<SavedRegime | null> {
-  if (!isRegimeId(id)) {
+/** One regime by id, or null when no regime has that id, malformed ids included. */
+export async function get(id: string): Promise<Regime | null> {
+  if (!UUID.test(id)) {
     return null;
   }
 
-  const found = await pool.query<SavedRow>(
+  const found = await pool.query<RegimeRow>(
     `select id, muscle, body_region, created_at
        from regimes
       where id = $1`,
@@ -123,41 +125,27 @@ export async function findRegimeById(id: string): Promise<SavedRegime | null> {
     return null;
   }
 
-  return withExercises(found.rows[0]);
-}
+  const row = found.rows[0];
 
-// Picking the regime row and loading its exercises are separate jobs, so the
-// second half lives here rather than inline in the lookup above.
-async function withExercises(row: SavedRow): Promise<SavedRegime> {
   // `position` is what makes this come back in the order it was shown.
   const items = await pool.query<ItemRow>(
     `select exercise_id, name, description, sets, reps
        from regime_exercises
       where regime_id = $1
       order by position`,
-    [row.id]
+    [id]
   );
 
-  const regime: RegimeItem[] = [];
-
-  for (const item of items.rows) {
-    regime.push({
+  return fromDbRow(
+    row,
+    // The stored snapshot, not today's catalogue: this is what the user was
+    // actually shown, even if the catalogue has changed since.
+    items.rows.map((item) => ({
       id: item.exercise_id,
       name: item.name,
-      // Stored on the regime, not read back from `exercises`: this is what the
-      // user was actually shown, even if the catalogue has changed since.
-      bodyRegion: row.body_region,
       description: item.description,
       sets: item.sets,
       reps: item.reps,
-    });
-  }
-
-  return {
-    id: row.id,
-    muscle: row.muscle,
-    bodyRegion: row.body_region,
-    createdAt: row.created_at.toISOString(),
-    regime,
-  };
+    }))
+  );
 }

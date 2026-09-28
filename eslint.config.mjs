@@ -15,8 +15,9 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"],
     rules: {
-      // Unused args are often deliberate in node:http handlers; allow the
-      // underscore convention rather than silencing the rule wholesale.
+      // Unused args are often deliberate in Express handlers (an error handler
+      // must take all four to be one); allow the underscore convention rather
+      // than silencing the rule wholesale.
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

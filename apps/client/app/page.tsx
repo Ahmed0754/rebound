@@ -21,7 +21,7 @@ export default function Home() {
   const [lookupId, setLookupId] = useState("");
 
   //This is the important function
-  //Controller: validates the input, POSTs to the server /regime route,
+  //Controller: validates the input, POSTs to the server /api/regimes route,
   //then pushes the result into state for the view to render
   async function submit() {
     if (!muscle.trim()) return;

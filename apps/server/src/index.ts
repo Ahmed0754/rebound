@@ -1,9 +1,9 @@
-// this is my entry point, it reads the port, builds the server, then listens. 
+// The entry point: reads the port, starts the app, and listens.
 
-import { createApiServer } from "./server.js";
+import { app } from "./app.js";
 
 const port = Number(process.env.API_PORT ?? 4000);
 
-createApiServer().listen(port, () => {
+app.listen(port, () => {
   console.log(`api listening on http://localhost:${port}`);
 });

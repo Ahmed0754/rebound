@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import type { AddressInfo } from "node:net";
+import type { Server } from "node:http";
 
 const knee = [
   {
     id: "11111111-1111-1111-1111-111111111111",
     name: "Straight Leg Raise",
-    bodyRegion: "knee",
     description: "Lift the leg straight up to hip height.",
     sets: 3,
     reps: 10,
@@ -13,43 +13,46 @@ const knee = [
   {
     id: "22222222-2222-2222-2222-222222222222",
     name: "Wall Sit",
-    bodyRegion: "knee",
     description: "Slide down a wall and hold.",
     sets: 3,
     reps: 30,
   },
 ];
 
-// No database and no Gemini key needed: the endpoint's routing, validation and
-// error mapping are what these tests are about.
-vi.mock("./models/generate-regime.js", () => ({
-  buildRegime: vi.fn(async (muscle: string) => (muscle === "knee" ? knee : [])),
-}));
+const SAVED_ID = "11111111-2222-3333-4444-555555555555";
+const BROKEN_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
 
-// Mocked for the same reason, and for one more: without it these tests write a
-// row to the real database on every run.
 const saved = {
-  id: "11111111-2222-3333-4444-555555555555",
+  id: SAVED_ID,
   muscle: "knee",
   bodyRegion: "knee",
   createdAt: "2026-09-24T00:00:00.000Z",
   regime: knee,
 };
 
+// No database and no Gemini key needed: routing, validation and error mapping
+// are what these tests are about. Without the mock they would also write a row
+// to the real database on every run.
 vi.mock("./models/regimes.js", () => ({
-  saveRegime: vi.fn(async () => "00000000-0000-0000-0000-000000000000"),
-  findRegimeById: vi.fn(async (id: string) =>
-    id === "11111111-2222-3333-4444-555555555555" ? saved : null
-  ),
+  create: vi.fn(async (muscle: string) => (muscle === "knee" ? saved : null)),
+  get: vi.fn(async (id: string) => {
+    if (id === BROKEN_ID) {
+      throw new Error("database is down");
+    }
+
+    return id === SAVED_ID ? saved : null;
+  }),
 }));
 
-const { createApiServer } = await import("./server.js");
+const { app } = await import("./app.js");
 
 let base: string;
-const server = createApiServer();
+let server: Server;
 
 beforeAll(async () => {
-  await new Promise<void>((resolve) => server.listen(0, resolve));
+  server = await new Promise<Server>((resolve) => {
+    const listening = app.listen(0, () => resolve(listening));
+  });
   const { port } = server.address() as AddressInfo;
   base = `http://127.0.0.1:${port}`;
 });
@@ -60,14 +63,15 @@ afterAll(async () => {
   );
 });
 
+type RegimeBody = { id: string; muscle: string; regime: { name: string; sets: number; reps: number }[] };
+type ErrorBody = { error: string };
+
 async function json<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
-type RegimeBody = { muscle: string; regime: { name: string; sets: number; reps: number }[] };
-
 function postRegime(body: unknown) {
-  return fetch(`${base}/regime`, {
+  return fetch(`${base}/api/regimes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -82,50 +86,48 @@ describe("GET /health", () => {
   });
 });
 
-describe("GET /regime/:id", () => {
+describe("GET /api/regimes/:id", () => {
   it("does not answer the POST route's path", async () => {
-    // Method and path both have to match, so a GET to /regime is not a regime.
-    expect((await fetch(`${base}/regime`)).status).toBe(404);
+    // Method and path both have to match, so a GET to the collection is not a regime.
+    expect((await fetch(`${base}/api/regimes`)).status).toBe(404);
   });
 
   it("returns the regime with that id", async () => {
-    const res = await fetch(`${base}/regime/11111111-2222-3333-4444-555555555555`);
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}`);
 
     expect(res.status).toBe(200);
-    const body = await json<{ id: string; regime: unknown[] }>(res);
-    expect(body.id).toBe("11111111-2222-3333-4444-555555555555");
+    const body = await json<RegimeBody>(res);
+    expect(body.id).toBe(SAVED_ID);
     expect(body.regime).toHaveLength(2);
   });
 
   it("404s for an id that exists in no regime", async () => {
-    const res = await fetch(`${base}/regime/99999999-9999-9999-9999-999999999999`);
+    const res = await fetch(`${base}/api/regimes/99999999-9999-9999-9999-999999999999`);
     expect(res.status).toBe(404);
   });
 
   it("404s for a malformed id rather than failing", async () => {
-    // Postgres rejects a non-uuid outright, so without the guard in the model
-    // this would surface as a 500 for what is only a bad URL.
-    const res = await fetch(`${base}/regime/not-a-uuid`);
+    const res = await fetch(`${base}/api/regimes/not-a-uuid`);
     expect(res.status).toBe(404);
-    expect((await json<{ error: string }>(res)).error).toBe("no regime with that id");
+    expect(await json<ErrorBody>(res)).toEqual({ error: "no regime with that id" });
   });
 
   it("does not match a path with an extra segment", async () => {
-    // Segment counts must agree, so ":id" captures one segment and never two.
-    const res = await fetch(`${base}/regime/11111111-2222-3333-4444-555555555555/extra`);
+    // ":id" captures one segment and never two.
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/extra`);
     expect(res.status).toBe(404);
-    expect((await json<{ error: string }>(res)).error).toBe("not found");
+    expect((await json<ErrorBody>(res)).error).toBe("not found");
   });
 
   it("does not match an empty id", async () => {
-    // "/regime/" must not capture "" and look like a valid lookup.
-    const res = await fetch(`${base}/regime/`);
+    // A trailing slash must not capture "" and look like a valid lookup.
+    const res = await fetch(`${base}/api/regimes/`);
     expect(res.status).toBe(404);
-    expect((await json<{ error: string }>(res)).error).toBe("not found");
+    expect((await json<ErrorBody>(res)).error).toBe("not found");
   });
 });
 
-describe("POST /regime", () => {
+describe("POST /api/regimes", () => {
   it("returns 400 when muscle is missing", async () => {
     const res = await postRegime({});
     expect(res.status).toBe(400);
@@ -143,16 +145,16 @@ describe("POST /regime", () => {
   });
 
   it("returns the id the regime was saved under", async () => {
-    const body = await json<{ id: string }>(await postRegime({ muscle: "knee" }));
+    const body = await json<RegimeBody>(await postRegime({ muscle: "knee" }));
 
     // The client needs this to fetch the regime back later, so a response
     // without it is a broken contract even when the exercises are right.
-    expect(body.id).toBe("00000000-0000-0000-0000-000000000000");
+    expect(body.id).toBe(SAVED_ID);
   });
 
-  it("returns a regime for a known body region", async () => {
+  it("returns 201 and a regime for a known body region", async () => {
     const res = await postRegime({ muscle: "knee" });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     const body = await json<RegimeBody>(res);
     expect(body.muscle).toBe("knee");
     expect(body.regime).toHaveLength(2);
@@ -160,36 +162,29 @@ describe("POST /regime", () => {
   });
 
   it("normalises case and surrounding whitespace", async () => {
+    // The mock only knows "knee", so a 201 here means the controller cleaned it up.
     const res = await postRegime({ muscle: "  KNEE " });
-    expect(res.status).toBe(200);
-    const body = await json<RegimeBody>(res);
-    expect(body.muscle).toBe("knee");
+    expect(res.status).toBe(201);
   });
 
   it("returns 404 when no exercises match", async () => {
     const res = await postRegime({ muscle: "spleen" });
     expect(res.status).toBe(404);
-    const body = await json<{ error: string }>(res);
-    expect(body.error).toContain("spleen");
+    expect((await json<ErrorBody>(res)).error).toContain("spleen");
   });
 });
 
-describe("request bodies", () => {
-  // A body this size arrives in several socket chunks. Joining the chunks as
-  // bytes before decoding is what keeps the three-byte characters that straddle
-  // a boundary intact; the 404 echoes the muscle back, so a mangled one shows.
-  it("keeps multi-byte characters intact across chunk boundaries", async () => {
-    const muscle = "日".repeat(60_000);
-    const res = await postRegime({ muscle });
-    expect(res.status).toBe(404);
-    const body = await json<{ error: string }>(res);
-    expect(body.error).toBe(`no exercises found for "${muscle}"`);
+describe("errors", () => {
+  it("turns a thrown model error into a 500 without leaking it", async () => {
+    const res = await fetch(`${base}/api/regimes/${BROKEN_ID}`);
+    expect(res.status).toBe(500);
+    expect(await json<ErrorBody>(res)).toEqual({ error: "internal server error" });
   });
 });
 
 describe("CORS", () => {
   it("answers preflight with the allowed methods", async () => {
-    const res = await fetch(`${base}/regime`, { method: "OPTIONS" });
+    const res = await fetch(`${base}/api/regimes`, { method: "OPTIONS" });
     expect(res.status).toBe(204);
     expect(res.headers.get("access-control-allow-methods")).toContain("POST");
   });

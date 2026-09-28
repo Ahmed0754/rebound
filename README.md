@@ -36,26 +36,26 @@ The whole bet is that most people don't need a clinician managing every decision
 ## Team responsibilities
 
 **Backend / API — Shahid Khan** (`apps/server`)
-The Node HTTP server and its two routes (`/health`, `/regime`), including input
-validation and error responses; the Postgres query that finds exercises for a
-body region; the Gemini call in `regime.ts` and the response schema it enforces;
-the migration that creates the `exercises` table and the seed script that fills
-it; the tests in `server.test.ts`.
+The Express server and its routes (`/health`, `/api/regimes`), including
+input validation and error responses; the Postgres query that finds exercises
+for a body region; the Gemini call in `models/gemini.ts` and the response schema
+it enforces; the migrations and the seed script that fills the `exercises`
+table; the tests in `app.test.ts`.
 
 **Frontend / UI — Syed Ahmed Ali** (`apps/web`)
-The Next.js page: the input box and submit button, the `fetch` to `/regime`,
+The Next.js page: the input box and submit button, the `fetch` to `/api/regimes`,
 loading and error states, and the cards that render each returned exercise with
 its sets and reps.
 
 **Shared decisions — both**
-The request-flow diagram; the JSON shape `/regime` returns, since it is the
+The request-flow diagram; the JSON shape `/api/regimes` returns, since it is the
 contract between the two halves; the columns on the `exercises` table; and the
 scope of each stage — what's working now and what comes next.
 
 ## Tech stack
 
 **API** (`apps/server`)
-- Node.js `http` server — no framework, just plain Node
+- [Express 5](https://expressjs.com/) — one controller per resource, one model per table
 - [`pg`](https://node-postgres.com/) — direct Postgres driver
 - [`@google/genai`](https://github.com/googleapis/js-genai) — Gemini calls
 - TypeScript, run via `tsx`

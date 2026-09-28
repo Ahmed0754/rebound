@@ -7,7 +7,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 export type Exercise = {
   id: string;
   name: string;
-  bodyRegion: string;
   description: string;
   sets: number;
   reps: number;
@@ -40,7 +39,7 @@ async function readOrThrow(res: Response): Promise<Regime> {
 // Generates a regime and saves it. Named for what it does rather than the HTTP
 // verb, so it cannot be confused with reading one back.
 export async function createRegime(muscle: string): Promise<Regime> {
-  const res = await fetch(`${API_URL}/regime`, {
+  const res = await fetch(`${API_URL}/api/regimes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ muscle }),
@@ -55,7 +54,7 @@ export async function createRegime(muscle: string): Promise<Regime> {
 // matches nothing is an ordinary miss - a typo, or a regime from a database
 // that has since been reset - not a failure worth showing as an error.
 export async function getRegimeById(id: string): Promise<Regime | null> {
-  const res = await fetch(`${API_URL}/regime/${encodeURIComponent(id)}`);
+  const res = await fetch(`${API_URL}/api/regimes/${encodeURIComponent(id)}`);
 
   if (res.status === 404) {
     return null;
