@@ -18,7 +18,7 @@ Step by step:
 
 **Not built yet:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. The safety layer is the next major piece of work; see below for why it matters more here than in a normal fitness app.
 
-![Rebound architecture: the client POSTs a muscle name to the server's controller, which asks its models to query Postgres for matching exercises and Gemini to pick three with sets and reps, then returns the finished regime to the browser. Boxes are tagged with their MVC role.](./diagrams/request-flow.svg)
+![Rebound architecture: the client's page.tsx either POSTs a muscle name to create a regime or GETs a saved regime by id. The controller routes both to models/regimes.ts, which for create asks the exercises model to query Postgres for candidates and Gemini to pick three with sets and reps, then saves the regime and its items in one transaction; lookup reads that saved snapshot straight back out, without calling Gemini. Boxes are tagged with their MVC role.](./diagrams/request-flow.svg)
 
 ## Where this is going
 
@@ -110,3 +110,13 @@ It's seeded with 30 hand-written exercises across 10 body regions. When you sear
    pnpm --filter web run dev
    ```
 7. Open the URL Next.js prints (`http://localhost:3000`), type a body part like "knee", click "Get exercises."
+
+## Weekly log
+
+A running summary of what got added each week, for anyone who wants the gist without reading commit history. Day-by-day detail lives in `roadmap/session-logs/`.
+
+**Week of Sep 21 – Sep 27**
+- Switched to a real exercise database (703 exercises).
+- Regimes are now saved and can be looked up by id.
+- Cleaned up and reorganized the server code.
+- Implemented Express 
