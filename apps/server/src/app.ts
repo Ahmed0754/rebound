@@ -13,10 +13,12 @@ export const app = express();
 // Set before any routing, so every reply carries them, errors included.
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", webOrigin);
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // The browser asks permission with its own OPTIONS request before a cross-origin POST.
+  // The browser asks permission with its own OPTIONS request before a cross-origin
+  // POST, PUT or DELETE. A method left out of the header above is refused by the
+  // browser itself, which looks from here like the server never being called.
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
     return;

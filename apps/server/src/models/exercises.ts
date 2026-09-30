@@ -124,6 +124,30 @@ export async function getByRegion(
 }
 
 
+/**
+ * The catalogue rows for `ids`, keyed by id.
+ *
+ * An id that matches nothing is simply absent from the map rather than an
+ * error here: only the caller knows whether a miss is a bad request or an
+ * exercise that a re-seed has since dropped.
+ */
+export async function getByIds(ids: string[]): Promise<Map<string, Exercise>> {
+  // `= any('{}')` is a valid query that matches nothing, but there is no
+  // reason to spend a round trip discovering that.
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const result = await pool.query<ExerciseRow>(
+    `select id, name, instructions
+       from exercises
+      where id = any($1)`,
+    [ids]
+  );
+
+  return new Map(result.rows.map((row) => [row.id, fromDbRow(row)]));
+}
+
 //data exists in the database
 //any resuable data retrive from db should be casched to avoid repeated queries
 //migrate data from here to supabase (CONST REGION_MUSCLES)

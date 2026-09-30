@@ -1,7 +1,5 @@
 # Rebound
 
-//describe methods in the file descriptions & apis, in the readme
-
 An AI coach that keeps athletes training instead of sidelined — no doctor's referral, no insurance, no waiting.
 
 ## What this does
@@ -20,7 +18,52 @@ Step by step:
 
 **Not built yet:** no login/accounts, no saving your history, no daily check-ins, no adjusting a plan over time, and no safety checks on what the AI recommends — if Gemini says "do 30 reps," the app just shows 30 reps, no validation. The safety layer is the next major piece of work; see below for why it matters more here than in a normal fitness app.
 
-![Rebound architecture: the client's page.tsx either POSTs a muscle name to create a regime or GETs a saved regime by id. The controller routes both to models/regimes.ts, which for create asks the exercises model to query Postgres for candidates and Gemini to pick three with sets and reps, then saves the regime and its items in one transaction; lookup reads that saved snapshot straight back out, without calling Gemini. Boxes are tagged with their MVC role.](./diagrams/request-flow.svg)
+![Rebound architecture: the client's page.tsx POSTs a muscle name to create a regime, or GETs, PUTs and DELETEs one by id. The controller validates each request and routes it to models/regimes.ts, which for create asks the exercises model to query Postgres for candidates and Gemini to pick three with sets and reps, then saves the regime and its items in one transaction. Lookup reads that saved snapshot straight back out, update replaces the saved exercises in a transaction and resolves their names server-side, and delete removes the regime, with its items cascading. Only create calls Gemini. Boxes are tagged with their MVC role.](./diagrams/request-flow.svg)
+
+## The API
+
+Everything lives under `/api/regimes`, on `:4000`. A regime is the resource: a
+body region, and the three exercises the AI picked for it with their sets and
+reps. Errors are always `{"error": "..."}`.
+
+| Method | Path | Body | Success | Failures |
+| --- | --- | --- | --- | --- |
+| `GET` | `/health` | — | `200 {ok: true}` | — |
+| `POST` | `/api/regimes` | `{muscle}` | `201` regime | `400` no muscle · `404` no exercises for that region |
+| `GET` | `/api/regimes/:id` | — | `200` regime | `404` unknown id |
+| `PUT` | `/api/regimes/:id` | `{regime: [{id, sets, reps}]}` | `200` regime | `400` bad list or unknown exercise · `404` unknown id |
+| `DELETE` | `/api/regimes/:id` | — | `204` no content | `404` unknown id |
+
+A regime comes back as:
+
+```json
+{
+  "id": "uuid",
+  "muscle": "knee",
+  "bodyRegion": "knee",
+  "createdAt": "when it was generated",
+  "updatedAt": "when it was last edited",
+  "regime": [{ "id": "slug", "name": "...", "description": "...", "sets": 3, "reps": 10 }]
+}
+```
+
+Three things about these that are decisions rather than accidents:
+
+- **`PUT` takes ids and doses, never `name` or `description`.** A saved regime
+  is the record of what the app actually told someone, so the server resolves
+  that text — from the regime's own stored copy first, then the catalogue for
+  an exercise being added. You can reorder, re-dose, drop and add; you cannot
+  rewrite what an exercise says.
+- **`PUT` replaces, it never creates.** An unknown id is a `404`, because
+  `muscle` and the body region come from *generating* a regime and there is
+  nothing in an edit to build them from.
+- **A malformed id is a `404`, not a `400`,** on all three `:id` routes, so a
+  stranger probing the API learns nothing about how ids are shaped.
+
+There are no accounts yet, so a regime belongs to nobody and anyone holding an
+id can now edit or delete it, not just read it. That is survivable only because
+ids are unguessable UUIDs. The ownership check goes into `update` and `remove`
+in `models/regimes.ts` on the same commit that adds `user_id`.
 
 ## Where this is going
 

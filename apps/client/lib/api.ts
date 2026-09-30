@@ -15,7 +15,20 @@ export type Exercise = {
 export type Regime = {
   id: string;
   muscle: string;
+  // When it was generated, and when it was last edited. They are equal until
+  // someone saves a change, which is the only visible sign a PUT landed.
+  createdAt: string;
+  updatedAt: string;
   regime: Exercise[];
+};
+
+// One exercise as the server lets a client ask for it. No name and no
+// description: a saved regime is the record of what the app told someone, so
+// the server looks that text up itself and never takes it from a request.
+export type RegimeEdit = {
+  id: string;
+  sets: number;
+  reps: number;
 };
 
 // Pings the server; nothing to validate, so there is no failure branch here.
@@ -25,7 +38,7 @@ export async function getHealth(): Promise<{ ok: boolean }> {
 }
 
 // The server's error message is more useful than a bare status code, so
-// surface it when there is one. Shared by both calls below.
+// surface it when there is one. Shared by the three calls below.
 async function readOrThrow(res: Response): Promise<Regime> {
   const data = await res.json();
 
@@ -59,6 +72,21 @@ export async function getRegimeById(id: string): Promise<Regime | null> {
   if (res.status === 404) {
     return null;
   }
+
+  return readOrThrow(res);
+}
+
+// Replaces the exercises of a saved regime and returns it as it now stands.
+//
+// Throws on a 404, unlike `getRegimeById`: looking up an id that matches
+// nothing is an ordinary miss, but saving into one means the regime went away
+// while it was being edited, and that is worth putting in front of the user.
+export async function updateRegime(id: string, regime: RegimeEdit[]): Promise<Regime> {
+  const res = await fetch(`${API_URL}/api/regimes/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ regime }),
+  });
 
   return readOrThrow(res);
 }

@@ -9,3 +9,13 @@ export type RegimeItem = {
   sets: number;
   reps: number;
 };
+
+// One exercise as the client asks for it in an edit: which exercise, and the
+// dose. Name and description are deliberately absent - a saved regime is the
+// record of what the app told someone, so that text is resolved server-side
+// and never accepted from a request.
+export type RegimeEdit = {
+  id: string;
+  sets: number;
+  reps: number;
+};
