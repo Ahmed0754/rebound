@@ -1,5 +1,6 @@
 // The model for the exercise catalogue: the Exercise type, the body-region
-// mapping, and the one query that reads it.
+// mapping (read from `region_muscles` and cached), and the queries that read
+// exercises by region or by id.
 
 import { pool } from "./db.js";
 
@@ -15,6 +16,13 @@ type ExerciseRow = {
   instructions: string[];
 };
 
+type RegionMuscles = Record<string, string[]>;
+
+type RegionRow = {
+  region: string;
+  muscles: string[];
+};
+
 /**
  * The body regions this app accepts, and the muscles worth training for each.
  *
@@ -24,20 +32,27 @@ type ExerciseRow = {
  * translated into the muscles around it before the library can be searched.
  *
  * These are plausible groupings, not clinically reviewed ones. A real version
- * of this is authored with a physiotherapist.
+ * of this is authored with a physiotherapist - which is also why this lives in
+ * `region_muscles` rather than in source: editing it should not require a
+ * deploy.
+ *
+ * Read once per process and kept here after that. The mapping changes by
+ * someone editing a table, not by a request, so there is nothing a later call
+ * could see that this one missed. The promise itself is the cache: two
+ * requests landing before the first query returns share it instead of firing
+ * one each.
  */
-const REGION_MUSCLES: Record<string, string[]> = {
-  knee: ["quadriceps", "hamstrings", "glutes", "calves"],
-  hip: ["glutes", "abductors", "adductors", "quadriceps"],
-  hamstring: ["hamstrings", "glutes"],
-  calf: ["calves"],
-  ankle: ["calves"],
-  "lower back": ["lower back", "abdominals", "glutes"],
-  shoulder: ["shoulders", "traps"],
-  neck: ["neck", "traps"],
-  elbow: ["biceps", "triceps", "forearms"],
-  wrist: ["forearms"],
-};
+let regionMusclesPromise: Promise<RegionMuscles> | null = null;
+
+function getRegionMuscles(): Promise<RegionMuscles> {
+  if (regionMusclesPromise === null) {
+    regionMusclesPromise = pool
+      .query<RegionRow>(`select region, muscles from region_muscles`)
+      .then((result) => Object.fromEntries(result.rows.map((row) => [row.region, row.muscles])));
+  }
+
+  return regionMusclesPromise;
+}
 
 // The catalogue stores instructions as steps; the rest of the app wants one
 // string. Joining here means no other file ever sees the array.
@@ -57,7 +72,7 @@ function fromDbRow(row: ExerciseRow): Exercise {
  * so "hip" is not found inside "ship". Irregular plurals are not handled:
  * "calves" finds nothing.
  */
-function matchRegion(text: string): string | null {
+function matchRegion(text: string, regionMuscles: RegionMuscles): string | null {
   const words = text
     .toLowerCase()
     // Anything that is not a letter becomes a gap, which also disarms `%`,
@@ -76,7 +91,7 @@ function matchRegion(text: string): string | null {
 
   // When two regions are named, the one mentioned first wins: someone typing
   // "knee and shoulder" is asking about the knee.
-  for (const region of Object.keys(REGION_MUSCLES)) {
+  for (const region of Object.keys(regionMuscles)) {
     const at = padded.indexOf(` ${region} `);
 
     if (at !== -1 && at < bestAt) {
@@ -95,15 +110,16 @@ function matchRegion(text: string): string | null {
 export async function getByRegion(
   muscle: string
 ): Promise<{ region: string; exercises: Exercise[] } | null> {
-  // The regions are a constant, so picking one costs no database round trip.
-  const region = matchRegion(muscle);
+  // Cached after the first call in this process - see `getRegionMuscles`.
+  const regionMuscles = await getRegionMuscles();
+  const region = matchRegion(muscle, regionMuscles);
 
   if (region === null) {
     return null;
   }
 
   // `&&` is array overlap: keep a row if any muscle it trains is one this
-  // region cares about. The muscle names come from REGION_MUSCLES, not from
+  // region cares about. The muscle names come from `region_muscles`, not from
   // the user, so nothing typed reaches the query as a pattern.
   //
   // The 20 are picked at random because nothing here knows which exercises
@@ -111,18 +127,28 @@ export async function getByRegion(
   // detail to rank on. Random at least varies what gets offered instead of
   // always sending the same rows. Replacing this with a real ranking is the
   // point of the planned judge step, once onboarding exists to feed it.
+  //
+  // Not cached, unlike the mapping above: caching this result would mean
+  // every request for "knee" gets the same 20 rows back forever, which is the
+  // one thing `order by random()` exists to avoid.
   const result = await pool.query<ExerciseRow>(
     `select id, name, instructions
        from exercises
       where primary_muscles && $1
       order by random()
       limit 20`,
-    [REGION_MUSCLES[region]]
+    [regionMuscles[region]]
   );
 
   return { region, exercises: result.rows.map(fromDbRow) };
 }
 
+
+// Rows this process has already read, keyed by id. The only writer of
+// `exercises` is the offline seed script, never a request, so an id answered
+// once needs no second round trip for the rest of the process's life - a
+// reseed is picked up on the next restart, same as `getRegionMuscles`.
+const exerciseCache = new Map<string, Exercise>();
 
 /**
  * The catalogue rows for `ids`, keyed by id.
@@ -132,20 +158,40 @@ export async function getByRegion(
  * exercise that a re-seed has since dropped.
  */
 export async function getByIds(ids: string[]): Promise<Map<string, Exercise>> {
+  const found = new Map<string, Exercise>();
+  const missing: string[] = [];
+
+  for (const id of ids) {
+    const cached = exerciseCache.get(id);
+
+    if (cached === undefined) {
+      missing.push(id);
+    } else {
+      found.set(id, cached);
+    }
+  }
+
   // `= any('{}')` is a valid query that matches nothing, but there is no
-  // reason to spend a round trip discovering that.
-  if (ids.length === 0) {
-    return new Map();
+  // reason to spend a round trip discovering that - including when every id
+  // asked for was already cached.
+  if (missing.length === 0) {
+    return found;
   }
 
   const result = await pool.query<ExerciseRow>(
     `select id, name, instructions
        from exercises
       where id = any($1)`,
-    [ids]
+    [missing]
   );
 
-  return new Map(result.rows.map((row) => [row.id, fromDbRow(row)]));
+  for (const row of result.rows) {
+    const exercise = fromDbRow(row);
+    exerciseCache.set(row.id, exercise);
+    found.set(row.id, exercise);
+  }
+
+  return found;
 }
 
 //data exists in the database
