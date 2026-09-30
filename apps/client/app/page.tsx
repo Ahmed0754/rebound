@@ -4,7 +4,13 @@
 //it renders the form, holds UI state, calls the API, and shows the regime or an error.
 
 import { useState } from "react";
-import { createRegime, getRegimeById, updateRegime, type Exercise } from "@/lib/api";
+import {
+  createRegime,
+  deleteRegime,
+  getRegimeById,
+  updateRegime,
+  type Exercise,
+} from "@/lib/api";
 
 export default function Home() {
   const [muscle, setMuscle] = useState("");
@@ -147,6 +153,35 @@ export default function Home() {
     }
   }
 
+  //Controller: DELETEs the regime on screen, then clears it, because once the
+  //server has dropped it there is nothing left for the list to be showing.
+  //
+  //There is no confirmation step and no undo: the delete is a hard one on the
+  //server, so a misclick here loses the plan for good.
+  async function remove() {
+    if (!regimeId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await deleteRegime(regimeId);
+
+      //Everything that described the deleted regime goes at once. `muscle`
+      //stays in the box on purpose, so generating a replacement is one click.
+      setRegime([]);
+      setRegimeId(null);
+      setUpdatedAt(null);
+      setSource(null);
+    } catch (e) {
+      //The regime is left on screen. A failed delete means it is still in the
+      //database, so clearing the list would be a lie about what happened.
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main style={{ maxWidth: 560, margin: "48px auto", padding: "0 16px" }}>
       <h1 style={{ fontSize: 28, marginBottom: 24 }}>What muscle hurts?</h1>
@@ -247,23 +282,45 @@ export default function Home() {
             )}
           </p>
 
-          {/* Only reachable with a regime on screen, since the whole line is. */}
+          {/* Only reachable with a regime on screen, since the whole line is.
+              Both are hidden mid-edit: one would throw the draft away and the
+              other would delete what is being drafted against. */}
           {!editing && (
-            <button
-              onClick={startEdit}
-              disabled={loading}
-              style={{
-                padding: "4px 12px",
-                border: "1px solid #bbb",
-                borderRadius: 8,
-                background: "#fff",
-                color: loading ? "#999" : "#111",
-                fontSize: 13,
-                cursor: loading ? "default" : "pointer",
-              }}
-            >
-              Edit sets &amp; reps
-            </button>
+            <>
+              <button
+                onClick={startEdit}
+                disabled={loading}
+                style={{
+                  padding: "4px 12px",
+                  border: "1px solid #bbb",
+                  borderRadius: 8,
+                  background: "#fff",
+                  color: loading ? "#999" : "#111",
+                  fontSize: 13,
+                  cursor: loading ? "default" : "pointer",
+                }}
+              >
+                Edit sets &amp; reps
+              </button>
+
+              {/* Red because it destroys the regime outright - there is no
+                  soft delete behind this and nothing to undo it with. */}
+              <button
+                onClick={remove}
+                disabled={loading}
+                style={{
+                  padding: "4px 12px",
+                  border: "1px solid #b00020",
+                  borderRadius: 8,
+                  background: "#fff",
+                  color: loading ? "#999" : "#b00020",
+                  fontSize: 13,
+                  cursor: loading ? "default" : "pointer",
+                }}
+              >
+                Delete
+              </button>
+            </>
           )}
         </div>
       )}

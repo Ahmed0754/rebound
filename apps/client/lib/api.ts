@@ -90,3 +90,26 @@ export async function updateRegime(id: string, regime: RegimeEdit[]): Promise<Re
 
   return readOrThrow(res);
 }
+
+// Deletes a saved regime. The server answers 204 with no body, so there is
+// nothing to hand back and `readOrThrow` does not fit.
+//
+// Throws on a 404 for the same reason `updateRegime` does: the id came from a
+// regime that is on screen, so nothing to delete means it went away underneath
+// the user rather than that they mistyped it.
+export async function deleteRegime(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/regimes/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+
+  if (res.ok) {
+    return;
+  }
+
+  // The success case has no body, but a failure does. Still guarded: a dead
+  // server or a proxy in the way answers with HTML, and that must not surface
+  // as a parse error instead of the status.
+  const data = await res.json().catch(() => null);
+
+  throw new Error(data?.error ?? `Request failed: ${res.status}`);
+}
