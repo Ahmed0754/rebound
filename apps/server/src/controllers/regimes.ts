@@ -40,3 +40,12 @@ router.get("/:id", async (req, res) => {
 });
 
 export default router;
+
+
+//put: update an existing regime by id
+//delete: remove an existing regime by id
+
+//structure:
+// depends on http request
+// diff api endpoints for different HTTP methods (GET, POST, PUT, DELETE)
+//sub apis

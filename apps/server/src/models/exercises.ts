@@ -122,3 +122,8 @@ export async function getByRegion(
 
   return { region, exercises: result.rows.map(fromDbRow) };
 }
+
+
+//data exists in the database
+//any resuable data retrive from db should be casched to avoid repeated queries
+//migrate data from here to supabase (CONST REGION_MUSCLES)

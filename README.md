@@ -1,5 +1,7 @@
 # Rebound
 
+//describe methods in the file descriptions & apis, in the readme
+
 An AI coach that keeps athletes training instead of sidelined — no doctor's referral, no insurance, no waiting.
 
 ## What this does
