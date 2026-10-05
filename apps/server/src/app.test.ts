@@ -32,6 +32,7 @@ const saved = {
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
   regime: knee,
+  userId: null as string | null,
 };
 
 // The real one lives in models/regimes.ts, which is mocked away below. The
@@ -53,7 +54,9 @@ class UnknownExercise extends Error {
 // that sends its own text can show the text never reaches the response.
 vi.mock("./models/regimes.js", () => ({
   UnknownExercise,
-  create: vi.fn(async (muscle: string) => (muscle === "knee" ? saved : null)),
+  create: vi.fn(async (muscle: string, userId?: string) =>
+    muscle === "knee" ? { ...saved, userId: userId ?? null } : null
+  ),
   get: vi.fn(async (id: string) => {
     if (id === BROKEN_ID) {
       throw new Error("database is down");
@@ -85,6 +88,35 @@ vi.mock("./models/regimes.js", () => ({
   remove: vi.fn(async (id: string) => id === SAVED_ID),
 }));
 
+const USER_ID = "33333333-3333-3333-3333-333333333333";
+const OTHER_USER_ID = "44444444-4444-4444-4444-444444444444";
+
+const user = { id: USER_ID, username: "shahid", createdAt: CREATED_AT };
+
+class DuplicateUsername extends Error {
+  constructor(username: string) {
+    super(`username "${username}" is taken`);
+    this.name = "DuplicateUsername";
+  }
+}
+
+// Same reasoning as the models/regimes.js mock above: no database needed for
+// routing, validation and error mapping, and the controller maps this class
+// by `instanceof`, so the mock has to throw it and not a lookalike.
+vi.mock("./models/users.js", () => ({
+  DuplicateUsername,
+  create: vi.fn(async (username: string) => {
+    if (username === "shahid") {
+      throw new DuplicateUsername(username);
+    }
+
+    return { id: USER_ID, username, createdAt: CREATED_AT };
+  }),
+  list: vi.fn(async () => [user]),
+  get: vi.fn(async (id: string) => (id === USER_ID ? user : null)),
+  remove: vi.fn(async (id: string) => id === USER_ID),
+}));
+
 const { app } = await import("./app.js");
 
 let base: string;
@@ -111,6 +143,7 @@ type RegimeBody = {
   createdAt: string;
   updatedAt: string;
   regime: Item[];
+  userId: string | null;
 };
 type ErrorBody = { error: string };
 
@@ -212,6 +245,32 @@ describe("POST /api/regimes", () => {
     // The client needs this to fetch the regime back later, so a response
     // without it is a broken contract even when the exercises are right.
     expect(body.id).toBe(SAVED_ID);
+  });
+
+  it("tags the regime with the caller's X-User-Id", async () => {
+    const res = await fetch(`${base}/api/regimes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": USER_ID },
+      body: JSON.stringify({ muscle: "knee" }),
+    });
+
+    expect((await json<RegimeBody>(res)).userId).toBe(USER_ID);
+  });
+
+  it("leaves the regime untagged when there is no X-User-Id", async () => {
+    const body = await json<RegimeBody>(await postRegime({ muscle: "knee" }));
+    expect(body.userId).toBeNull();
+  });
+
+  it("ignores a malformed X-User-Id rather than failing", async () => {
+    const res = await fetch(`${base}/api/regimes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": "not-a-uuid" },
+      body: JSON.stringify({ muscle: "knee" }),
+    });
+
+    expect(res.status).toBe(201);
+    expect((await json<RegimeBody>(res)).userId).toBeNull();
   });
 
   it("returns 201 and a regime for a known body region", async () => {
@@ -384,6 +443,83 @@ describe("DELETE /api/regimes/:id", () => {
   it("does not answer the collection path", async () => {
     // "DELETE /api/regimes" would mean deleting all of them. It must 404.
     expect((await send("DELETE", "/api/regimes")).status).toBe(404);
+  });
+});
+
+describe("POST /api/users", () => {
+  it("returns 201 and the new account for a valid username", async () => {
+    const res = await send("POST", "/api/users", { username: "newuser" });
+    expect(res.status).toBe(201);
+    const body = await json<{ id: string; username: string }>(res);
+    expect(body.username).toBe("newuser");
+    expect(body.id).toBe(USER_ID);
+  });
+
+  it("normalises case and surrounding whitespace", async () => {
+    const res = await send("POST", "/api/users", { username: "  NewUser  " });
+    expect(res.status).toBe(201);
+    expect((await json<{ username: string }>(res)).username).toBe("newuser");
+  });
+
+  it("returns 400 when username is missing", async () => {
+    const res = await send("POST", "/api/users", {});
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for a username failing the charset", async () => {
+    const res = await send("POST", "/api/users", { username: "sh!" });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for a username that is too short", async () => {
+    const res = await send("POST", "/api/users", { username: "ab" });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 409 for a username already taken", async () => {
+    const res = await send("POST", "/api/users", { username: "shahid" });
+    expect(res.status).toBe(409);
+    expect((await json<ErrorBody>(res)).error).toContain("shahid");
+  });
+});
+
+describe("GET /api/users", () => {
+  it("returns every account", async () => {
+    const res = await fetch(`${base}/api/users`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown[]>(res)).toEqual([user]);
+  });
+});
+
+describe("GET /api/users/:id", () => {
+  it("returns the account with that id", async () => {
+    const res = await fetch(`${base}/api/users/${USER_ID}`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toEqual(user);
+  });
+
+  it("404s for an id that exists in no account", async () => {
+    const res = await fetch(`${base}/api/users/${OTHER_USER_ID}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("404s for a malformed id rather than failing", async () => {
+    const res = await fetch(`${base}/api/users/not-a-uuid`);
+    expect(res.status).toBe(404);
+    expect(await json<ErrorBody>(res)).toEqual({ error: "no user with that id" });
+  });
+});
+
+describe("DELETE /api/users/:id", () => {
+  it("returns 204 with no body", async () => {
+    const res = await send("DELETE", `/api/users/${USER_ID}`);
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe("");
+  });
+
+  it("404s for an id that exists in no account", async () => {
+    const res = await send("DELETE", `/api/users/${OTHER_USER_ID}`);
+    expect(res.status).toBe(404);
   });
 });
 

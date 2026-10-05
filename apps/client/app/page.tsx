@@ -3,16 +3,29 @@
 //this is my VIEW + client-side CONTROLLER for the home page
 //it renders the form, holds UI state, calls the API, and shows the regime or an error.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createRegime,
+  createUser,
   deleteRegime,
+  deleteUser,
   getRegimeById,
+  listUsers,
   updateRegime,
   type Exercise,
+  type User,
 } from "@/lib/api";
 
 export default function Home() {
+  //Account state. Standalone for now - not yet wired to regimes, see
+  //ACCOUNTS.md - so picking an account here does not change what "Get
+  //exercises" or "Look up by id" below actually do.
+  const [users, setUsers] = useState<User[]>([]);
+  const [newUsername, setNewUsername] = useState("");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountLoading, setAccountLoading] = useState(false);
+
   const [muscle, setMuscle] = useState("");
   const [regime, setRegime] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,9 +37,12 @@ export default function Home() {
   //was just generated or fetched back. Both are only for the line above the list.
   const [regimeId, setRegimeId] = useState<string | null>(null);
   const [source, setSource] = useState<"new" | "saved" | null>(null);
-  //Stand-in for accounts: until a regime belongs to a signed-in user, this is
-  //how someone gets back to one - paste the id you were given and look it up
-  //directly.
+  //Who the regime on screen is tagged to - see ACCOUNTS.md - or null if it
+  //was made with nobody signed in. Separate from `currentUser`: a looked-up
+  //regime can be owned by a different account than the one selected now.
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  //There is still no "my regimes" list: a regime is tagged to an account, but
+  //getting back to one is still pasting the id you were given.
   const [lookupId, setLookupId] = useState("");
   //Edit mode. `doses` is the draft: the only thing this editor can change is
   //how many sets and reps of each exercise, so it holds nothing else.
@@ -39,6 +55,51 @@ export default function Home() {
   const [editing, setEditing] = useState(false);
   const [doses, setDoses] = useState<{ sets: string; reps: string }[]>([]);
 
+  //Loads the account list once on mount, so there is something to pick from
+  //without typing a uuid - the same reason ACCOUNTS.md gives for GET /api/users.
+  useEffect(() => {
+    listUsers()
+      .then(setUsers)
+      .catch((e) => setAccountError(e instanceof Error ? e.message : String(e)));
+  }, []);
+
+  //Controller: creates an account, adds it to the list, and selects it.
+  async function createAccount() {
+    const username = newUsername.trim();
+    if (!username) return;
+
+    setAccountLoading(true);
+    setAccountError(null);
+
+    try {
+      const user = await createUser(username);
+      setUsers((current) => [user, ...current]);
+      setCurrentUser(user);
+      setNewUsername("");
+    } catch (e) {
+      setAccountError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAccountLoading(false);
+    }
+  }
+
+  //Controller: deletes an account. Doubles as "reset this account" per
+  //ACCOUNTS.md, since there is nothing yet for it to cascade into.
+  async function removeAccount(id: string) {
+    setAccountLoading(true);
+    setAccountError(null);
+
+    try {
+      await deleteUser(id);
+      setUsers((current) => current.filter((u) => u.id !== id));
+      setCurrentUser((current) => (current?.id === id ? null : current));
+    } catch (e) {
+      setAccountError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAccountLoading(false);
+    }
+  }
+
   //This is the important function
   //Controller: validates the input, POSTs to the server /api/regimes route,
   //then pushes the result into state for the view to render
@@ -49,16 +110,18 @@ export default function Home() {
     setError(null);
 
     try {
-      const saved = await createRegime(muscle);
+      const saved = await createRegime(muscle, currentUser?.id);
       setRegime(saved.regime);
       setRegimeId(saved.id);
       setUpdatedAt(saved.updatedAt);
+      setOwnerId(saved.userId);
       setSource("new");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setRegime([]);
       setRegimeId(null);
       setUpdatedAt(null);
+      setOwnerId(null);
       setSource(null);
     } finally {
       setLoading(false);
@@ -82,6 +145,7 @@ export default function Home() {
       setRegime(found.regime);
       setRegimeId(found.id);
       setUpdatedAt(found.updatedAt);
+      setOwnerId(found.userId);
       setSource("saved");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -172,6 +236,7 @@ export default function Home() {
       setRegime([]);
       setRegimeId(null);
       setUpdatedAt(null);
+      setOwnerId(null);
       setSource(null);
     } catch (e) {
       //The regime is left on screen. A failed delete means it is still in the
@@ -184,6 +249,114 @@ export default function Home() {
 
   return (
     <main style={{ maxWidth: 560, margin: "48px auto", padding: "0 16px" }}>
+      <section
+        style={{
+          border: "1px solid #e5e5e5",
+          borderRadius: 10,
+          background: "#fff",
+          padding: 16,
+          marginBottom: 32,
+        }}
+      >
+        <p style={{ margin: "0 0 10px", fontSize: 13, color: "#555" }}>
+          {currentUser ? (
+            <>
+              Signed in as <strong>{currentUser.username}</strong>
+            </>
+          ) : (
+            "No account selected — test accounts only, no password"
+          )}
+        </p>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") createAccount();
+            }}
+            placeholder="new username"
+            style={{
+              flex: 1,
+              minWidth: 160,
+              padding: "8px 10px",
+              boxSizing: "border-box",
+              border: "1px solid #ccc",
+              borderRadius: 8,
+              fontSize: 14,
+            }}
+          />
+
+          <button
+            onClick={createAccount}
+            disabled={accountLoading}
+            style={{
+              padding: "8px 16px",
+              border: "1px solid #111",
+              borderRadius: 8,
+              background: accountLoading ? "#eee" : "#111",
+              color: accountLoading ? "#666" : "#fff",
+              fontSize: 14,
+              cursor: accountLoading ? "default" : "pointer",
+            }}
+          >
+            Create account
+          </button>
+        </div>
+
+        {accountError && (
+          <p style={{ color: "#b00020", fontSize: 13, marginTop: 8 }}>{accountError}</p>
+        )}
+
+        {users.length > 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            {users.map((u) => (
+              <span
+                key={u.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  border: `1px solid ${currentUser?.id === u.id ? "#111" : "#ccc"}`,
+                  borderRadius: 20,
+                  padding: "2px 4px 2px 12px",
+                  fontSize: 13,
+                }}
+              >
+                <button
+                  onClick={() => setCurrentUser(u)}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontWeight: currentUser?.id === u.id ? 600 : 400,
+                    padding: "4px 2px",
+                  }}
+                >
+                  {u.username}
+                </button>
+
+                <button
+                  onClick={() => removeAccount(u.id)}
+                  title="Delete account"
+                  disabled={accountLoading}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    cursor: accountLoading ? "default" : "pointer",
+                    color: "#b00020",
+                    padding: "4px 8px",
+                    fontSize: 14,
+                  }}
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </section>
+
       <h1 style={{ fontSize: 28, marginBottom: 24 }}>What muscle hurts?</h1>
 
       <input
@@ -280,6 +453,8 @@ export default function Home() {
                 &middot; last written {new Date(updatedAt).toLocaleTimeString()}
               </>
             )}
+            {" "}&middot; owner:{" "}
+            {ownerId ? users.find((u) => u.id === ownerId)?.username ?? ownerId : "none"}
           </p>
 
           {/* Only reachable with a regime on screen, since the whole line is.

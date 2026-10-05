@@ -20,6 +20,9 @@ export type Regime = {
   createdAt: string;
   updatedAt: string;
   regime: Exercise[];
+  // Who was signed in when this was generated, or null if nobody was. A tag,
+  // not an ownership check - see ACCOUNTS.md.
+  userId: string | null;
 };
 
 // One exercise as the server lets a client ask for it. No name and no
@@ -37,6 +40,59 @@ export async function getHealth(): Promise<{ ok: boolean }> {
   return res.json();
 }
 
+// A test account - see ACCOUNTS.md. No password: anyone holding the id can
+// act as it.
+export type User = {
+  id: string;
+  username: string;
+  createdAt: string;
+};
+
+// Creates an account and returns it. Throws on a 400 (bad username) or a 409
+// (taken), with the server's own message - it is more specific than anything
+// this client would invent.
+export async function createUser(username: string): Promise<User> {
+  const res = await fetch(`${API_URL}/api/users`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.error ?? `Request failed: ${res.status}`);
+  }
+
+  return data;
+}
+
+// Every account, so a test session can pick one instead of remembering a uuid.
+export async function listUsers(): Promise<User[]> {
+  const res = await fetch(`${API_URL}/api/users`);
+
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// Deletes an account. The server answers 204 with no body, so there is
+// nothing to hand back on success.
+export async function deleteUser(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/users/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+
+  if (res.ok) {
+    return;
+  }
+
+  const data = await res.json().catch(() => null);
+  throw new Error(data?.error ?? `Request failed: ${res.status}`);
+}
+
 // The server's error message is more useful than a bare status code, so
 // surface it when there is one. Shared by the three calls below.
 async function readOrThrow(res: Response): Promise<Regime> {
@@ -51,10 +107,16 @@ async function readOrThrow(res: Response): Promise<Regime> {
 
 // Generates a regime and saves it. Named for what it does rather than the HTTP
 // verb, so it cannot be confused with reading one back.
-export async function createRegime(muscle: string): Promise<Regime> {
+//
+// `userId` is optional: there is no sign-in requirement, only a tag applied
+// when the caller happens to have one. See ACCOUNTS.md.
+export async function createRegime(muscle: string, userId?: string): Promise<Regime> {
   const res = await fetch(`${API_URL}/api/regimes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(userId ? { "X-User-Id": userId } : {}),
+    },
     body: JSON.stringify({ muscle }),
   });
 

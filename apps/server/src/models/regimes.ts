@@ -14,6 +14,9 @@ export type Regime = {
   createdAt: string;
   updatedAt: string;
   regime: RegimeItem[];
+  // Who made it, if anyone was signed in at the time - see ACCOUNTS.md. Not
+  // enforced: this is a tag, not an ownership check.
+  userId: string | null;
 };
 
 type RegimeRow = {
@@ -22,6 +25,7 @@ type RegimeRow = {
   body_region: string;
   created_at: Date;
   updated_at: Date;
+  user_id: string | null;
 };
 
 type ItemRow = {
@@ -38,7 +42,7 @@ type Queryable = Pool | PoolClient;
 
 // The columns a regime is built from, written once because four queries select
 // exactly these and one selecting fewer would return a regime missing a field.
-const REGIME_COLUMNS = "id, muscle, body_region, created_at, updated_at";
+const REGIME_COLUMNS = "id, muscle, body_region, created_at, updated_at, user_id";
 
 /** Thrown when an edit names an exercise the server cannot put a name to. */
 export class UnknownExercise extends Error {
@@ -56,6 +60,7 @@ function fromDbRow(row: RegimeRow, items: RegimeItem[]): Regime {
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     regime: items,
+    userId: row.user_id,
   };
 }
 
@@ -124,10 +129,13 @@ async function insertItems(
  * Builds a regime for `muscle`, saves it, and returns it, or null when there
  * is nothing to build one from.
  *
+ * `userId` is optional and unenforced - a tag recording who was signed in
+ * when the regime was made, not an ownership check. See ACCOUNTS.md.
+ *
  * Saved before it is returned, so the id the caller hands out is one that can
  * actually be fetched back.
  */
-export async function create(muscle: string): Promise<Regime | null> {
+export async function create(muscle: string, userId?: string): Promise<Regime | null> {
   const match = await getByRegion(muscle);
 
   if (match === null || match.exercises.length === 0) {
@@ -148,10 +156,10 @@ export async function create(muscle: string): Promise<Regime | null> {
     await client.query("begin");
 
     const created = await client.query<RegimeRow>(
-      `insert into regimes (muscle, body_region)
-       values ($1, $2)
+      `insert into regimes (muscle, body_region, user_id)
+       values ($1, $2, $3)
        returning ${REGIME_COLUMNS}`,
-      [muscle, match.region]
+      [muscle, match.region, userId ?? null]
     );
 
     const row = created.rows[0];

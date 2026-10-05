@@ -7,6 +7,19 @@ import type { RegimeEdit } from "../types/index.js";
 
 const router = Router();
 
+// Same shape as the one in models/regimes.ts and models/users.ts. Checked
+// here, not left to the database, because an invalid uuid reaching a foreign
+// key would surface as a 500 for what is only a bad header.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Optional and unenforced: there is no middleware requiring this, so a
+// missing or malformed header just means the regime is tagged to nobody,
+// never a failure. See ACCOUNTS.md.
+function readUserId(req: { header(name: string): string | undefined }): string | undefined {
+  const id = req.header("X-User-Id");
+  return id !== undefined && UUID.test(id) ? id : undefined;
+}
+
 // A regime edited by hand still has to be a regime: at least one exercise,
 // and not an unbounded list. Three is what the app generates and shows.
 const MIN_ITEMS = 1;
@@ -88,7 +101,7 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const regime = await create(muscle);
+  const regime = await create(muscle, readUserId(req));
 
   // Not an error: the request was fine, there is just nothing stored for that region.
   if (regime === null) {
