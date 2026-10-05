@@ -12,12 +12,19 @@ const router = Router();
 // key would surface as a 500 for what is only a bad header.
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Optional and unenforced: there is no middleware requiring this, so a
-// missing or malformed header just means the regime is tagged to nobody,
-// never a failure. See ACCOUNTS.md.
-function readUserId(req: { header(name: string): string | undefined }): string | undefined {
+// Required on create, since `regimes.user_id` is `not null` - there is no such
+// thing as a regime belonging to nobody, so a request that names nobody cannot
+// make one. A missing and a malformed header are the same answer: a caller who
+// sent a broken id has not identified an account either, and quietly treating
+// it as "no account" is how a frontend bug turns into plans saved under
+// nothing.
+//
+// Still not authentication. Nothing checks that the caller is entitled to act
+// as this account, and `get`, `update` and `remove` do not read it at all -
+// see the capitalised TODO in models/regimes.ts.
+function readUserId(req: { header(name: string): string | undefined }): string | null {
   const id = req.header("X-User-Id");
-  return id !== undefined && UUID.test(id) ? id : undefined;
+  return id !== undefined && UUID.test(id) ? id : null;
 }
 
 // A regime edited by hand still has to be a regime: at least one exercise,
@@ -101,7 +108,17 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const regime = await create(muscle, readUserId(req));
+  const userId = readUserId(req);
+
+  // A plan is saved to an account, so one has to be named. 400 rather than
+  // 401: there is no authentication to have failed, the request is simply
+  // missing something it needs.
+  if (userId === null) {
+    res.status(400).send({ error: "X-User-Id must be a user id" });
+    return;
+  }
+
+  const regime = await create(muscle, userId);
 
   // Not an error: the request was fine, there is just nothing stored for that region.
   if (regime === null) {

@@ -22,6 +22,10 @@ const knee = [
 const SAVED_ID = "11111111-2222-3333-4444-555555555555";
 const BROKEN_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
 
+// Declared up here because `saved` below needs it: every regime has an owner.
+const USER_ID = "33333333-3333-3333-3333-333333333333";
+const OTHER_USER_ID = "44444444-4444-4444-4444-444444444444";
+
 const CREATED_AT = "2026-09-24T00:00:00.000Z";
 const EDITED_AT = "2026-09-30T00:00:00.000Z";
 
@@ -32,7 +36,7 @@ const saved = {
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
   regime: knee,
-  userId: null as string | null,
+  userId: USER_ID,
 };
 
 // The real one lives in models/regimes.ts, which is mocked away below. The
@@ -54,8 +58,8 @@ class UnknownExercise extends Error {
 // that sends its own text can show the text never reaches the response.
 vi.mock("./models/regimes.js", () => ({
   UnknownExercise,
-  create: vi.fn(async (muscle: string, userId?: string) =>
-    muscle === "knee" ? { ...saved, userId: userId ?? null } : null
+  create: vi.fn(async (muscle: string, userId: string) =>
+    muscle === "knee" ? { ...saved, userId } : null
   ),
   get: vi.fn(async (id: string) => {
     if (id === BROKEN_ID) {
@@ -87,9 +91,6 @@ vi.mock("./models/regimes.js", () => ({
   }),
   remove: vi.fn(async (id: string) => id === SAVED_ID),
 }));
-
-const USER_ID = "33333333-3333-3333-3333-333333333333";
-const OTHER_USER_ID = "44444444-4444-4444-4444-444444444444";
 
 const user = { id: USER_ID, username: "shahid", createdAt: CREATED_AT };
 
@@ -159,8 +160,14 @@ function send(method: string, path: string, body?: unknown) {
   });
 }
 
+// Creating a regime now requires an account, so the ordinary helper sends
+// one. The tests that are *about* the header call fetch directly.
 function postRegime(body: unknown) {
-  return send("POST", "/api/regimes", body);
+  return fetch(`${base}/api/regimes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-User-Id": USER_ID },
+    body: JSON.stringify(body),
+  });
 }
 
 function putRegime(id: string, body: unknown) {
@@ -257,20 +264,30 @@ describe("POST /api/regimes", () => {
     expect((await json<RegimeBody>(res)).userId).toBe(USER_ID);
   });
 
-  it("leaves the regime untagged when there is no X-User-Id", async () => {
-    const body = await json<RegimeBody>(await postRegime({ muscle: "knee" }));
-    expect(body.userId).toBeNull();
+  // `regimes.user_id` is `not null`, so a request naming no account cannot
+  // produce a regime. Both of these used to answer 201 with userId null.
+  it("returns 400 when there is no X-User-Id", async () => {
+    const res = await fetch(`${base}/api/regimes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ muscle: "knee" }),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("X-User-Id must be a user id");
   });
 
-  it("ignores a malformed X-User-Id rather than failing", async () => {
+  // A broken id has not identified an account either, so it is the same
+  // answer rather than a silent fallback to "nobody".
+  it("returns 400 for a malformed X-User-Id", async () => {
     const res = await fetch(`${base}/api/regimes`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-User-Id": "not-a-uuid" },
       body: JSON.stringify({ muscle: "knee" }),
     });
 
-    expect(res.status).toBe(201);
-    expect((await json<RegimeBody>(res)).userId).toBeNull();
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("X-User-Id must be a user id");
   });
 
   it("returns 201 and a regime for a known body region", async () => {

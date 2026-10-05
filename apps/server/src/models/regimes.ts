@@ -14,9 +14,11 @@ export type Regime = {
   createdAt: string;
   updatedAt: string;
   regime: RegimeItem[];
-  // Who made it, if anyone was signed in at the time - see ACCOUNTS.md. Not
-  // enforced: this is a tag, not an ownership check.
-  userId: string | null;
+  // The account that made it. Never null: `regimes.user_id` is `not null`, so
+  // a regime cannot exist without an owner. Recording the owner is not yet
+  // the same as enforcing it - `get`, `update` and `remove` still do not check
+  // it, which is the capitalised TODO further down this file.
+  userId: string;
 };
 
 type RegimeRow = {
@@ -25,7 +27,7 @@ type RegimeRow = {
   body_region: string;
   created_at: Date;
   updated_at: Date;
-  user_id: string | null;
+  user_id: string;
 };
 
 type ItemRow = {
@@ -129,13 +131,14 @@ async function insertItems(
  * Builds a regime for `muscle`, saves it, and returns it, or null when there
  * is nothing to build one from.
  *
- * `userId` is optional and unenforced - a tag recording who was signed in
- * when the regime was made, not an ownership check. See ACCOUNTS.md.
+ * `userId` is required: `regimes.user_id` is `not null`, so there is no such
+ * thing as a regime belonging to nobody. The controller is what turns a
+ * missing header into a 400 rather than letting it reach the column.
  *
  * Saved before it is returned, so the id the caller hands out is one that can
  * actually be fetched back.
  */
-export async function create(muscle: string, userId?: string): Promise<Regime | null> {
+export async function create(muscle: string, userId: string): Promise<Regime | null> {
   const match = await getByRegion(muscle);
 
   if (match === null || match.exercises.length === 0) {
@@ -159,7 +162,7 @@ export async function create(muscle: string, userId?: string): Promise<Regime | 
       `insert into regimes (muscle, body_region, user_id)
        values ($1, $2, $3)
        returning ${REGIME_COLUMNS}`,
-      [muscle, match.region, userId ?? null]
+      [muscle, match.region, userId]
     );
 
     const row = created.rows[0];
