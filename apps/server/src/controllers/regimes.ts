@@ -2,7 +2,9 @@
 // calls the model, and picks a status code. Mounted at /api/regimes in app.ts.
 
 import { Router } from "express";
-import { create, get, remove, update, UnknownExercise } from "../models/regimes.js";
+import { getLimits, hasRedFlag } from "../clinical.js";
+import { get as getOnboarding } from "../models/onboarding.js";
+import { create, get, list, remove, update, UnknownExercise } from "../models/regimes.js";
 import type { RegimeEdit } from "../types/index.js";
 
 const router = Router();
@@ -99,15 +101,43 @@ function parseItems(body: unknown): { items: RegimeEdit[] } | { error: string } 
   return { items };
 }
 
-router.post("/", async (req, res) => {
-  // Anything that is not a string becomes "", so there is only one way to be invalid.
-  const muscle = typeof req.body?.muscle === "string" ? req.body.muscle.trim().toLowerCase() : "";
+/**
+ * Builds a regime from a saved questionnaire.
+ *
+ * The red-flag check runs again here even though it ran when the answers were
+ * saved: without it, the "see a doctor" response could just be ignored and the
+ * id posted straight to this route.
+ */
+async function fromOnboarding(onboardingId: string, userId: string) {
+  const onboarding = await getOnboarding(onboardingId, userId);
 
-  if (muscle === "") {
-    res.status(400).send({ error: "muscle is required" });
-    return;
+  if (onboarding === null) {
+    return { status: 404, body: { error: "no onboarding with that id" } };
   }
 
+  if (hasRedFlag(onboarding.answers)) {
+    // Not a 400 - the request is well formed and the id is real. The stored
+    // answers are what forbid a plan.
+    return { status: 409, body: { error: "these answers need a doctor, not a plan" } };
+  }
+
+  const regime = await create({
+    muscle: onboarding.answers.region,
+    userId,
+    limits: getLimits(onboarding.answers),
+  });
+
+  if (regime === null) {
+    return {
+      status: 404,
+      body: { error: `no exercises found for "${onboarding.answers.region}"` },
+    };
+  }
+
+  return { status: 201, body: regime };
+}
+
+router.post("/", async (req, res) => {
   const userId = readUserId(req);
 
   // A plan is saved to an account, so one has to be named. 400 rather than
@@ -118,7 +148,28 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const regime = await create(muscle, userId);
+  const onboardingId =
+    typeof req.body?.onboardingId === "string" ? req.body.onboardingId.trim() : "";
+
+  if (onboardingId !== "") {
+    const { status, body } = await fromOnboarding(onboardingId, userId);
+
+    res.status(status).send(body);
+    return;
+  }
+
+  // The original path: a body part typed into a box, no questionnaire, so no
+  // limits and Gemini's dose is taken as given.
+  //
+  // Anything that is not a string becomes "", so there is only one way to be invalid.
+  const muscle = typeof req.body?.muscle === "string" ? req.body.muscle.trim().toLowerCase() : "";
+
+  if (muscle === "") {
+    res.status(400).send({ error: "muscle or onboardingId is required" });
+    return;
+  }
+
+  const regime = await create({ muscle, userId });
 
   // Not an error: the request was fine, there is just nothing stored for that region.
   if (regime === null) {
@@ -127,6 +178,21 @@ router.post("/", async (req, res) => {
   }
 
   res.status(201).send(regime);
+});
+
+// The caller's own regimes, newest first. Declared before "/:id" so the bare
+// path is not read as an id.
+router.get("/", async (req, res) => {
+  const userId = readUserId(req);
+
+  if (userId === null) {
+    res.status(400).send({ error: "X-User-Id must be a user id" });
+    return;
+  }
+
+  // An account with no regimes is an empty list, not a 404: the question
+  // "what has this account made" has an answer, and it is "nothing yet".
+  res.send(await list(userId));
 });
 
 router.get("/:id", async (req, res) => {

@@ -3,8 +3,10 @@
 // Built here and started in index.ts, so the tests can use it without a port.
 
 import express, { type ErrorRequestHandler } from "express";
+import onboardingController from "./controllers/onboarding.js";
 import regimesController from "./controllers/regimes.js";
 import usersController from "./controllers/users.js";
+import { listRegions } from "./models/exercises.js";
 
 // The page runs on :3000 and this API on :4000, so the browser must be told :3000 is allowed.
 const webOrigin = process.env.WEB_ORIGIN || "http://localhost:3000";
@@ -36,6 +38,14 @@ app.get("/health", (_req, res) => {
   res.send({ ok: true });
 });
 
+// The body regions a client offers as choices, so it can present a fixed set
+// instead of a text box. Reference data, read-only, nothing user-specific -
+// one permanent route, so it needs no controller of its own.
+app.get("/api/regions", async (_req, res) => {
+  res.send(await listRegions());
+});
+
+app.use("/api/onboarding", onboardingController);
 app.use("/api/regimes", regimesController);
 app.use("/api/users", usersController);
 

@@ -58,9 +58,10 @@ class UnknownExercise extends Error {
 // that sends its own text can show the text never reaches the response.
 vi.mock("./models/regimes.js", () => ({
   UnknownExercise,
-  create: vi.fn(async (muscle: string, userId: string) =>
-    muscle === "knee" ? { ...saved, userId } : null
+  create: vi.fn(async (input: { muscle: string; userId: string }) =>
+    input.muscle === "knee" ? { ...saved, userId: input.userId } : null
   ),
+  list: vi.fn(async (userId: string) => (userId === USER_ID ? [saved] : [])),
   get: vi.fn(async (id: string) => {
     if (id === BROKEN_ID) {
       throw new Error("database is down");
@@ -104,6 +105,10 @@ class DuplicateUsername extends Error {
 // Same reasoning as the models/regimes.js mock above: no database needed for
 // routing, validation and error mapping, and the controller maps this class
 // by `instanceof`, so the mock has to throw it and not a lookalike.
+vi.mock("./models/exercises.js", () => ({
+  listRegions: vi.fn(async () => ["knee", "lower back", "shoulder"]),
+}));
+
 vi.mock("./models/users.js", () => ({
   DuplicateUsername,
   create: vi.fn(async (username: string) => {
@@ -188,12 +193,36 @@ describe("GET /health", () => {
   });
 });
 
-describe("GET /api/regimes/:id", () => {
-  it("does not answer the POST route's path", async () => {
-    // Method and path both have to match, so a GET to the collection is not a regime.
-    expect((await fetch(`${base}/api/regimes`)).status).toBe(404);
+describe("GET /api/regimes", () => {
+  function listRegimes(userId: string | null) {
+    return fetch(`${base}/api/regimes`, {
+      headers: userId === null ? undefined : { "X-User-Id": userId },
+    });
+  }
+
+  it("returns 400 without an account", async () => {
+    expect((await listRegimes(null)).status).toBe(400);
   });
 
+  it("returns the caller's regimes", async () => {
+    const res = await listRegimes(USER_ID);
+
+    expect(res.status).toBe(200);
+    const body = await json<RegimeBody[]>(res);
+    expect(body).toHaveLength(1);
+    expect(body[0].id).toBe(SAVED_ID);
+  });
+
+  // "Nothing yet" is an answer, so it is an empty list rather than a 404.
+  it("returns an empty list for an account with none", async () => {
+    const res = await listRegimes(OTHER_USER_ID);
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual([]);
+  });
+});
+
+describe("GET /api/regimes/:id", () => {
   it("returns the regime with that id", async () => {
     const res = await fetch(`${base}/api/regimes/${SAVED_ID}`);
 
@@ -221,11 +250,13 @@ describe("GET /api/regimes/:id", () => {
     expect((await json<ErrorBody>(res)).error).toBe("not found");
   });
 
-  it("does not match an empty id", async () => {
-    // A trailing slash must not capture "" and look like a valid lookup.
+  it("does not capture an empty id from a trailing slash", async () => {
+    // It reaches the collection route instead, which is why this is a 400
+    // about the missing account rather than a lookup of the id "".
     const res = await fetch(`${base}/api/regimes/`);
-    expect(res.status).toBe(404);
-    expect((await json<ErrorBody>(res)).error).toBe("not found");
+
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("X-User-Id must be a user id");
   });
 });
 
@@ -233,7 +264,9 @@ describe("POST /api/regimes", () => {
   it("returns 400 when muscle is missing", async () => {
     const res = await postRegime({});
     expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({ error: "muscle is required" });
+    await expect(res.json()).resolves.toEqual({
+      error: "muscle or onboardingId is required",
+    });
   });
 
   it("returns 400 when muscle is only whitespace", async () => {
@@ -571,5 +604,77 @@ describe("unknown routes", () => {
   it("returns 404", async () => {
     const res = await fetch(`${base}/nope`);
     expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /api/regions", () => {
+  it("returns the body regions a client can offer as choices", async () => {
+    const res = await fetch(`${base}/api/regions`);
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual(["knee", "lower back", "shoulder"]);
+  });
+
+  // Nothing user-specific in the list, so it answers without a header.
+  it("needs no account", async () => {
+    expect((await fetch(`${base}/api/regions`)).status).toBe(200);
+  });
+});
+
+describe("POST /api/onboarding", () => {
+  const answers = {
+    goal: "reduce_pain",
+    region: "knee",
+    onset: "acute",
+    painNow: 3,
+    aggravators: [],
+    redFlags: [],
+    ageBand: "40_64",
+    conditions: [],
+    equipment: ["none"],
+    activityLevel: "recreational",
+    sessionMinutes: 10,
+  };
+
+  function postOnboarding(body: unknown, userId: string | null = USER_ID) {
+    return fetch(`${base}/api/onboarding`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(userId === null ? {} : { "X-User-Id": userId }),
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("returns 400 without an account", async () => {
+    expect((await postOnboarding(answers, null)).status).toBe(400);
+  });
+
+  it("names the valid options when an answer is outside its list", async () => {
+    const res = await postOnboarding({ ...answers, onset: "yesterday" });
+
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("onset must be one of: acute, subacute, chronic");
+  });
+
+  it("rejects a pain score outside 0-10", async () => {
+    expect((await postOnboarding({ ...answers, painNow: 11 })).status).toBe(400);
+    expect((await postOnboarding({ ...answers, painNow: 2.5 })).status).toBe(400);
+  });
+
+  // The region question is the one that decides which exercises are even
+  // considered, so an unknown one fails here rather than at generation.
+  it("rejects a region that is not in the catalogue", async () => {
+    const res = await postOnboarding({ ...answers, region: "spleen" });
+
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toContain("region must be one of");
+  });
+
+  it("rejects a repeated answer in a multi-select", async () => {
+    const res = await postOnboarding({ ...answers, aggravators: ["stairs", "stairs"] });
+
+    expect(res.status).toBe(400);
   });
 });

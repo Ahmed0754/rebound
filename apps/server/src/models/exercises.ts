@@ -54,6 +54,21 @@ function getRegionMuscles(): Promise<RegionMuscles> {
   return regionMusclesPromise;
 }
 
+/**
+ * The body regions this app accepts, sorted.
+ *
+ * Exposed so a client can offer them as a fixed set of choices instead of a
+ * text box, which is the difference between picking "lower back" and typing
+ * "spleen" and finding out a request later. Sorted here because the query has
+ * no `order by` - the mapping is keyed by region, so nothing else cares.
+ *
+ * The muscles each region maps to are deliberately not returned: which
+ * muscles "knee" means is this server's business.
+ */
+export async function listRegions(): Promise<string[]> {
+  return Object.keys(await getRegionMuscles()).sort();
+}
+
 // The catalogue stores instructions as steps; the rest of the app wants one
 // string. Joining here means no other file ever sees the array.
 function fromDbRow(row: ExerciseRow): Exercise {

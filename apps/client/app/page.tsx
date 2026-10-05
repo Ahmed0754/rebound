@@ -10,6 +10,7 @@ import {
   deleteRegime,
   deleteUser,
   getRegimeById,
+  listRegimes,
   listUsers,
   updateRegime,
   type Exercise,
@@ -172,6 +173,39 @@ export default function Home() {
     const id = lookupId.trim();
     if (!id) return;
     loadById(id);
+  }
+
+  //Controller: shows the signed-in account's most recent regime, so finding
+  //one does not mean having kept its id. The server returns them newest
+  //first, so the one worth showing is the first.
+  async function loadMine() {
+    if (!currentUser) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const mine = await listRegimes(currentUser.id);
+
+      if (mine.length === 0) {
+        setError(`${currentUser.username} did not generate a regime yet.`);
+        return;
+      }
+
+      const latest = mine[0];
+
+      setMuscle(latest.muscle);
+      setRegime(latest.regime);
+      setRegimeId(latest.id);
+      setUpdatedAt(latest.updatedAt);
+      setOwnerId(latest.userId);
+      setSource("saved");
+      setLookupId(latest.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
   }
 
   //Controller: opens the editor on a copy of the current doses. `regime` is
@@ -463,6 +497,26 @@ export default function Home() {
           }}
         >
           Find
+        </button>
+
+        {/* The id is only worth remembering if you kept it, so an account can
+            ask for its own plan instead. Disabled rather than hidden without
+            an account, so it does not appear and vanish. */}
+        <button
+          onClick={loadMine}
+          disabled={loading || editing || !currentUser}
+          title={currentUser ? `Show ${currentUser.username}'s latest regime` : "Select an account first"}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #111",
+            borderRadius: 8,
+            background: "#fff",
+            color: loading || editing || !currentUser ? "#999" : "#111",
+            fontSize: 14,
+            cursor: loading || editing || !currentUser ? "default" : "pointer",
+          }}
+        >
+          My regime
         </button>
       </div>
 

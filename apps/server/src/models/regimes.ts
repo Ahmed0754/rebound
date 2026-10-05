@@ -5,6 +5,7 @@ import type { Pool, PoolClient } from "pg";
 import { pool } from "./db.js";
 import { getByIds, getByRegion } from "./exercises.js";
 import { pickExercises } from "./gemini.js";
+import { clampDose, type Limits } from "../clinical.js";
 import type { RegimeEdit, RegimeItem } from "../types/index.js";
 
 export type Regime = {
@@ -100,6 +101,55 @@ async function readItems(runner: Queryable, regimeId: string): Promise<RegimeIte
 }
 
 /**
+ * Every regime belonging to `userId`, newest first.
+ *
+ * Two queries rather than one per regime: the regimes, then all of their
+ * exercises at once, grouped here. An account with ten plans costs the same
+ * round trips as one with one.
+ */
+export async function list(userId: string): Promise<Regime[]> {
+  const found = await pool.query<RegimeRow>(
+    `select ${REGIME_COLUMNS}
+       from regimes
+      where user_id = $1
+      order by created_at desc`,
+    [userId]
+  );
+
+  if (found.rows.length === 0) {
+    return [];
+  }
+
+  const items = await pool.query<ItemRow & { regime_id: string }>(
+    `select regime_id, exercise_id, name, description, sets, reps
+       from regime_exercises
+      where regime_id = any($1)
+      order by regime_id, position`,
+    [found.rows.map((row) => row.id)]
+  );
+
+  // `order by position` above means each regime's exercises arrive in the
+  // order they were shown, and pushing in turn preserves it.
+  const byRegime = new Map<string, RegimeItem[]>();
+
+  for (const item of items.rows) {
+    const list = byRegime.get(item.regime_id) ?? [];
+
+    list.push({
+      id: item.exercise_id,
+      name: item.name,
+      description: item.description,
+      sets: item.sets,
+      reps: item.reps,
+    });
+
+    byRegime.set(item.regime_id, list);
+  }
+
+  return found.rows.map((row) => fromDbRow(row, byRegime.get(row.id) ?? []));
+}
+
+/**
  * Writes the exercises of one regime. Shared by create and update, which
  * differ only in whether there were rows there before.
  *
@@ -127,29 +177,44 @@ async function insertItems(
   );
 }
 
+// Gemini's dose pinned to what the questionnaire allows, and the list cut to
+// the number of exercises it allows. Here rather than in clinical.ts so that
+// file keeps its no-imports property.
+function applyLimits(items: RegimeItem[], limits: Limits): RegimeItem[] {
+  return items
+    .slice(0, limits.count.max)
+    .map((item) => ({ ...item, ...clampDose(item.sets, item.reps, limits) }));
+}
+
 /**
- * Builds a regime for `muscle`, saves it, and returns it, or null when there
- * is nothing to build one from.
+ * Builds a regime, saves it, and returns it, or null when there is nothing to
+ * build one from.
  *
- * `userId` is required: `regimes.user_id` is `not null`, so there is no such
- * thing as a regime belonging to nobody. The controller is what turns a
- * missing header into a 400 rather than letting it reach the column.
+ * `userId` is required - `regimes.user_id` is `not null`. `limits` is not:
+ * the original "type a body part" screen has no questionnaire behind it, and
+ * without limits Gemini's dose is taken as given.
  *
- * Saved before it is returned, so the id the caller hands out is one that can
- * actually be fetched back.
+ * An options object so the next field added here is not a fourth argument.
  */
-export async function create(muscle: string, userId: string): Promise<Regime | null> {
+export async function create(input: {
+  muscle: string;
+  userId: string;
+  limits?: Limits;
+}): Promise<Regime | null> {
+  const { muscle, userId, limits } = input;
   const match = await getByRegion(muscle);
 
   if (match === null || match.exercises.length === 0) {
     return null;
   }
 
-  const items = await pickExercises(muscle, match.exercises);
+  const picked = await pickExercises(muscle, match.exercises);
 
-  if (items.length === 0) {
+  if (picked.length === 0) {
     return null;
   }
+
+  const items = limits === undefined ? picked : applyLimits(picked, limits);
 
   // A transaction needs one connection for every statement, so take a client
   // out of the pool rather than using the pool's one-shot query.

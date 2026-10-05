@@ -94,8 +94,9 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 // The server's error message is more useful than a bare status code, so
-// surface it when there is one. Shared by the three calls below.
-async function readOrThrow(res: Response): Promise<Regime> {
+// surface it when there is one. Generic because the regime calls below return
+// one regime and the list call returns several.
+async function readOrThrow<T = Regime>(res: Response): Promise<T> {
   const data = await res.json();
 
   if (!res.ok) {
@@ -121,6 +122,16 @@ export async function createRegime(muscle: string, userId?: string): Promise<Reg
   });
 
   return readOrThrow(res);
+}
+
+// Every regime this account has generated, newest first. An account that has
+// not generated one yet comes back as an empty list, not an error.
+export async function listRegimes(userId: string): Promise<Regime[]> {
+  const res = await fetch(`${API_URL}/api/regimes`, {
+    headers: { "X-User-Id": userId },
+  });
+
+  return readOrThrow<Regime[]>(res);
 }
 
 // Reads back one regime by the id `createRegime` returned.
