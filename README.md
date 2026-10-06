@@ -165,3 +165,9 @@ A running summary of what got added each week, for anyone who wants the gist wit
 - Regimes are now saved and can be looked up by id.
 - Cleaned up and reorganized the server code.
 - Implemented Express 
+
+**Week of Oct 5 – Oct 11**
+- Added test accounts, so you can create, pick, and delete a user.
+- Regimes now remember which account created them.
+- Creating a regime now requires an account — it won't save without one.
+- Cleared out old regimes that weren't tied to any account.
