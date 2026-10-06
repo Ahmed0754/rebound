@@ -65,8 +65,6 @@ export default function Home() {
   }, []);
 
   //Controller: creates an account, adds it to the list, and selects it.
-  //Shared by the username box and the one-click test button below, so there
-  //is one place that knows what to do with a new account.
   async function createAccount(username: string) {
     if (!username) return;
 
@@ -83,18 +81,6 @@ export default function Home() {
     } finally {
       setAccountLoading(false);
     }
-  }
-
-  //Controller: a throwaway account in one click, for running an onboarding
-  //test without inventing a name first. The server requires an account before
-  //it will generate a regime, so this is the shortest path from a fresh page
-  //to a plan.
-  //
-  //The timestamp is what keeps it unique: usernames are unique on
-  //lower(username), so "test" twice would be a 409. Base 36 keeps it inside
-  //the server's 3-30 character [a-z0-9_] rule.
-  function createTestAccount() {
-    return createAccount(`test_${Date.now().toString(36)}`);
   }
 
   //Controller: deletes an account outright. `regimes.user_id` is declared
@@ -349,26 +335,6 @@ export default function Home() {
             }}
           >
             Create account
-          </button>
-
-          {/* One click to a usable account, for running a test without
-              inventing a name. Outlined rather than filled so it reads as the
-              shortcut next to the real action. */}
-          <button
-            onClick={createTestAccount}
-            disabled={accountLoading}
-            title="Creates a throwaway account and selects it"
-            style={{
-              padding: "8px 16px",
-              border: "1px solid #111",
-              borderRadius: 8,
-              background: "transparent",
-              color: accountLoading ? "#999" : "#111",
-              fontSize: 14,
-              cursor: accountLoading ? "default" : "pointer",
-            }}
-          >
-            New test account
           </button>
         </div>
 
