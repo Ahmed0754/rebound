@@ -138,10 +138,10 @@ export async function getByRegion(
   // the user, so nothing typed reaches the query as a pattern.
   //
   // The 20 are picked at random because nothing here knows which exercises
-  // suit this particular person - there is no onboarding yet, so no injury
-  // detail to rank on. Random at least varies what gets offered instead of
-  // always sending the same rows. Replacing this with a real ranking is the
-  // point of the planned judge step, once onboarding exists to feed it.
+  // suit this particular person - this is the type-a-body-part path, with no
+  // questionnaire behind it. Random at least varies what gets offered instead
+  // of always sending the same rows. A plan built from onboarding answers
+  // goes through `getCandidates` below instead.
   //
   // Not cached, unlike the mapping above: caching this result would mean
   // every request for "knee" gets the same 20 rows back forever, which is the
@@ -156,6 +156,103 @@ export async function getByRegion(
   );
 
   return { region, exercises: result.rows.map(fromDbRow) };
+}
+
+/** An exercise with the catalogue fields the candidate filters were applied to. */
+export type Candidate = Exercise & {
+  primaryMuscles: string[];
+  category: string;
+  level: string;
+  equipment: string | null;
+  force: string | null;
+  mechanic: string | null;
+};
+
+type CandidateRow = ExerciseRow & {
+  primary_muscles: string[];
+  category: string;
+  level: string;
+  equipment: string | null;
+  force: string | null;
+  mechanic: string | null;
+};
+
+/**
+ * The exercises a questionnaire allows for `region`, or null when the region
+ * is not one this app knows.
+ *
+ * Every option is in the catalogue's own vocabulary - "dumbbell", not the
+ * questionnaire's "dumbbells" - and this file never imports clinical.ts.
+ * models/regimes.ts does the translating, so the data layer stays unaware of
+ * the rules layer and the rules layer can be read on its own.
+ *
+ * Still `order by random()`, but now over the right exercises: nothing yet
+ * ranks one allowed exercise above another, so random is what keeps the same
+ * 20 from coming back every time.
+ */
+export async function getCandidates(options: {
+  region: string;
+  // A blank `equipment` in the catalogue counts as "body only" - 77 rows
+  // leave it out, and nearly all of them are bodyweight stretches. Reading
+  // blank as "needs something" instead would take half the stretches away
+  // from someone who owns nothing.
+  equipment: string[];
+  levels: string[];
+  categories: string[];
+  // Matched against `aggravator_exclusions`, which says what each one rules out.
+  aggravators: string[];
+  limit: number;
+}): Promise<Candidate[] | null> {
+  const regionMuscles = await getRegionMuscles();
+  const muscles = regionMuscles[options.region];
+
+  if (muscles === undefined) {
+    return null;
+  }
+
+  // An exclusion row matches when every pattern column it fills in matches.
+  // A null on the exercise side never matches a filled-in pattern, so an
+  // exercise the dataset left `force` blank on is not excluded by a `force`
+  // rule - the catalogue gives no grounds to say it pushes or pulls.
+  const result = await pool.query<CandidateRow>(
+    `select e.id, e.name, e.instructions, e.primary_muscles, e.category, e.level,
+            e.equipment, e.force, e.mechanic
+       from exercises e
+      where e.primary_muscles && $1
+        and coalesce(e.equipment, 'body only') = any($2)
+        and e.level = any($3)
+        and e.category = any($4)
+        and not exists (
+          select 1
+            from aggravator_exclusions x
+           where x.aggravator = any($5)
+             and (x.exercise_id is null or x.exercise_id = e.id)
+             and (x.muscle is null or x.muscle = any(e.primary_muscles))
+             and (x.force is null or x.force = e.force)
+             and (x.mechanic is null or x.mechanic = e.mechanic)
+             and (x.category is null or x.category = e.category)
+        )
+      order by random()
+      limit $6`,
+    [
+      muscles,
+      options.equipment,
+      options.levels,
+      options.categories,
+      options.aggravators,
+      options.limit,
+    ]
+  );
+
+  return result.rows.map((row) => ({
+    ...fromDbRow(row),
+    primaryMuscles: row.primary_muscles,
+    category: row.category,
+    level: row.level,
+    equipment: row.equipment,
+    force: row.force,
+    mechanic: row.mechanic,
+  }));
 }
 
 

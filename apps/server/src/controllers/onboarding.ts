@@ -19,6 +19,7 @@ import {
 } from "../clinical.js";
 import { listRegions } from "../models/exercises.js";
 import { create, get } from "../models/onboarding.js";
+import { getCandidatesFor, toCandidateQuery } from "../models/regimes.js";
 
 const router = Router();
 
@@ -229,6 +230,37 @@ router.get("/:id", async (req, res) => {
   }
 
   res.send({ ...present(found.id, found.answers), answers: found.answers });
+});
+
+// The exercises these answers allow, before Gemini picks any - and the
+// filters, in the catalogue's vocabulary, that produced them. A random sample
+// of the allowed pool, so it will not be the exact 20 a generate call sees.
+router.get("/:id/candidates", async (req, res) => {
+  const userId = readUserId(req);
+
+  if (userId === null) {
+    res.status(400).send({ error: "X-User-Id must be a user id" });
+    return;
+  }
+
+  const found = await get(req.params.id, userId);
+
+  if (found === null) {
+    res.status(404).send({ error: "no onboarding with that id" });
+    return;
+  }
+
+  // Same gate as generating: a red-flagged questionnaire has no plan, so it
+  // has no exercises to offer either.
+  if (hasRedFlag(found.answers)) {
+    res.status(409).send({ error: "these answers need a doctor, not a plan" });
+    return;
+  }
+
+  const limits = getLimits(found.answers);
+  const candidates = await getCandidatesFor(found.answers, limits);
+
+  res.send({ query: toCandidateQuery(found.answers, limits), candidates: candidates ?? [] });
 });
 
 export default router;

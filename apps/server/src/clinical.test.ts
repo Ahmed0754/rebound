@@ -12,7 +12,7 @@ const WELL: Answers = {
   painNow: 1,
   aggravators: [],
   redFlags: [],
-  ageBand: "under_40",
+  ageBand: "under_30",
   conditions: [],
   equipment: ["full_gym"],
   activityLevel: "trains_regularly",
@@ -38,6 +38,7 @@ describe("getLimits", () => {
     expect(limits.sets).toEqual({ min: 1, max: 4 });
     expect(limits.reps).toEqual({ min: 5, max: 15 });
     expect(limits.count).toEqual({ min: 2, max: 5 });
+    expect(limits.categories).toEqual(["stretching", "strength"]);
     expect(limits.reasons).toEqual([]);
   });
 
@@ -58,12 +59,12 @@ describe("getLimits", () => {
 
   // The behaviour tiers could not produce.
   it("stacks caps from separate rules and takes the tightest of each", () => {
-    const limits = getLimits(answers({ ageBand: "65_plus", onset: "acute" }));
+    const limits = getLimits(answers({ ageBand: "50_plus", onset: "acute" }));
 
     expect(limits.sets.max).toBe(2);
     expect(limits.reps.max).toBe(10);
     expect(limits.count.max).toBe(3);
-    expect(limits.reasons).toEqual(["this flared up recently", "you are 65 or over"]);
+    expect(limits.reasons).toEqual(["this flared up recently", "you are 50 or over"]);
   });
 
   it("lets the shorter of two overlapping session rules win", () => {
@@ -77,7 +78,7 @@ describe("getLimits", () => {
       answers({
         painNow: 10,
         onset: "acute",
-        ageBand: "65_plus",
+        ageBand: "50_plus",
         conditions: ["autoimmune", "osteoporosis"],
         activityLevel: "sedentary",
         sessionMinutes: 5,
@@ -94,7 +95,7 @@ describe("getLimits", () => {
     const cases: Partial<Answers>[] = [
       {},
       { painNow: 0, activityLevel: "competitive" },
-      { ageBand: "under_40", onset: "subacute", sessionMinutes: 20 },
+      { ageBand: "under_30", onset: "subacute", sessionMinutes: 20 },
     ];
 
     for (const override of cases) {
@@ -110,6 +111,51 @@ describe("getLimits", () => {
     expect(getLimits(answers({ conditions: ["diabetes"] })).reasons).toEqual([
       "you told us about a long-term condition",
     ]);
+  });
+});
+
+describe("which exercises are allowed", () => {
+  it("starts the difficulty ceiling from activity level", () => {
+    expect(getLimits(answers({ activityLevel: "sedentary" })).difficultyCap).toBe("beginner");
+    expect(getLimits(answers({ activityLevel: "recreational" })).difficultyCap).toBe("beginner");
+    expect(getLimits(answers({ activityLevel: "trains_regularly" })).difficultyCap).toBe(
+      "intermediate"
+    );
+    expect(getLimits(answers({ activityLevel: "competitive" })).difficultyCap).toBe("expert");
+  });
+
+  // The starting point is not a restriction, so it is not given as a reason.
+  it("does not explain the activity ceiling as a rule", () => {
+    expect(getLimits(answers({ activityLevel: "recreational" })).reasons).toEqual([]);
+  });
+
+  it("lets a rule pull the ceiling below what activity level allows", () => {
+    const limits = getLimits(answers({ activityLevel: "competitive", ageBand: "50_plus" }));
+
+    expect(limits.difficultyCap).toBe("beginner");
+  });
+
+  it("never lets a rule raise the ceiling above what activity level allows", () => {
+    // Nothing caps a sedentary person at anything harder than beginner, and
+    // a rule that caps at beginner must not be read as "beginner or above".
+    const limits = getLimits(answers({ activityLevel: "sedentary", conditions: ["diabetes"] }));
+
+    expect(limits.difficultyCap).toBe("beginner");
+  });
+
+  it("allows only stretching on a fresh flare", () => {
+    expect(getLimits(answers({ onset: "acute" })).categories).toEqual(["stretching"]);
+  });
+
+  it("allows only stretching at high pain", () => {
+    expect(getLimits(answers({ painNow: 7 })).categories).toEqual(["stretching"]);
+    expect(getLimits(answers({ painNow: 6 })).categories).toEqual(["stretching", "strength"]);
+  });
+
+  it("never leaves no category allowed", () => {
+    const limits = getLimits(answers({ painNow: 10, onset: "acute" }));
+
+    expect(limits.categories.length).toBeGreaterThan(0);
   });
 });
 

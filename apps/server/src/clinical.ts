@@ -17,7 +17,9 @@ export const GOALS = [
 // Under a week, one to six weeks, longer.
 export const ONSETS = ["acute", "subacute", "chronic"] as const;
 
-export const AGE_BANDS = ["under_40", "40_64", "65_plus"] as const;
+// Skewed young on purpose: the app is aimed at a younger audience, so the
+// detail goes where most users are and everyone 50 and over shares one band.
+export const AGE_BANDS = ["under_30", "30_49", "50_plus"] as const;
 
 export const ACTIVITY_LEVELS = [
   "sedentary",
@@ -26,16 +28,24 @@ export const ACTIVITY_LEVELS = [
   "competitive",
 ] as const;
 
-// Stored but not yet read - the exercise exclusions these drive are Part 2.
+// Each one leaves exercises out of the candidate list, via the hand-authored
+// `aggravator_exclusions` table - not decided here, because which exercises
+// "stairs" rules out is data about the catalogue, not a rule about the person.
 export const AGGRAVATORS = ["stairs", "overhead", "sitting", "impact", "loaded_flexion"] as const;
 
 export const CONDITIONS = ["autoimmune", "diabetes", "osteoporosis"] as const;
 
-// Also stored and not yet read: filtering on it needs an `equipment` column
-// that the seed script currently drops.
+// What someone owns. Translated into the catalogue's own equipment names in
+// models/regimes.ts, which is the only place that knows both vocabularies.
 export const EQUIPMENT = ["none", "bands", "dumbbells", "full_gym"] as const;
 
 export const SESSION_MINUTES = [5, 10, 20] as const;
+
+// The catalogue's own `level` and `category` values, in the order a ceiling
+// moves through them. Not answers - nobody is asked these - but what the
+// rules below restrict.
+export const DIFFICULTIES = ["beginner", "intermediate", "expert"] as const;
+export const CATEGORIES = ["stretching", "strength"] as const;
 
 // Each of these is a "see a doctor", not a "be careful": no dose is safe for
 // someone who ticked one. Only catches what the structured questions ask -
@@ -59,6 +69,8 @@ export type Condition = (typeof CONDITIONS)[number];
 export type Equipment = (typeof EQUIPMENT)[number];
 export type SessionMinutes = (typeof SESSION_MINUTES)[number];
 export type RedFlag = (typeof RED_FLAGS)[number];
+export type Difficulty = (typeof DIFFICULTIES)[number];
+export type Category = (typeof CATEGORIES)[number];
 
 export type Answers = {
   goal: Goal;
@@ -80,6 +92,11 @@ export type Limits = {
   sets: { min: number; max: number };
   reps: { min: number; max: number };
   count: { min: number; max: number };
+  // The hardest catalogue level allowed, and the kinds of exercise allowed.
+  // These decide which exercises are offered at all, where the three above
+  // only decide how much of each.
+  difficultyCap: Difficulty;
+  categories: Category[];
   // The rules that fired, in the words shown to the user.
   reasons: string[];
 };
@@ -92,11 +109,30 @@ const ABSOLUTE = {
   count: { min: 2, max: 5 },
 } as const;
 
+// Where the difficulty ceiling starts, before any rule lowers it. Not a rule
+// itself, so it adds nothing to `reasons`: being a recreational exerciser is
+// not something a plan was restricted *because of*, it is just the starting
+// point. A rule can only take this lower, never higher.
+const ACTIVITY_DIFFICULTY: Record<ActivityLevel, Difficulty> = {
+  sedentary: "beginner",
+  recreational: "beginner",
+  trains_regularly: "intermediate",
+  competitive: "expert",
+};
+
 type Rule = {
   id: string;
   reason: string;
   when: (answers: Answers) => boolean;
-  cap: { sets?: number; reps?: number; count?: number };
+  cap: {
+    sets?: number;
+    reps?: number;
+    count?: number;
+    difficulty?: Difficulty;
+    // The only categories this rule allows. Rules intersect, the same way the
+    // numeric caps take the minimum.
+    categories?: Category[];
+  };
 };
 
 // Not risk tiers: tiers collapse everyone who trips any threshold into one
@@ -107,7 +143,9 @@ const RULES: Rule[] = [
     id: "high_pain",
     reason: "your pain is 7 or above",
     when: (a) => a.painNow >= 7,
-    cap: { sets: 2, reps: 8, count: 3 },
+    // Loaded strength work is what a conservative default refuses at this
+    // level of pain.
+    cap: { sets: 2, reps: 8, count: 3, categories: ["stretching"] },
   },
   {
     id: "moderate_pain",
@@ -119,7 +157,9 @@ const RULES: Rule[] = [
     id: "acute",
     reason: "this flared up recently",
     when: (a) => a.onset === "acute",
-    cap: { sets: 2, count: 3 },
+    // Under a week old. Same reasoning as high pain: no loaded work on a
+    // fresh flare.
+    cap: { sets: 2, count: 3, categories: ["stretching"] },
   },
   {
     id: "chronic",
@@ -129,15 +169,17 @@ const RULES: Rule[] = [
   },
   {
     id: "older_adult",
-    reason: "you are 65 or over",
-    when: (a) => a.ageBand === "65_plus",
-    cap: { sets: 2, reps: 10 },
+    // Was 65+ until the bands moved younger. Keeping the same caps at 50 is
+    // the cautious reading of a band that now starts 15 years earlier.
+    reason: "you are 50 or over",
+    when: (a) => a.ageBand === "50_plus",
+    cap: { sets: 2, reps: 10, difficulty: "beginner" },
   },
   {
     id: "condition",
     reason: "you told us about a long-term condition",
     when: (a) => a.conditions.length > 0,
-    cap: { sets: 2, reps: 10 },
+    cap: { sets: 2, reps: 10, difficulty: "beginner" },
   },
   {
     id: "sedentary",
@@ -179,11 +221,31 @@ export function getLimits(answers: Answers): Limits {
   let sets: number = ABSOLUTE.sets.max;
   let reps: number = ABSOLUTE.reps.max;
   let count: number = ABSOLUTE.count.max;
+  // Held as a position on the ladder so "lower" is just a smaller number.
+  let difficulty = DIFFICULTIES.indexOf(ACTIVITY_DIFFICULTY[answers.activityLevel]);
+  let categories: Category[] = [...CATEGORIES];
 
   for (const rule of fired) {
     sets = Math.min(sets, rule.cap.sets ?? sets);
     reps = Math.min(reps, rule.cap.reps ?? reps);
     count = Math.min(count, rule.cap.count ?? count);
+
+    if (rule.cap.difficulty !== undefined) {
+      difficulty = Math.min(difficulty, DIFFICULTIES.indexOf(rule.cap.difficulty));
+    }
+
+    if (rule.cap.categories !== undefined) {
+      const allowed = rule.cap.categories;
+      categories = categories.filter((category) => allowed.includes(category));
+    }
+  }
+
+  // Two rules allowing different categories would intersect to none, and a
+  // plan with no allowed exercises is not a plan. Stretching is the most
+  // conservative thing there is, so it is what is left - the same "the
+  // cautious end wins" call as the floors below.
+  if (categories.length === 0) {
+    categories = ["stretching"];
   }
 
   // Enough rules at once can pull a ceiling under its own floor, and nothing
@@ -192,6 +254,8 @@ export function getLimits(answers: Answers): Limits {
     sets: { min: ABSOLUTE.sets.min, max: Math.max(ABSOLUTE.sets.min, sets) },
     reps: { min: ABSOLUTE.reps.min, max: Math.max(ABSOLUTE.reps.min, reps) },
     count: { min: ABSOLUTE.count.min, max: Math.max(ABSOLUTE.count.min, count) },
+    difficultyCap: DIFFICULTIES[difficulty],
+    categories,
     reasons: fired.map((rule) => rule.reason),
   };
 }

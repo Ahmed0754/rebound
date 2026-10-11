@@ -4,7 +4,15 @@
 import { Router } from "express";
 import { getLimits, hasRedFlag } from "../clinical.js";
 import { get as getOnboarding } from "../models/onboarding.js";
-import { create, get, list, remove, update, UnknownExercise } from "../models/regimes.js";
+import {
+  create,
+  get,
+  list,
+  remove,
+  TooFewCandidates,
+  update,
+  UnknownExercise,
+} from "../models/regimes.js";
 import type { RegimeEdit } from "../types/index.js";
 
 const router = Router();
@@ -121,11 +129,23 @@ async function fromOnboarding(onboardingId: string, userId: string) {
     return { status: 409, body: { error: "these answers need a doctor, not a plan" } };
   }
 
-  const regime = await create({
-    muscle: onboarding.answers.region,
-    userId,
-    limits: getLimits(onboarding.answers),
-  });
+  let regime;
+
+  try {
+    regime = await create({
+      muscle: onboarding.answers.region,
+      userId,
+      onboarding: { answers: onboarding.answers, limits: getLimits(onboarding.answers) },
+    });
+  } catch (error) {
+    // 409 for the same reason as the red flag: the request is fine, the
+    // stored answers are what rule a plan out.
+    if (error instanceof TooFewCandidates) {
+      return { status: 409, body: { error: error.message } };
+    }
+
+    throw error;
+  }
 
   if (regime === null) {
     return {

@@ -49,6 +49,17 @@ class UnknownExercise extends Error {
   }
 }
 
+// Same reason as UnknownExercise: the controller maps it with `instanceof`.
+class TooFewCandidates extends Error {
+  constructor(found: number, needed: number) {
+    super(`only ${found} exercises fit these answers, and a plan needs at least ${needed}`);
+    this.name = "TooFewCandidates";
+  }
+}
+
+// A saved questionnaire whose filters leave too little to build a plan from.
+const NARROW_ONBOARDING_ID = "55555555-5555-5555-5555-555555555555";
+
 // No database and no Gemini key needed: routing, validation and error mapping
 // are what these tests are about. Without the mock they would also write a row
 // to the real database on every run.
@@ -58,9 +69,14 @@ class UnknownExercise extends Error {
 // that sends its own text can show the text never reaches the response.
 vi.mock("./models/regimes.js", () => ({
   UnknownExercise,
-  create: vi.fn(async (input: { muscle: string; userId: string }) =>
-    input.muscle === "knee" ? { ...saved, userId: input.userId } : null
-  ),
+  TooFewCandidates,
+  create: vi.fn(async (input: { muscle: string; userId: string; onboarding?: unknown }) => {
+    if (input.onboarding !== undefined && input.muscle === "wrist") {
+      throw new TooFewCandidates(1, 2);
+    }
+
+    return input.muscle === "knee" ? { ...saved, userId: input.userId } : null;
+  }),
   list: vi.fn(async (userId: string) => (userId === USER_ID ? [saved] : [])),
   get: vi.fn(async (id: string) => {
     if (id === BROKEN_ID) {
@@ -107,6 +123,33 @@ class DuplicateUsername extends Error {
 // by `instanceof`, so the mock has to throw it and not a lookalike.
 vi.mock("./models/exercises.js", () => ({
   listRegions: vi.fn(async () => ["knee", "lower back", "shoulder"]),
+}));
+
+// Only `get` is reached by these tests: every POST /api/onboarding case below
+// fails validation before anything is saved.
+vi.mock("./models/onboarding.js", () => ({
+  create: vi.fn(),
+  get: vi.fn(async (id: string, userId: string) =>
+    id === NARROW_ONBOARDING_ID
+      ? {
+          id,
+          userId,
+          answers: {
+            goal: "reduce_pain",
+            region: "wrist",
+            onset: "acute",
+            painNow: 8,
+            aggravators: [],
+            redFlags: [],
+            ageBand: "50_plus",
+            conditions: [],
+            equipment: ["none"],
+            activityLevel: "sedentary",
+            sessionMinutes: 5,
+          },
+        }
+      : null
+  ),
 }));
 
 vi.mock("./models/users.js", () => ({
@@ -261,6 +304,23 @@ describe("GET /api/regimes/:id", () => {
 });
 
 describe("POST /api/regimes", () => {
+  // Nothing is loosened to fill a plan, so a questionnaire whose filters
+  // leave too little gets a refusal it can show, not an empty plan or a 500.
+  it("returns 409 when too few exercises fit the questionnaire", async () => {
+    const res = await postRegime({ onboardingId: NARROW_ONBOARDING_ID });
+
+    expect(res.status).toBe(409);
+    expect((await json<ErrorBody>(res)).error).toBe(
+      "only 1 exercises fit these answers, and a plan needs at least 2"
+    );
+  });
+
+  it("returns 404 for an onboarding id that matches nothing", async () => {
+    const res = await postRegime({ onboardingId: "99999999-9999-9999-9999-999999999999" });
+
+    expect(res.status).toBe(404);
+  });
+
   it("returns 400 when muscle is missing", async () => {
     const res = await postRegime({});
     expect(res.status).toBe(400);
@@ -629,7 +689,7 @@ describe("POST /api/onboarding", () => {
     painNow: 3,
     aggravators: [],
     redFlags: [],
-    ageBand: "40_64",
+    ageBand: "30_49",
     conditions: [],
     equipment: ["none"],
     activityLevel: "recreational",

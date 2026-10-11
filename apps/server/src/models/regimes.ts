@@ -3,9 +3,15 @@
 
 import type { Pool, PoolClient } from "pg";
 import { pool } from "./db.js";
-import { getByIds, getByRegion } from "./exercises.js";
+import { getByIds, getByRegion, getCandidates, type Candidate, type Exercise } from "./exercises.js";
 import { pickExercises } from "./gemini.js";
-import { clampDose, type Limits } from "../clinical.js";
+import {
+  clampDose,
+  DIFFICULTIES,
+  type Answers,
+  type Equipment,
+  type Limits,
+} from "../clinical.js";
 import type { RegimeEdit, RegimeItem } from "../types/index.js";
 
 export type Regime = {
@@ -46,6 +52,26 @@ type Queryable = Pool | PoolClient;
 // The columns a regime is built from, written once because four queries select
 // exactly these and one selecting fewer would return a regime missing a field.
 const REGIME_COLUMNS = "id, muscle, body_region, created_at, updated_at, user_id";
+
+/**
+ * Thrown when a questionnaire's filters leave fewer exercises than the
+ * smallest plan allowed.
+ *
+ * Nothing is loosened to make up the number: every filter is either a safety
+ * restriction or equipment the person does not own, and quietly dropping
+ * either to fill a plan is worse than saying no plan fits.
+ */
+export class TooFewCandidates extends Error {
+  constructor(
+    readonly found: number,
+    readonly needed: number
+  ) {
+    super(
+      `only ${found} exercise${found === 1 ? "" : "s"} fit these answers, and a plan needs at least ${needed}`
+    );
+    this.name = "TooFewCandidates";
+  }
+}
 
 /** Thrown when an edit names an exercise the server cannot put a name to. */
 export class UnknownExercise extends Error {
@@ -177,6 +203,72 @@ async function insertItems(
   );
 }
 
+// The questionnaire's equipment answers, in the catalogue's own names. Lives
+// here because this is the one file that sits between the two vocabularies:
+// clinical.ts does not know the catalogue, and exercises.ts must not know the
+// questionnaire.
+//
+// "body only" is not listed because everyone has it - it is added for every
+// answer in `toCandidateQuery`. Kettlebells are not counted as dumbbells, and
+// foam rollers and exercise balls only count as a full gym: the questionnaire
+// does not ask about them, so nobody is assumed to own one.
+const CATALOGUE_EQUIPMENT: Record<Equipment, string[]> = {
+  none: [],
+  bands: ["bands"],
+  dumbbells: ["dumbbell"],
+  full_gym: [
+    "bands",
+    "dumbbell",
+    "barbell",
+    "cable",
+    "machine",
+    "kettlebells",
+    "e-z curl bar",
+    "exercise ball",
+    "medicine ball",
+    "foam roll",
+    "other",
+  ],
+};
+
+// How many candidates Gemini is shown. Same number the typed path sends.
+const CANDIDATE_LIMIT = 20;
+
+/**
+ * Turns answers and the limits derived from them into the options
+ * `getCandidates` takes. Pure, so the translation - which is where v1 lost
+ * its equipment filter - is testable without a database.
+ */
+export function toCandidateQuery(answers: Answers, limits: Limits) {
+  const equipment = new Set(["body only"]);
+
+  for (const owned of answers.equipment) {
+    for (const name of CATALOGUE_EQUIPMENT[owned]) {
+      equipment.add(name);
+    }
+  }
+
+  return {
+    region: answers.region,
+    equipment: [...equipment],
+    // Every level up to and including the cap: a cap of "intermediate" still
+    // allows beginner exercises.
+    levels: DIFFICULTIES.slice(0, DIFFICULTIES.indexOf(limits.difficultyCap) + 1),
+    categories: [...limits.categories],
+    aggravators: [...answers.aggravators],
+    limit: CANDIDATE_LIMIT,
+  };
+}
+
+/**
+ * The exercises a questionnaire allows, before Gemini chooses among them.
+ * Null when the region is unknown. The same call `create` makes, exposed so
+ * the pool can be inspected on its own.
+ */
+export function getCandidatesFor(answers: Answers, limits: Limits): Promise<Candidate[] | null> {
+  return getCandidates(toCandidateQuery(answers, limits));
+}
+
 // Gemini's dose pinned to what the questionnaire allows, and the list cut to
 // the number of exercises it allows. Here rather than in clinical.ts so that
 // file keeps its no-imports property.
@@ -190,31 +282,59 @@ function applyLimits(items: RegimeItem[], limits: Limits): RegimeItem[] {
  * Builds a regime, saves it, and returns it, or null when there is nothing to
  * build one from.
  *
- * `userId` is required - `regimes.user_id` is `not null`. `limits` is not:
- * the original "type a body part" screen has no questionnaire behind it, and
- * without limits Gemini's dose is taken as given.
+ * `userId` is required - `regimes.user_id` is `not null`. `onboarding` is
+ * not: the original "type a body part" screen has no questionnaire behind it,
+ * so it draws from `getByRegion` and Gemini's dose is taken as given. With a
+ * questionnaire, the candidates come from `getCandidates` and the dose is
+ * held to its limits.
+ *
+ * Throws `TooFewCandidates` when the questionnaire's filters leave too little
+ * to build the smallest allowed plan from.
  *
  * An options object so the next field added here is not a fourth argument.
  */
 export async function create(input: {
   muscle: string;
   userId: string;
-  limits?: Limits;
+  onboarding?: { answers: Answers; limits: Limits };
 }): Promise<Regime | null> {
-  const { muscle, userId, limits } = input;
-  const match = await getByRegion(muscle);
+  const { muscle, userId, onboarding } = input;
+  let region: string;
+  let exercises: Exercise[];
 
-  if (match === null || match.exercises.length === 0) {
-    return null;
+  if (onboarding === undefined) {
+    const match = await getByRegion(muscle);
+
+    if (match === null || match.exercises.length === 0) {
+      return null;
+    }
+
+    region = match.region;
+    exercises = match.exercises;
+  } else {
+    const candidates = await getCandidatesFor(onboarding.answers, onboarding.limits);
+
+    if (candidates === null) {
+      return null;
+    }
+
+    if (candidates.length < onboarding.limits.count.min) {
+      throw new TooFewCandidates(candidates.length, onboarding.limits.count.min);
+    }
+
+    region = onboarding.answers.region;
+    // Only what a plain exercise has: these are spread into the saved items,
+    // and the filter fields are not part of what a regime records.
+    exercises = candidates.map(({ id, name, description }) => ({ id, name, description }));
   }
 
-  const picked = await pickExercises(muscle, match.exercises);
+  const picked = await pickExercises(muscle, exercises);
 
   if (picked.length === 0) {
     return null;
   }
 
-  const items = limits === undefined ? picked : applyLimits(picked, limits);
+  const items = onboarding === undefined ? picked : applyLimits(picked, onboarding.limits);
 
   // A transaction needs one connection for every statement, so take a client
   // out of the pool rather than using the pool's one-shot query.
@@ -227,7 +347,7 @@ export async function create(input: {
       `insert into regimes (muscle, body_region, user_id)
        values ($1, $2, $3)
        returning ${REGIME_COLUMNS}`,
-      [muscle, match.region, userId]
+      [muscle, region, userId]
     );
 
     const row = created.rows[0];

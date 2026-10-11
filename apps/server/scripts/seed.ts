@@ -19,6 +19,10 @@ type SourceExercise = {
   instructions: string[];
   category: string;
   level: string;
+  // Blank in the dataset for some rows, so null rather than a string.
+  equipment: string | null;
+  force: string | null;
+  mechanic: string | null;
 };
 
 // The dataset is a general gym catalogue. Olympic lifting, strongman and
@@ -49,11 +53,13 @@ async function main() {
   // text[][] is passed as a json array of arrays: unnest cannot take a
   // two-dimensional array and give back one row per inner array.
   await pool.query(
-    `insert into exercises (id, name, primary_muscles, instructions, category, level)
-     select id, name, primary_muscles, instructions, category, level
+    `insert into exercises
+       (id, name, primary_muscles, instructions, category, level, equipment, force, mechanic)
+     select id, name, primary_muscles, instructions, category, level, equipment, force, mechanic
        from jsonb_to_recordset($1::jsonb)
          as t(id text, name text, primary_muscles text[],
-              instructions text[], category text, level text)`,
+              instructions text[], category text, level text,
+              equipment text, force text, mechanic text)`,
     [
       JSON.stringify(
         rows.map((e) => ({
@@ -63,6 +69,9 @@ async function main() {
           instructions: e.instructions,
           category: e.category,
           level: e.level,
+          equipment: e.equipment,
+          force: e.force,
+          mechanic: e.mechanic,
         }))
       ),
     ]
