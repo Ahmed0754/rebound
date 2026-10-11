@@ -3,17 +3,21 @@
 // exercises by region or by id.
 
 import { pool } from "./db.js";
+import type { Unit } from "../types/index.js";
 
 export type Exercise = {
   id: string;
   name: string;
   description: string;
+  // How it is dosed - see `unitOf`.
+  unit: Unit;
 };
 
 type ExerciseRow = {
   id: string;
   name: string;
   instructions: string[];
+  force: string | null;
 };
 
 type RegionMuscles = Record<string, string[]>;
@@ -69,6 +73,19 @@ export async function listRegions(): Promise<string[]> {
   return Object.keys(await getRegionMuscles()).sort();
 }
 
+/**
+ * Reps or a hold, from the catalogue's own `force` tag: a `static` exercise is
+ * a position you hold (a calf stretch, a plank), anything else is repeated.
+ *
+ * Decided here, from data, so the model never chooses it and cannot get it
+ * wrong. The tag is not perfect - "90/90 Hamstring" is a held stretch tagged
+ * `push` - and an override list for the known misses is the fix when one
+ * matters.
+ */
+function unitOf(force: string | null): Unit {
+  return force === "static" ? "hold" : "reps";
+}
+
 // The catalogue stores instructions as steps; the rest of the app wants one
 // string. Joining here means no other file ever sees the array.
 function fromDbRow(row: ExerciseRow): Exercise {
@@ -76,6 +93,7 @@ function fromDbRow(row: ExerciseRow): Exercise {
     id: row.id,
     name: row.name,
     description: row.instructions.join(" "),
+    unit: unitOf(row.force),
   };
 }
 
@@ -147,7 +165,7 @@ export async function getByRegion(
   // every request for "knee" gets the same 20 rows back forever, which is the
   // one thing `order by random()` exists to avoid.
   const result = await pool.query<ExerciseRow>(
-    `select id, name, instructions
+    `select id, name, instructions, force
        from exercises
       where primary_muscles && $1
       order by random()
@@ -173,7 +191,6 @@ type CandidateRow = ExerciseRow & {
   category: string;
   level: string;
   equipment: string | null;
-  force: string | null;
   mechanic: string | null;
 };
 
@@ -291,7 +308,7 @@ export async function getByIds(ids: string[]): Promise<Map<string, Exercise>> {
   }
 
   const result = await pool.query<ExerciseRow>(
-    `select id, name, instructions
+    `select id, name, instructions, force
        from exercises
       where id = any($1)`,
     [missing]

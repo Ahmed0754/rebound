@@ -1,6 +1,7 @@
-// The controller for onboarding: save a questionnaire, read one back. Mounted
-// at /api/onboarding in app.ts. Most of this file is validation, in the same
-// {value} | {error} shape as `parseItems` in controllers/regimes.ts.
+// The controller for onboarding: save a questionnaire, screen its note, read
+// one back. Mounted at /api/onboarding in app.ts. Most of this file is
+// validation, in the same {value} | {error} shape as `parseItems` in
+// controllers/regimes.ts.
 
 import { Router } from "express";
 import {
@@ -9,16 +10,18 @@ import {
   AGGRAVATORS,
   CONDITIONS,
   EQUIPMENT,
+  FREE_TEXT_MAX_LENGTH,
   GOALS,
   ONSETS,
   RED_FLAGS,
   SESSION_MINUTES,
+  decide,
   getLimits,
-  hasRedFlag,
   type Answers,
 } from "../clinical.js";
+import { screenNote } from "../models/classifier.js";
 import { listRegions } from "../models/exercises.js";
-import { create, get } from "../models/onboarding.js";
+import { create, get, type Onboarding } from "../models/onboarding.js";
 import { getCandidatesFor, toCandidateQuery } from "../models/regimes.js";
 
 const router = Router();
@@ -167,18 +170,61 @@ function parseAnswers(body: unknown): { answers: Answers } | { error: string } {
 }
 
 /**
- * What a saved questionnaire looks like to the client.
- *
- * `outcome` carries the red-flag decision rather than the status code, because
- * the request was valid either way and "see a doctor" is a product answer.
- * `limits` is absent on a red flag: there is no plan for them to bound.
+ * The optional note, or what is wrong with it. Absent, blank and whitespace
+ * all mean "no note", which needs no screening at all.
  */
-function present(id: string, answers: Answers) {
-  if (hasRedFlag(answers)) {
-    return { id, outcome: "see_a_doctor" as const, redFlags: answers.redFlags };
+function parseFreeText(body: unknown): { freeText: string | null } | { error: string } {
+  const value = (body as { freeText?: unknown } | null | undefined)?.freeText;
+
+  if (value === undefined || value === null) {
+    return { freeText: null };
   }
 
-  return { id, outcome: "ready" as const, limits: getLimits(answers) };
+  if (typeof value !== "string") {
+    return { error: "freeText must be a string" };
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length > FREE_TEXT_MAX_LENGTH) {
+    return { error: `freeText must be at most ${FREE_TEXT_MAX_LENGTH} characters` };
+  }
+
+  return { freeText: trimmed === "" ? null : trimmed };
+}
+
+/**
+ * What a saved questionnaire looks like to the client.
+ *
+ * `outcome` carries the decision rather than the status code, because the
+ * request was valid either way and "see a doctor" is a product answer. It is
+ * one of three, and the client shows a different screen for each: crisis is
+ * never folded into "see a doctor" (USERFLOW.md is explicit about that).
+ * `limits` is only present when there is a plan for them to bound.
+ *
+ * `screening` is sent so the client can say when a note could not be checked.
+ */
+function present({ id, answers, note }: Onboarding) {
+  const outcome = decide(answers, note.screening);
+  const screening = note.screening;
+
+  if (outcome === "crisis") {
+    return { id, outcome, screening };
+  }
+
+  if (outcome === "see_a_doctor") {
+    return {
+      id,
+      outcome,
+      screening,
+      redFlags: answers.redFlags,
+      // What the note was flagged for, if it was the note that did it.
+      noteCategories: note.screeningCategories,
+      noteQuote: note.screeningQuote,
+    };
+  }
+
+  return { id, outcome, screening, limits: getLimits(answers) };
 }
 
 router.post("/", async (req, res) => {
@@ -196,6 +242,13 @@ router.post("/", async (req, res) => {
     return;
   }
 
+  const note = parseFreeText(req.body);
+
+  if ("error" in note) {
+    res.status(400).send({ error: note.error });
+    return;
+  }
+
   // Checked against the real list, not just for length: region decides which
   // exercises are considered at all, so "spleen" should fail here rather than
   // at generation. Exact match - the questionnaire sends a choice, where the
@@ -207,11 +260,24 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  // Saved even for a red flag: the row is the record that someone was turned
-  // away, and nothing is generated from it either way.
-  const saved = await create(userId, parsed.answers);
+  // Screened only once the rest is known to be valid, so a bad request never
+  // costs a model call.
+  const screened =
+    note.freeText === null
+      ? { screening: "not_needed" as const, categories: [], quote: null, model: null }
+      : await screenNote(note.freeText);
 
-  res.status(201).send(present(saved.id, saved.answers));
+  // Saved even for a red flag or a crisis: the row is the record that someone
+  // was turned away, and nothing is generated from it either way.
+  const saved = await create(userId, parsed.answers, {
+    freeText: note.freeText,
+    screening: screened.screening,
+    screeningCategories: screened.categories,
+    screeningQuote: screened.quote,
+    screeningModel: screened.model,
+  });
+
+  res.status(201).send(present(saved));
 });
 
 router.get("/:id", async (req, res) => {
@@ -229,7 +295,7 @@ router.get("/:id", async (req, res) => {
     return;
   }
 
-  res.send({ ...present(found.id, found.answers), answers: found.answers });
+  res.send({ ...present(found), answers: found.answers, freeText: found.note.freeText });
 });
 
 // The exercises these answers allow, before Gemini picks any - and the
@@ -250,10 +316,10 @@ router.get("/:id/candidates", async (req, res) => {
     return;
   }
 
-  // Same gate as generating: a red-flagged questionnaire has no plan, so it
-  // has no exercises to offer either.
-  if (hasRedFlag(found.answers)) {
-    res.status(409).send({ error: "these answers need a doctor, not a plan" });
+  // Same gate as generating: answers that lead to a doctor or to crisis
+  // resources have no plan, so they have no exercises to offer either.
+  if (decide(found.answers, found.note.screening) !== "ready") {
+    res.status(409).send({ error: "these answers do not lead to a plan" });
     return;
   }
 

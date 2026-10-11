@@ -4,15 +4,16 @@
 import type { Pool, PoolClient } from "pg";
 import { pool } from "./db.js";
 import { getByIds, getByRegion, getCandidates, type Candidate, type Exercise } from "./exercises.js";
-import { pickExercises } from "./gemini.js";
+import { proposeRegime } from "./gemini.js";
 import {
-  clampDose,
   DIFFICULTIES,
+  validateRegime,
+  widestLimits,
   type Answers,
   type Equipment,
   type Limits,
 } from "../clinical.js";
-import type { RegimeEdit, RegimeItem } from "../types/index.js";
+import type { RegimeEdit, RegimeItem, Unit } from "../types/index.js";
 
 export type Regime = {
   id: string;
@@ -41,9 +42,29 @@ type ItemRow = {
   exercise_id: string;
   name: string;
   description: string;
+  unit: string;
   sets: number;
-  reps: number;
+  reps: number | null;
+  hold_seconds: number | null;
+  rationale: string | null;
 };
+
+// The columns an item is read back from, shared by `readItems` and `list`.
+const ITEM_COLUMNS = "exercise_id, name, description, unit, sets, reps, hold_seconds, rationale";
+
+// A check constraint holds `unit` to these two values, so the cast is safe.
+function itemFromDbRow(item: ItemRow): RegimeItem {
+  return {
+    id: item.exercise_id,
+    name: item.name,
+    description: item.description,
+    unit: item.unit as Unit,
+    sets: item.sets,
+    reps: item.reps,
+    holdSeconds: item.hold_seconds,
+    rationale: item.rationale,
+  };
+}
 
 // Either the pool, for a read that stands on its own, or a client checked out
 // of it, for a read that has to happen inside a transaction.
@@ -70,6 +91,34 @@ export class TooFewCandidates extends Error {
       `only ${found} exercise${found === 1 ? "" : "s"} fit these answers, and a plan needs at least ${needed}`
     );
     this.name = "TooFewCandidates";
+  }
+}
+
+/**
+ * Thrown when no valid plan came back: the model could not be reached, or its
+ * answer broke the limits twice - once, then again after being told why.
+ *
+ * Refused rather than patched, by decision (ADR 0022): there are
+ * no presets to fall back to, and a plan assembled some other way would not
+ * be what the user was told they were getting. Nothing is saved.
+ */
+export class GenerationFailed extends Error {
+  constructor(readonly problems: string[]) {
+    super("we couldn't build a plan right now - please try again in a few minutes");
+    this.name = "GenerationFailed";
+  }
+}
+
+/** Thrown when an edit doses an exercise in the wrong unit - reps for a hold. */
+export class WrongUnit extends Error {
+  constructor(
+    readonly exerciseId: string,
+    readonly unit: Unit
+  ) {
+    super(
+      `"${exerciseId}" is dosed as ${unit === "hold" ? "a hold - send holdSeconds" : "reps - send reps"}`
+    );
+    this.name = "WrongUnit";
   }
 }
 
@@ -108,7 +157,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function readItems(runner: Queryable, regimeId: string): Promise<RegimeItem[]> {
   // `position` is what makes this come back in the order it was shown.
   const items = await runner.query<ItemRow>(
-    `select exercise_id, name, description, sets, reps
+    `select ${ITEM_COLUMNS}
        from regime_exercises
       where regime_id = $1
       order by position`,
@@ -117,13 +166,7 @@ async function readItems(runner: Queryable, regimeId: string): Promise<RegimeIte
 
   // The stored snapshot, not today's catalogue: this is what the user was
   // actually shown, even if the catalogue has changed since.
-  return items.rows.map((item) => ({
-    id: item.exercise_id,
-    name: item.name,
-    description: item.description,
-    sets: item.sets,
-    reps: item.reps,
-  }));
+  return items.rows.map(itemFromDbRow);
 }
 
 /**
@@ -147,7 +190,7 @@ export async function list(userId: string): Promise<Regime[]> {
   }
 
   const items = await pool.query<ItemRow & { regime_id: string }>(
-    `select regime_id, exercise_id, name, description, sets, reps
+    `select regime_id, ${ITEM_COLUMNS}
        from regime_exercises
       where regime_id = any($1)
       order by regime_id, position`,
@@ -161,13 +204,7 @@ export async function list(userId: string): Promise<Regime[]> {
   for (const item of items.rows) {
     const list = byRegime.get(item.regime_id) ?? [];
 
-    list.push({
-      id: item.exercise_id,
-      name: item.name,
-      description: item.description,
-      sets: item.sets,
-      reps: item.reps,
-    });
+    list.push(itemFromDbRow(item));
 
     byRegime.set(item.regime_id, list);
   }
@@ -189,16 +226,21 @@ async function insertItems(
 ): Promise<void> {
   await client.query(
     `insert into regime_exercises
-       (regime_id, position, exercise_id, name, description, sets, reps)
-     select $1, * from unnest($2::int[], $3::text[], $4::text[], $5::text[], $6::int[], $7::int[])`,
+       (regime_id, position, exercise_id, name, description, unit, sets, reps,
+        hold_seconds, rationale)
+     select $1, * from unnest($2::int[], $3::text[], $4::text[], $5::text[], $6::text[],
+                              $7::int[], $8::int[], $9::int[], $10::text[])`,
     [
       regimeId,
       items.map((_, i) => i + 1),
       items.map((item) => item.id),
       items.map((item) => item.name),
       items.map((item) => item.description),
+      items.map((item) => item.unit),
       items.map((item) => item.sets),
       items.map((item) => item.reps),
+      items.map((item) => item.holdSeconds),
+      items.map((item) => item.rationale),
     ]
   );
 }
@@ -269,13 +311,64 @@ export function getCandidatesFor(answers: Answers, limits: Limits): Promise<Cand
   return getCandidates(toCandidateQuery(answers, limits));
 }
 
-// Gemini's dose pinned to what the questionnaire allows, and the list cut to
-// the number of exercises it allows. Here rather than in clinical.ts so that
-// file keeps its no-imports property.
-function applyLimits(items: RegimeItem[], limits: Limits): RegimeItem[] {
-  return items
-    .slice(0, limits.count.max)
-    .map((item) => ({ ...item, ...clampDose(item.sets, item.reps, limits) }));
+// One first try, and one retry told exactly what was wrong with the first.
+const GENERATION_ATTEMPTS = 2;
+
+/**
+ * Asks Gemini for a plan and accepts it only once `validateRegime` does.
+ *
+ * A failed call and a rejected answer cost the same attempt. The retry is
+ * sent the validator's problems, so it is a correction rather than a re-roll.
+ * Throws `GenerationFailed` when neither attempt produces a valid plan.
+ */
+async function generate(input: {
+  region: string;
+  candidates: Exercise[];
+  limits: Limits;
+  answers?: Answers;
+  freeText?: string | null;
+}): Promise<RegimeItem[]> {
+  const byId = new Map(input.candidates.map((candidate) => [candidate.id, candidate]));
+  const allowed = new Map(input.candidates.map((candidate) => [candidate.id, candidate.unit]));
+  let problems: string[] = [];
+
+  for (let attempt = 1; attempt <= GENERATION_ATTEMPTS; attempt++) {
+    let proposal;
+
+    try {
+      proposal = await proposeRegime({ ...input, rejection: problems });
+    } catch (error) {
+      console.error(`regime generation failed (attempt ${attempt} of ${GENERATION_ATTEMPTS})`, error);
+      problems = [];
+      continue;
+    }
+
+    const verdict = validateRegime(proposal.draft, input.limits, allowed);
+
+    if (!verdict.ok) {
+      console.error(`regime rejected (attempt ${attempt} of ${GENERATION_ATTEMPTS})`, verdict.problems);
+      problems = verdict.problems;
+      continue;
+    }
+
+    // Every id is known by now - the validator rejected any that were not.
+    return proposal.draft.map((item) => {
+      const source = byId.get(item.id)!;
+
+      return {
+        id: item.id,
+        name: source.name,
+        description: source.description,
+        unit: item.unit,
+        sets: item.sets,
+        reps: item.reps,
+        holdSeconds: item.holdSeconds,
+        rationale: proposal.rationales.get(item.id) ?? null,
+      };
+    });
+  }
+
+  throw new GenerationFailed(problems);
 }
 
 /**
@@ -284,21 +377,23 @@ function applyLimits(items: RegimeItem[], limits: Limits): RegimeItem[] {
  *
  * `userId` is required - `regimes.user_id` is `not null`. `onboarding` is
  * not: the original "type a body part" screen has no questionnaire behind it,
- * so it draws from `getByRegion` and Gemini's dose is taken as given. With a
- * questionnaire, the candidates come from `getCandidates` and the dose is
- * held to its limits.
+ * so it draws from `getByRegion` and is held only to the widest limits. With a
+ * questionnaire, the candidates come from `getCandidates` and the plan is held
+ * to the limits its answers produced.
  *
- * Throws `TooFewCandidates` when the questionnaire's filters leave too little
- * to build the smallest allowed plan from.
+ * Throws `TooFewCandidates` when the filters leave too little to build the
+ * smallest allowed plan from, and `GenerationFailed` when no valid plan came
+ * back from the model.
  *
  * An options object so the next field added here is not a fourth argument.
  */
 export async function create(input: {
   muscle: string;
   userId: string;
-  onboarding?: { answers: Answers; limits: Limits };
+  onboarding?: { answers: Answers; limits: Limits; freeText: string | null };
 }): Promise<Regime | null> {
   const { muscle, userId, onboarding } = input;
+  const limits = onboarding?.limits ?? widestLimits();
   let region: string;
   let exercises: Exercise[];
 
@@ -318,23 +413,28 @@ export async function create(input: {
       return null;
     }
 
-    if (candidates.length < onboarding.limits.count.min) {
-      throw new TooFewCandidates(candidates.length, onboarding.limits.count.min);
-    }
-
     region = onboarding.answers.region;
-    // Only what a plain exercise has: these are spread into the saved items,
-    // and the filter fields are not part of what a regime records.
-    exercises = candidates.map(({ id, name, description }) => ({ id, name, description }));
+    // Only what a plain exercise has: the filter fields are not part of what
+    // a regime records or the model needs.
+    exercises = candidates.map(({ id, name, description, unit }) => ({
+      id,
+      name,
+      description,
+      unit,
+    }));
   }
 
-  const picked = await pickExercises(muscle, exercises);
-
-  if (picked.length === 0) {
-    return null;
+  if (exercises.length < limits.count.min) {
+    throw new TooFewCandidates(exercises.length, limits.count.min);
   }
 
-  const items = onboarding === undefined ? picked : applyLimits(picked, onboarding.limits);
+  const items = await generate({
+    region,
+    candidates: exercises,
+    limits,
+    answers: onboarding?.answers,
+    freeText: onboarding?.freeText,
+  });
 
   // A transaction needs one connection for every statement, so take a client
   // out of the pool rather than using the pool's one-shot query.
@@ -344,10 +444,10 @@ export async function create(input: {
     await client.query("begin");
 
     const created = await client.query<RegimeRow>(
-      `insert into regimes (muscle, body_region, user_id)
-       values ($1, $2, $3)
+      `insert into regimes (muscle, body_region, user_id, limits)
+       values ($1, $2, $3, $4)
        returning ${REGIME_COLUMNS}`,
-      [muscle, region, userId]
+      [muscle, region, userId, JSON.stringify(limits)]
     );
 
     const row = created.rows[0];
@@ -410,18 +510,38 @@ async function resolveItems(
   );
 
   return picks.map((pick) => {
-    const source = stored.get(pick.id) ?? catalogue.get(pick.id);
+    const kept = stored.get(pick.id);
+    const source = kept ?? catalogue.get(pick.id);
 
     if (source === undefined) {
       throw new UnknownExercise(pick.id);
     }
 
+    // The unit an exercise was saved with wins over today's catalogue, for
+    // the same reason the stored text does.
+    const unit = source.unit;
+
+    if ((unit === "reps" && pick.reps === null) || (unit === "hold" && pick.holdSeconds === null)) {
+      throw new WrongUnit(pick.id, unit);
+    }
+
+    // The rationale explained a particular dose. Kept while the dose is
+    // unchanged, dropped once the edit has changed what it was explaining.
+    const unchanged =
+      kept !== undefined &&
+      kept.sets === pick.sets &&
+      kept.reps === (unit === "reps" ? pick.reps : null) &&
+      kept.holdSeconds === (unit === "hold" ? pick.holdSeconds : null);
+
     return {
       id: pick.id,
       name: source.name,
       description: source.description,
+      unit,
       sets: pick.sets,
-      reps: pick.reps,
+      reps: unit === "reps" ? pick.reps : null,
+      holdSeconds: unit === "hold" ? pick.holdSeconds : null,
+      rationale: unchanged ? kept.rationale : null,
     };
   });
 }

@@ -54,7 +54,8 @@ export default function Home() {
   //Index-aligned with `regime`, which is safe only because nothing here adds,
   //removes or reorders an exercise. Key it by exercise id if that ever changes.
   const [editing, setEditing] = useState(false);
-  const [doses, setDoses] = useState<{ sets: string; reps: string }[]>([]);
+  //`amount` is reps or seconds, whichever the exercise is dosed in.
+  const [doses, setDoses] = useState<{ sets: string; amount: string }[]>([]);
 
   //Loads the account list once on mount, so there is something to pick from
   //without typing a uuid - the same reason ACCOUNTS.md gives for GET /api/users.
@@ -198,7 +199,12 @@ export default function Home() {
   //left alone until the server confirms the change, so a save that fails
   //cannot leave the screen showing a plan the database does not have.
   function startEdit() {
-    setDoses(regime.map((ex) => ({ sets: String(ex.sets), reps: String(ex.reps) })));
+    setDoses(
+      regime.map((ex) => ({
+        sets: String(ex.sets),
+        amount: String(ex.unit === "hold" ? ex.holdSeconds : ex.reps),
+      }))
+    );
     setError(null);
     setEditing(true);
   }
@@ -209,7 +215,7 @@ export default function Home() {
     setError(null);
   }
 
-  function setDose(index: number, field: "sets" | "reps", value: string) {
+  function setDose(index: number, field: "sets" | "amount", value: string) {
     setDoses((current) =>
       current.map((dose, i) => (i === index ? { ...dose, [field]: value } : dose))
     );
@@ -229,13 +235,15 @@ export default function Home() {
 
     try {
       //Only the id and the two numbers are sent. The exercise text is the
-      //record of what this app told the user, so the server owns it.
+      //record of what this app told the user, so the server owns it, and the
+      //amount goes in whichever field the exercise's unit names.
       const updated = await updateRegime(
         regimeId,
         regime.map((ex, i) => ({
           id: ex.id,
           sets: Number(doses[i].sets),
-          reps: Number(doses[i].reps),
+          reps: ex.unit === "reps" ? Number(doses[i].amount) : null,
+          holdSeconds: ex.unit === "hold" ? Number(doses[i].amount) : null,
         }))
       );
 
@@ -574,7 +582,7 @@ export default function Home() {
 
             {editing ? (
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                {(["sets", "reps"] as const).map((field) => (
+                {(["sets", "amount"] as const).map((field) => (
                   <label
                     key={field}
                     style={{ display: "flex", gap: 6, alignItems: "center", color: "#555" }}
@@ -593,14 +601,21 @@ export default function Home() {
                         fontSize: 15,
                       }}
                     />
-                    {field}
+                    {field === "sets" ? "sets" : ex.unit === "hold" ? "seconds" : "reps"}
                   </label>
                 ))}
               </div>
             ) : (
-              <p style={{ margin: 0, color: "#555" }}>
-                {ex.sets} sets &times; {ex.reps} reps
-              </p>
+              <>
+                <p style={{ margin: 0, color: "#555" }}>
+                  {ex.unit === "hold"
+                    ? `${ex.sets} sets \u00d7 ${ex.holdSeconds}s hold`
+                    : `${ex.sets} sets \u00d7 ${ex.reps} reps`}
+                </p>
+                {ex.rationale && (
+                  <p style={{ margin: "6px 0 0", color: "#777", fontSize: 14 }}>{ex.rationale}</p>
+                )}
+              </>
             )}
           </li>
         ))}

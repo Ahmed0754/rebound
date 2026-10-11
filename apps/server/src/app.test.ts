@@ -57,8 +57,20 @@ class TooFewCandidates extends Error {
   }
 }
 
+// Same reason again: mapped to a 503 with `instanceof`.
+class GenerationFailed extends Error {
+  constructor() {
+    super("we couldn't build a plan right now - please try again in a few minutes");
+    this.name = "GenerationFailed";
+  }
+}
+
 // A saved questionnaire whose filters leave too little to build a plan from.
 const NARROW_ONBOARDING_ID = "55555555-5555-5555-5555-555555555555";
+// One the model will not produce a valid plan for.
+const STUCK_ONBOARDING_ID = "66666666-6666-6666-6666-666666666666";
+// One whose note was screened as a crisis.
+const CRISIS_ONBOARDING_ID = "77777777-7777-7777-7777-777777777777";
 
 // No database and no Gemini key needed: routing, validation and error mapping
 // are what these tests are about. Without the mock they would also write a row
@@ -70,9 +82,14 @@ const NARROW_ONBOARDING_ID = "55555555-5555-5555-5555-555555555555";
 vi.mock("./models/regimes.js", () => ({
   UnknownExercise,
   TooFewCandidates,
+  GenerationFailed,
   create: vi.fn(async (input: { muscle: string; userId: string; onboarding?: unknown }) => {
     if (input.onboarding !== undefined && input.muscle === "wrist") {
       throw new TooFewCandidates(1, 2);
+    }
+
+    if (input.muscle === "shoulder") {
+      throw new GenerationFailed();
     }
 
     return input.muscle === "knee" ? { ...saved, userId: input.userId } : null;
@@ -125,31 +142,85 @@ vi.mock("./models/exercises.js", () => ({
   listRegions: vi.fn(async () => ["knee", "lower back", "shoulder"]),
 }));
 
-// Only `get` is reached by these tests: every POST /api/onboarding case below
-// fails validation before anything is saved.
+// A stored questionnaire, as `get` returns one: the answers plus the note.
+function storedOnboarding(id: string, userId: string, region: string, screening = "not_needed") {
+  return {
+    id,
+    userId,
+    createdAt: CREATED_AT,
+    answers: {
+      goal: "reduce_pain",
+      region,
+      onset: "acute",
+      painNow: 8,
+      aggravators: [],
+      redFlags: [],
+      ageBand: "50_plus",
+      conditions: [],
+      equipment: ["none"],
+      activityLevel: "sedentary",
+      sessionMinutes: 5,
+    },
+    note: {
+      freeText: null,
+      screening,
+      screeningCategories: [],
+      screeningQuote: null,
+      screeningModel: null,
+    },
+  };
+}
+
+// `create` echoes what it was given, so a POST /api/onboarding test sees the
+// outcome its answers and its screening produce.
 vi.mock("./models/onboarding.js", () => ({
-  create: vi.fn(),
-  get: vi.fn(async (id: string, userId: string) =>
-    id === NARROW_ONBOARDING_ID
-      ? {
-          id,
-          userId,
-          answers: {
-            goal: "reduce_pain",
-            region: "wrist",
-            onset: "acute",
-            painNow: 8,
-            aggravators: [],
-            redFlags: [],
-            ageBand: "50_plus",
-            conditions: [],
-            equipment: ["none"],
-            activityLevel: "sedentary",
-            sessionMinutes: 5,
-          },
-        }
-      : null
-  ),
+  create: vi.fn(async (userId: string, answers: unknown, note: unknown) => ({
+    id: "88888888-8888-8888-8888-888888888888",
+    userId,
+    createdAt: CREATED_AT,
+    answers,
+    note,
+  })),
+  get: vi.fn(async (id: string, userId: string) => {
+    if (id === NARROW_ONBOARDING_ID) {
+      return storedOnboarding(id, userId, "wrist");
+    }
+
+    if (id === STUCK_ONBOARDING_ID) {
+      return storedOnboarding(id, userId, "shoulder");
+    }
+
+    if (id === CRISIS_ONBOARDING_ID) {
+      return storedOnboarding(id, userId, "knee", "crisis");
+    }
+
+    return null;
+  }),
+}));
+
+// The real one calls Gemini. Each canned verdict is keyed on a word in the
+// note, so a test picks its outcome by what it writes.
+vi.mock("./models/classifier.js", () => ({
+  screenNote: vi.fn(async (text: string) => {
+    if (text.includes("kill myself")) {
+      return { screening: "crisis", categories: ["self_harm"], quote: null, model: null };
+    }
+
+    if (text.includes("pregnant")) {
+      return {
+        screening: "flagged",
+        categories: ["pregnancy_related"],
+        quote: "36 weeks pregnant",
+        model: "test",
+      };
+    }
+
+    if (text.includes("OUTAGE")) {
+      return { screening: "unavailable", categories: [], quote: null, model: null };
+    }
+
+    return { screening: "clear", categories: [], quote: null, model: "test" };
+  }),
 }));
 
 vi.mock("./models/users.js", () => ({
@@ -313,6 +384,22 @@ describe("POST /api/regimes", () => {
     expect((await json<ErrorBody>(res)).error).toBe(
       "only 1 exercises fit these answers, and a plan needs at least 2"
     );
+  });
+
+  it("returns 503 when no valid plan came back from the model", async () => {
+    const res = await postRegime({ onboardingId: STUCK_ONBOARDING_ID });
+
+    expect(res.status).toBe(503);
+    expect((await json<ErrorBody>(res)).error).toContain("try again");
+  });
+
+  // The crisis outcome is re-checked here, like a red flag, so ignoring the
+  // crisis screen and posting the id anyway still gets no plan.
+  it("returns 409 for a questionnaire whose note was a crisis", async () => {
+    const res = await postRegime({ onboardingId: CRISIS_ONBOARDING_ID });
+
+    expect(res.status).toBe(409);
+    expect((await json<ErrorBody>(res)).error).toBe("these answers lead to crisis support, not a plan");
   });
 
   it("returns 404 for an onboarding id that matches nothing", async () => {
@@ -506,6 +593,11 @@ describe("PUT /api/regimes/:id", () => {
       ["zero sets", { regime: [{ id: knee[0].id, sets: 0, reps: 10 }] }],
       ["negative reps", { regime: [{ id: knee[0].id, sets: 3, reps: -10 }] }],
       ["more reps than the cap", { regime: [{ id: knee[0].id, sets: 3, reps: 1000 }] }],
+      // Exactly one amount: which one is right is the server's to check.
+      ["neither reps nor a hold", { regime: [{ id: knee[0].id, sets: 3 }] }],
+      ["both reps and a hold", { regime: [{ id: knee[0].id, sets: 3, reps: 10, holdSeconds: 30 }] }],
+      ["a fractional hold", { regime: [{ id: knee[0].id, sets: 3, holdSeconds: 2.5 }] }],
+      ["a hold longer than the cap", { regime: [{ id: knee[0].id, sets: 3, holdSeconds: 601 }] }],
     ];
 
     for (const [name, body] of bad) {
@@ -736,5 +828,55 @@ describe("POST /api/onboarding", () => {
     const res = await postOnboarding({ ...answers, aggravators: ["stairs", "stairs"] });
 
     expect(res.status).toBe(400);
+  });
+
+  it("rejects a note over 500 characters", async () => {
+    const res = await postOnboarding({ ...answers, freeText: "a".repeat(501) });
+
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("freeText must be at most 500 characters");
+  });
+
+  it("treats a blank note as no note, with nothing to screen", async () => {
+    const res = await postOnboarding({ ...answers, freeText: "   " });
+
+    expect(res.status).toBe(201);
+    await expect(res.json()).resolves.toMatchObject({ outcome: "ready", screening: "not_needed" });
+  });
+
+  it("is ready, with limits, when the note screens clear", async () => {
+    const res = await postOnboarding({ ...answers, freeText: "stairs are the worst" });
+    const body = await json<{ outcome: string; screening: string; limits?: unknown }>(res);
+
+    expect(body.outcome).toBe("ready");
+    expect(body.screening).toBe("clear");
+    expect(body.limits).toBeDefined();
+  });
+
+  // The PRD's example: "no" to the pregnancy question, then this in the note.
+  it("sends a flagged note to a doctor, saying what it was flagged for", async () => {
+    const res = await postOnboarding({ ...answers, freeText: "36 weeks pregnant, sciatica's been brutal" });
+
+    await expect(res.json()).resolves.toMatchObject({
+      outcome: "see_a_doctor",
+      noteCategories: ["pregnancy_related"],
+      noteQuote: "36 weeks pregnant",
+    });
+  });
+
+  // Its own outcome, never folded into see_a_doctor, and with no limits.
+  it("sends crisis language to crisis", async () => {
+    const res = await postOnboarding({ ...answers, freeText: "I want to kill myself" });
+    const body = await json<{ outcome: string; limits?: unknown }>(res);
+
+    expect(body.outcome).toBe("crisis");
+    expect(body.limits).toBeUndefined();
+  });
+
+  // ADR 0021, as decided: an unscreened note goes through, and says so.
+  it("is ready when the classifier was down, and reports the note as unscreened", async () => {
+    const res = await postOnboarding({ ...answers, freeText: "OUTAGE sore after football" });
+
+    await expect(res.json()).resolves.toMatchObject({ outcome: "ready", screening: "unavailable" });
   });
 });

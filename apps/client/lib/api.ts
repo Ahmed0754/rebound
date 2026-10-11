@@ -8,8 +8,15 @@ export type Exercise = {
   id: string;
   name: string;
   description: string;
+  // A count of repetitions, or a position held for a number of seconds. The
+  // server decides which, from the catalogue; exactly one of `reps` and
+  // `holdSeconds` is a number, the one `unit` names.
+  unit: "reps" | "hold";
   sets: number;
-  reps: number;
+  reps: number | null;
+  holdSeconds: number | null;
+  // One line on why this exercise, when the plan was generated with one.
+  rationale: string | null;
 };
 
 export type Regime = {
@@ -31,7 +38,8 @@ export type Regime = {
 export type RegimeEdit = {
   id: string;
   sets: number;
-  reps: number;
+  reps: number | null;
+  holdSeconds: number | null;
 };
 
 // Pings the server; nothing to validate, so there is no failure branch here.

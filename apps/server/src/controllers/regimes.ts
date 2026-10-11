@@ -2,16 +2,18 @@
 // calls the model, and picks a status code. Mounted at /api/regimes in app.ts.
 
 import { Router } from "express";
-import { getLimits, hasRedFlag } from "../clinical.js";
+import { decide, getLimits } from "../clinical.js";
 import { get as getOnboarding } from "../models/onboarding.js";
 import {
   create,
+  GenerationFailed,
   get,
   list,
   remove,
   TooFewCandidates,
   update,
   UnknownExercise,
+  WrongUnit,
 } from "../models/regimes.js";
 import type { RegimeEdit } from "../types/index.js";
 
@@ -42,13 +44,25 @@ function readUserId(req: { header(name: string): string | undefined }): string |
 const MIN_ITEMS = 1;
 const MAX_ITEMS = 10;
 
-// `sets` and `reps` are `integer` columns. A float or a numeric string reaches
-// Postgres as a type error, which would surface as a 500 for what is plainly a
-// bad request, so nothing but a whole number in range gets through.
+// `sets`, `reps` and `hold_seconds` are `integer` columns. A float or a
+// numeric string reaches Postgres as a type error, which would surface as a
+// 500 for what is plainly a bad request, so nothing but a whole number in
+// range gets through.
 const DOSE_LIMITS = {
   sets: { min: 1, max: 20 },
   reps: { min: 1, max: 100 },
+  holdSeconds: { min: 1, max: 600 },
 } as const;
+
+function badDose(value: unknown, field: keyof typeof DOSE_LIMITS): string | null {
+  const limit = DOSE_LIMITS[field];
+
+  if (!Number.isInteger(value) || (value as number) < limit.min || (value as number) > limit.max) {
+    return `${field} must be a whole number between ${limit.min} and ${limit.max}`;
+  }
+
+  return null;
+}
 
 // The catalogue's ids are slugs like "3_4_Sit-Up". `exercise_id` is unbounded
 // `text`, so the cap is here rather than in the schema.
@@ -61,6 +75,10 @@ const MAX_ID_LENGTH = 200;
  * Only the id and the dose are read. Name and description are the record of
  * what the app told the user, so the model resolves them and they are never
  * accepted from a request.
+ *
+ * The dose is `sets` plus exactly one of `reps` or `holdSeconds`. Which one
+ * the exercise takes is the server's to check (`WrongUnit`), since only it
+ * knows the unit; here it only has to be one of them.
  */
 function parseItems(body: unknown): { items: RegimeEdit[] } | { error: string } {
   const regime = (body as { regime?: unknown } | null | undefined)?.regime;
@@ -93,28 +111,72 @@ function parseItems(body: unknown): { items: RegimeEdit[] } | { error: string } 
 
     seen.add(id);
 
-    for (const [field, limit] of Object.entries(DOSE_LIMITS)) {
-      const value: unknown = entry?.[field];
+    const setsError = badDose(entry?.sets, "sets");
 
-      if (!Number.isInteger(value) || (value as number) < limit.min || (value as number) > limit.max) {
-        return {
-          error: `${field} must be a whole number between ${limit.min} and ${limit.max}`,
-        };
-      }
+    if (setsError !== null) {
+      return { error: setsError };
     }
 
-    items.push({ id, sets: entry.sets, reps: entry.reps });
+    const hasReps = entry?.reps !== undefined && entry?.reps !== null;
+    const hasHold = entry?.holdSeconds !== undefined && entry?.holdSeconds !== null;
+
+    if (hasReps === hasHold) {
+      return { error: `"${id}" needs exactly one of reps or holdSeconds` };
+    }
+
+    const amountError = hasReps ? badDose(entry.reps, "reps") : badDose(entry.holdSeconds, "holdSeconds");
+
+    if (amountError !== null) {
+      return { error: amountError };
+    }
+
+    items.push({
+      id,
+      sets: entry.sets,
+      reps: hasReps ? entry.reps : null,
+      holdSeconds: hasHold ? entry.holdSeconds : null,
+    });
   }
 
   return { items };
 }
 
 /**
+ * Builds and saves a regime, and picks the status for how that went. Shared
+ * by both ways of asking for one.
+ *
+ * 409 when too few exercises fit: the request is fine, the stored answers are
+ * what rule a plan out. 503 when no valid plan came back from the model: the
+ * request is fine and could succeed later, which is what "try again" means.
+ */
+async function build(input: Parameters<typeof create>[0], region: string) {
+  try {
+    const regime = await create(input);
+
+    if (regime === null) {
+      return { status: 404, body: { error: `no exercises found for "${region}"` } };
+    }
+
+    return { status: 201, body: regime };
+  } catch (error) {
+    if (error instanceof TooFewCandidates) {
+      return { status: 409, body: { error: error.message } };
+    }
+
+    if (error instanceof GenerationFailed) {
+      return { status: 503, body: { error: error.message } };
+    }
+
+    throw error;
+  }
+}
+
+/**
  * Builds a regime from a saved questionnaire.
  *
- * The red-flag check runs again here even though it ran when the answers were
- * saved: without it, the "see a doctor" response could just be ignored and the
- * id posted straight to this route.
+ * The decision runs again here even though it ran when the answers were
+ * saved: without it, a "see a doctor" or crisis response could just be
+ * ignored and the id posted straight to this route.
  */
 async function fromOnboarding(onboardingId: string, userId: string) {
   const onboarding = await getOnboarding(onboardingId, userId);
@@ -123,38 +185,31 @@ async function fromOnboarding(onboardingId: string, userId: string) {
     return { status: 404, body: { error: "no onboarding with that id" } };
   }
 
-  if (hasRedFlag(onboarding.answers)) {
-    // Not a 400 - the request is well formed and the id is real. The stored
-    // answers are what forbid a plan.
+  // Not a 400 - the request is well formed and the id is real. The stored
+  // answers are what forbid a plan.
+  const outcome = decide(onboarding.answers, onboarding.note.screening);
+
+  // Worded per outcome: crisis is never described as a referral.
+  if (outcome === "crisis") {
+    return { status: 409, body: { error: "these answers lead to crisis support, not a plan" } };
+  }
+
+  if (outcome === "see_a_doctor") {
     return { status: 409, body: { error: "these answers need a doctor, not a plan" } };
   }
 
-  let regime;
-
-  try {
-    regime = await create({
+  return build(
+    {
       muscle: onboarding.answers.region,
       userId,
-      onboarding: { answers: onboarding.answers, limits: getLimits(onboarding.answers) },
-    });
-  } catch (error) {
-    // 409 for the same reason as the red flag: the request is fine, the
-    // stored answers are what rule a plan out.
-    if (error instanceof TooFewCandidates) {
-      return { status: 409, body: { error: error.message } };
-    }
-
-    throw error;
-  }
-
-  if (regime === null) {
-    return {
-      status: 404,
-      body: { error: `no exercises found for "${onboarding.answers.region}"` },
-    };
-  }
-
-  return { status: 201, body: regime };
+      onboarding: {
+        answers: onboarding.answers,
+        limits: getLimits(onboarding.answers),
+        freeText: onboarding.note.freeText,
+      },
+    },
+    onboarding.answers.region
+  );
 }
 
 router.post("/", async (req, res) => {
@@ -189,15 +244,11 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const regime = await create({ muscle, userId });
+  // A 404 from here is not an error: the request was fine, there is just
+  // nothing stored for that region.
+  const { status, body } = await build({ muscle, userId }, muscle);
 
-  // Not an error: the request was fine, there is just nothing stored for that region.
-  if (regime === null) {
-    res.status(404).send({ error: `no exercises found for "${muscle}"` });
-    return;
-  }
-
-  res.status(201).send(regime);
+  res.status(status).send(body);
 });
 
 // The caller's own regimes, newest first. Declared before "/:id" so the bare
@@ -258,7 +309,7 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     // The regime is there; the request named an exercise that is neither in it
     // nor in the catalogue. That is a bad body, so it must not read as a 404.
-    if (error instanceof UnknownExercise) {
+    if (error instanceof UnknownExercise || error instanceof WrongUnit) {
       res.status(400).send({ error: error.message });
       return;
     }

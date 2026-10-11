@@ -88,9 +88,17 @@ export type Answers = {
   sessionMinutes: SessionMinutes;
 };
 
+// How an exercise is dosed: a count of repetitions, or a held position timed
+// in seconds. Decided by the catalogue (a `static` exercise is a hold), never
+// by the model.
+export const UNITS = ["reps", "hold"] as const;
+export type Unit = (typeof UNITS)[number];
+
 export type Limits = {
   sets: { min: number; max: number };
   reps: { min: number; max: number };
+  // Seconds per hold, for exercises dosed as a hold rather than reps.
+  hold: { min: number; max: number };
   count: { min: number; max: number };
   // The hardest catalogue level allowed, and the kinds of exercise allowed.
   // These decide which exercises are offered at all, where the three above
@@ -106,6 +114,9 @@ export type Limits = {
 const ABSOLUTE = {
   sets: { min: 1, max: 4 },
   reps: { min: 5, max: 15 },
+  // General fitness guidance usually quotes 10-30s per static stretch. The
+  // floor is 15 because a shorter hold is barely a stretch.
+  hold: { min: 15, max: 30 },
   count: { min: 2, max: 5 },
 } as const;
 
@@ -127,6 +138,7 @@ type Rule = {
   cap: {
     sets?: number;
     reps?: number;
+    hold?: number;
     count?: number;
     difficulty?: Difficulty;
     // The only categories this rule allows. Rules intersect, the same way the
@@ -145,7 +157,9 @@ const RULES: Rule[] = [
     when: (a) => a.painNow >= 7,
     // Loaded strength work is what a conservative default refuses at this
     // level of pain.
-    cap: { sets: 2, reps: 8, count: 3, categories: ["stretching"] },
+    // Shorter holds too: gentle is the point, and a long hold at this level of
+    // pain is not gentle.
+    cap: { sets: 2, reps: 8, hold: 20, count: 3, categories: ["stretching"] },
   },
   {
     id: "moderate_pain",
@@ -159,7 +173,7 @@ const RULES: Rule[] = [
     when: (a) => a.onset === "acute",
     // Under a week old. Same reasoning as high pain: no loaded work on a
     // fresh flare.
-    cap: { sets: 2, count: 3, categories: ["stretching"] },
+    cap: { sets: 2, hold: 20, count: 3, categories: ["stretching"] },
   },
   {
     id: "chronic",
@@ -220,6 +234,7 @@ export function getLimits(answers: Answers): Limits {
   // literal types, and the minimum could not be assigned back.
   let sets: number = ABSOLUTE.sets.max;
   let reps: number = ABSOLUTE.reps.max;
+  let hold: number = ABSOLUTE.hold.max;
   let count: number = ABSOLUTE.count.max;
   // Held as a position on the ladder so "lower" is just a smaller number.
   let difficulty = DIFFICULTIES.indexOf(ACTIVITY_DIFFICULTY[answers.activityLevel]);
@@ -228,6 +243,7 @@ export function getLimits(answers: Answers): Limits {
   for (const rule of fired) {
     sets = Math.min(sets, rule.cap.sets ?? sets);
     reps = Math.min(reps, rule.cap.reps ?? reps);
+    hold = Math.min(hold, rule.cap.hold ?? hold);
     count = Math.min(count, rule.cap.count ?? count);
 
     if (rule.cap.difficulty !== undefined) {
@@ -253,6 +269,7 @@ export function getLimits(answers: Answers): Limits {
   return {
     sets: { min: ABSOLUTE.sets.min, max: Math.max(ABSOLUTE.sets.min, sets) },
     reps: { min: ABSOLUTE.reps.min, max: Math.max(ABSOLUTE.reps.min, reps) },
+    hold: { min: ABSOLUTE.hold.min, max: Math.max(ABSOLUTE.hold.min, hold) },
     count: { min: ABSOLUTE.count.min, max: Math.max(ABSOLUTE.count.min, count) },
     difficultyCap: DIFFICULTIES[difficulty],
     categories,
@@ -260,24 +277,169 @@ export function getLimits(answers: Answers): Limits {
   };
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
+/**
+ * The widest limits there are, for the type-a-body-part path that has no
+ * questionnaire behind it. No rule has fired, so nothing is lowered - but a
+ * plan is still validated against the absolute bounds, which is more than
+ * that path had before.
+ */
+export function widestLimits(): Limits {
+  return {
+    sets: { ...ABSOLUTE.sets },
+    reps: { ...ABSOLUTE.reps },
+    hold: { ...ABSOLUTE.hold },
+    count: { ...ABSOLUTE.count },
+    difficultyCap: "expert",
+    categories: [...CATEGORIES],
+    reasons: [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Free text
+// ---------------------------------------------------------------------------
+
+// Long enough to say what the tick-boxes missed, short enough to keep the
+// prompt small and the injection surface smaller. The database enforces the
+// same number.
+export const FREE_TEXT_MAX_LENGTH = 500;
+
+// The verdicts a note can get. Stored per row - see the free-text migration
+// for what each one means.
+export const SCREENINGS = ["not_needed", "clear", "flagged", "crisis", "unavailable"] as const;
+export type Screening = (typeof SCREENINGS)[number];
+
+// Self-harm language, matched without a model so it is caught even when the
+// classifier is down - the one case where an outage must not let anything
+// through. The classifier is the wider net; these are the backstop.
+//
+// Deliberately narrow. This is an injury app, so "I hurt myself skiing" and
+// "this workout is killing me" are ordinary sentences here, and sending
+// someone with a sprained ankle to a crisis screen is its own kind of failure.
+const CRISIS_PATTERNS = [
+  /\bkill(ing)? myself\b/,
+  /\bsuicid/,
+  /\bself[- ]?harm/,
+  /\bharm(ing)? myself\b/,
+  /\bend(ing)? (it all|my life)\b/,
+  /\btake my (own )?life\b/,
+  /\bwant(ed)? to die\b/,
+  /\bbetter off dead\b/,
+  /\bno reason to (live|go on)\b/,
+  /\bdon'?t want to (live|be alive|be here anymore)\b/,
+];
+
+/** Whether a note contains self-harm language the fixed patterns recognise. */
+export function isCrisisText(text: string): boolean {
+  // Curly apostrophes, as phones type them, become straight ones first.
+  const normalised = text.toLowerCase().replace(/[\u2018\u2019]/g, "'");
+  return CRISIS_PATTERNS.some((pattern) => pattern.test(normalised));
 }
 
 /**
- * Pins a dose the model chose into what `limits` allows.
+ * What these answers lead to: a plan, a doctor, or crisis resources.
  *
- * A placeholder: clamping is safe but hides that the model ignored its bounds,
- * and can leave an odd pair - 4 sets clamped to 2 while 15 reps stays 15.
- * Part 3 puts the limits in the prompt and rejects instead.
+ * Crisis comes first, ahead of a ticked red flag: someone who is both in pain
+ * and at risk needs the crisis screen, not a referral. An `unavailable` note
+ * reads as ready - unscreened text goes through when the classifier cannot be
+ * reached, by decision (ADR 0021). The crisis patterns have already run on it.
+ *
+ * Asked twice, like the red flag always was - when the answers are saved, and
+ * again when a plan is generated - so the first answer cannot be skipped.
  */
-export function clampDose(
-  sets: number,
-  reps: number,
-  limits: Limits
-): { sets: number; reps: number } {
-  return {
-    sets: clamp(sets, limits.sets.min, limits.sets.max),
-    reps: clamp(reps, limits.reps.min, limits.reps.max),
-  };
+export function decide(
+  answers: Answers,
+  screening: Screening
+): "ready" | "see_a_doctor" | "crisis" {
+  if (screening === "crisis") {
+    return "crisis";
+  }
+
+  if (hasRedFlag(answers) || screening === "flagged") {
+    return "see_a_doctor";
+  }
+
+  return "ready";
+}
+
+// ---------------------------------------------------------------------------
+// Validating a generated plan
+// ---------------------------------------------------------------------------
+
+/** One exercise of a plan the model proposed, before anything is saved. */
+export type DraftItem = {
+  id: string;
+  unit: Unit;
+  sets: number;
+  // Exactly one of these is a number, the one `unit` names.
+  reps: number | null;
+  holdSeconds: number | null;
+};
+
+function outside(value: number | null, range: { min: number; max: number }): boolean {
+  return value === null || !Number.isInteger(value) || value < range.min || value > range.max;
+}
+
+/**
+ * Whether a proposed plan stays inside `limits`, using only exercises from
+ * `allowed` (exercise id -> the unit the catalogue doses it in).
+ *
+ * Rejects rather than repairs - the clamp this replaced always produced a
+ * safe dose, but hid that the model had ignored its bounds. Every problem is
+ * listed, not just the first, because the list is fed back to the model as
+ * the reason for one retry, and a retry told about one problem fixes one.
+ *
+ * Reads nothing the user wrote. A note can change what the model proposes;
+ * it cannot change what this accepts.
+ */
+export function validateRegime(
+  draft: DraftItem[],
+  limits: Limits,
+  allowed: Map<string, Unit>
+): { ok: true } | { ok: false; problems: string[] } {
+  const problems: string[] = [];
+
+  if (draft.length < limits.count.min || draft.length > limits.count.max) {
+    problems.push(
+      `the plan has ${draft.length} exercises; it must have between ${limits.count.min} and ${limits.count.max}`
+    );
+  }
+
+  const seen = new Set<string>();
+
+  for (const item of draft) {
+    if (seen.has(item.id)) {
+      problems.push(`"${item.id}" appears more than once`);
+      continue;
+    }
+
+    seen.add(item.id);
+
+    const unit = allowed.get(item.id);
+
+    if (unit === undefined) {
+      problems.push(`"${item.id}" is not one of the exercises offered`);
+      continue;
+    }
+
+    if (outside(item.sets, limits.sets)) {
+      problems.push(
+        `"${item.id}" has ${item.sets} sets; sets must be between ${limits.sets.min} and ${limits.sets.max}`
+      );
+    }
+
+    if (item.unit !== unit) {
+      problems.push(`"${item.id}" is dosed in ${unit}, not ${item.unit}`);
+    } else if (unit === "reps" && (outside(item.reps, limits.reps) || item.holdSeconds !== null)) {
+      problems.push(
+        `"${item.id}" has ${item.reps} reps; reps must be between ${limits.reps.min} and ${limits.reps.max}`
+      );
+    } else if (unit === "hold" && (outside(item.holdSeconds, limits.hold) || item.reps !== null)) {
+      problems.push(
+        `"${item.id}" is held for ${item.holdSeconds}s; holds must be between ${limits.hold.min} and ${limits.hold.max} seconds`
+      );
+    }
+  }
+
+  return problems.length === 0 ? { ok: true } : { ok: false, problems };
 }

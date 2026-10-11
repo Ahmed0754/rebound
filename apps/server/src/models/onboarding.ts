@@ -12,13 +12,26 @@ import type {
   Goal,
   Onset,
   RedFlag,
+  Screening,
   SessionMinutes,
 } from "../clinical.js";
+
+// The free-text note and what screening made of it. Kept apart from `answers`
+// because the rules in clinical.ts never read prose - only the classifier and
+// the generation prompt do.
+export type Note = {
+  freeText: string | null;
+  screening: Screening;
+  screeningCategories: string[];
+  screeningQuote: string | null;
+  screeningModel: string | null;
+};
 
 export type Onboarding = {
   id: string;
   userId: string;
   answers: Answers;
+  note: Note;
   createdAt: string;
 };
 
@@ -36,12 +49,18 @@ type OnboardingRow = {
   equipment: string[];
   activity_level: string;
   session_minutes: number;
+  free_text: string | null;
+  screening: string;
+  screening_categories: string[];
+  screening_quote: string | null;
+  screening_model: string | null;
   created_at: Date;
 };
 
 const COLUMNS = `id, user_id, goal, region, onset, pain_now, aggravators,
                  red_flags, age_band, conditions, equipment, activity_level,
-                 session_minutes, created_at`;
+                 session_minutes, free_text, screening, screening_categories,
+                 screening_quote, screening_model, created_at`;
 
 // Same shape and reason as the one in models/regimes.ts: a non-uuid compared
 // against a uuid column is a Postgres error, which would be a 500 for what is
@@ -69,15 +88,24 @@ function fromDbRow(row: OnboardingRow): Onboarding {
       activityLevel: row.activity_level as ActivityLevel,
       sessionMinutes: row.session_minutes as SessionMinutes,
     },
+    note: {
+      freeText: row.free_text,
+      // A check constraint holds this column to the same list.
+      screening: row.screening as Screening,
+      screeningCategories: row.screening_categories,
+      screeningQuote: row.screening_quote,
+      screeningModel: row.screening_model,
+    },
   };
 }
 
-export async function create(userId: string, answers: Answers): Promise<Onboarding> {
+export async function create(userId: string, answers: Answers, note: Note): Promise<Onboarding> {
   const saved = await pool.query<OnboardingRow>(
     `insert into onboarding_responses
        (user_id, goal, region, onset, pain_now, aggravators, red_flags,
-        age_band, conditions, equipment, activity_level, session_minutes)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        age_band, conditions, equipment, activity_level, session_minutes,
+        free_text, screening, screening_categories, screening_quote, screening_model)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
      returning ${COLUMNS}`,
     [
       userId,
@@ -92,6 +120,11 @@ export async function create(userId: string, answers: Answers): Promise<Onboardi
       answers.equipment,
       answers.activityLevel,
       answers.sessionMinutes,
+      note.freeText,
+      note.screening,
+      note.screeningCategories,
+      note.screeningQuote,
+      note.screeningModel,
     ]
   );
 
