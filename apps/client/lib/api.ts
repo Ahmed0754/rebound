@@ -1,5 +1,7 @@
 // The public-facing API calls this client makes: one named function per server endpoint.
 
+import type { Answers } from "@/lib/questionnaire";
+
 // Falls back to the server's own default port so a fresh checkout works
 // without an .env file.
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -21,14 +23,15 @@ export type Exercise = {
 
 export type Regime = {
   id: string;
+  // The body region the plan is for, e.g. "knee".
   muscle: string;
   // When it was generated, and when it was last edited. They are equal until
   // someone saves a change, which is the only visible sign a PUT landed.
   createdAt: string;
   updatedAt: string;
   regime: Exercise[];
-  // Who was signed in when this was generated, or null if nobody was. A tag,
-  // not an ownership check - see ACCOUNTS.md.
+  // The account that generated it. A tag, not an ownership check: the server
+  // does not yet refuse another account's plan on GET/PUT/DELETE by id.
   userId: string | null;
 };
 
@@ -42,155 +45,172 @@ export type RegimeEdit = {
   holdSeconds: number | null;
 };
 
-// Pings the server; nothing to validate, so there is no failure branch here.
-export async function getHealth(): Promise<{ ok: boolean }> {
-  const res = await fetch(`${API_URL}/health`);
-  return res.json();
-}
-
-// A test account - see ACCOUNTS.md. No password: anyone holding the id can
-// act as it.
+// A test account. No password: anyone holding the id can act as it.
 export type User = {
   id: string;
   username: string;
   createdAt: string;
 };
 
-// Creates an account and returns it. Throws on a 400 (bad username) or a 409
-// (taken), with the server's own message - it is more specific than anything
-// this client would invent.
-export async function createUser(username: string): Promise<User> {
-  const res = await fetch(`${API_URL}/api/users`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
-  });
+export type Range = { min: number; max: number };
 
-  const data = await res.json();
+// The bounds the server put on a plan for these answers. Shown only on the
+// "ready" screen - the client never computes or enforces any of it.
+export type Limits = {
+  sets: Range;
+  reps: Range;
+  hold: Range;
+  count: Range;
+  difficultyCap: string;
+  categories: string[];
+  // Already written for the user, e.g. "your pain is 7 or above".
+  reasons: string[];
+};
 
-  if (!res.ok) {
-    throw new Error(data?.error ?? `Request failed: ${res.status}`);
+export type Screening = "not_needed" | "clear" | "flagged" | "crisis" | "unavailable";
+
+// One saved questionnaire, as the server decided it. Branch on `outcome`,
+// never on the HTTP status: all three come back as a success.
+export type OnboardingResult =
+  | { id: string; outcome: "ready"; screening: Screening; limits: Limits }
+  | {
+      id: string;
+      outcome: "see_a_doctor";
+      screening: Screening;
+      redFlags: string[];
+      noteCategories: string[];
+      noteQuote: string | null;
+    }
+  | { id: string; outcome: "crisis"; screening: Screening };
+
+// A failed request, with the server's own message and the status, so a page
+// can tell a 409 ("no plan from these answers") from a 503 ("try again").
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+  }
+}
+
+// Every call goes through here. It adds `X-User-Id` when there is one, and
+// turns a failure into an ApiError carrying the server's message - that is
+// more specific than anything this client would invent.
+//
+// A 204 has no body, so it resolves to undefined. A failure body is parsed
+// guardedly: a dead server or a proxy in the way answers with HTML, and that
+// must not surface as a parse error instead of the status.
+async function request<T>(
+  path: string,
+  { method = "GET", body, userId }: { method?: string; body?: unknown; userId?: string } = {}
+): Promise<T> {
+  let res: Response;
+
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: {
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(userId ? { "X-User-Id": userId } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // fetch only rejects when no response arrived at all.
+    throw new ApiError("Couldn't reach the server. Is it running?", 0);
   }
 
-  return data;
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new ApiError(data?.error ?? `Request failed: ${res.status}`, res.status);
+  }
+
+  return data as T;
+}
+
+const id = (value: string) => encodeURIComponent(value);
+
+// Pings the server; nothing to validate, so there is no failure branch here.
+export function getHealth(): Promise<{ ok: boolean }> {
+  return request("/health");
+}
+
+// The body regions the questionnaire may name. Fetched rather than copied:
+// it lives in the database, not in source.
+export function listRegions(): Promise<string[]> {
+  return request("/api/regions");
+}
+
+// Creates an account. Throws on a 400 (bad username) or a 409 (taken).
+export function createUser(username: string): Promise<User> {
+  return request("/api/users", { method: "POST", body: { username } });
 }
 
 // Every account, so a test session can pick one instead of remembering a uuid.
-export async function listUsers(): Promise<User[]> {
-  const res = await fetch(`${API_URL}/api/users`);
-
-  if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
-  }
-
-  return res.json();
+export function listUsers(): Promise<User[]> {
+  return request("/api/users");
 }
 
-// Deletes an account. The server answers 204 with no body, so there is
-// nothing to hand back on success.
-export async function deleteUser(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/users/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
-
-  if (res.ok) {
-    return;
-  }
-
-  const data = await res.json().catch(() => null);
-  throw new Error(data?.error ?? `Request failed: ${res.status}`);
+// One account, or a 404 ApiError if it has been deleted.
+export function getUser(userId: string): Promise<User> {
+  return request(`/api/users/${id(userId)}`);
 }
 
-// The server's error message is more useful than a bare status code, so
-// surface it when there is one. Generic because the regime calls below return
-// one regime and the list call returns several.
-async function readOrThrow<T = Regime>(res: Response): Promise<T> {
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data?.error ?? `Request failed: ${res.status}`);
-  }
-
-  return data;
+// Deletes an account, and with it every plan and questionnaire it owns.
+export function deleteUser(userId: string): Promise<void> {
+  return request(`/api/users/${id(userId)}`, { method: "DELETE" });
 }
 
-// Generates a regime and saves it. Named for what it does rather than the HTTP
-// verb, so it cannot be confused with reading one back.
-//
-// `userId` is optional: there is no sign-in requirement, only a tag applied
-// when the caller happens to have one. See ACCOUNTS.md.
-export async function createRegime(muscle: string, userId?: string): Promise<Regime> {
-  const res = await fetch(`${API_URL}/api/regimes`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(userId ? { "X-User-Id": userId } : {}),
-    },
-    body: JSON.stringify({ muscle }),
-  });
-
-  return readOrThrow(res);
+// Saves a whole questionnaire in one go and returns the server's decision.
+// Slow when there is a note: the server screens it with Gemini first.
+export function createOnboarding(
+  userId: string,
+  answers: Answers,
+  freeText: string
+): Promise<OnboardingResult> {
+  return request("/api/onboarding", { method: "POST", userId, body: { ...answers, freeText } });
 }
 
-// Every regime this account has generated, newest first. An account that has
-// not generated one yet comes back as an empty list, not an error.
-export async function listRegimes(userId: string): Promise<Regime[]> {
-  const res = await fetch(`${API_URL}/api/regimes`, {
-    headers: { "X-User-Id": userId },
-  });
-
-  return readOrThrow<Regime[]>(res);
+// Reads a saved questionnaire's decision back by id. A 404 for an unknown id
+// and for another account's alike.
+export function getOnboarding(userId: string, onboardingId: string): Promise<OnboardingResult> {
+  return request(`/api/onboarding/${id(onboardingId)}`, { userId });
 }
 
-// Reads back one regime by the id `createRegime` returned.
-//
-// Returns null rather than throwing when no regime has that id: an id that
-// matches nothing is an ordinary miss - a typo, or a regime from a database
-// that has since been reset - not a failure worth showing as an error.
-export async function getRegimeById(id: string): Promise<Regime | null> {
-  const res = await fetch(`${API_URL}/api/regimes/${encodeURIComponent(id)}`);
-
-  if (res.status === 404) {
-    return null;
-  }
-
-  return readOrThrow(res);
+// Generates a plan from a saved questionnaire and saves it. Slow: up to two
+// Gemini calls. 409 means no plan from these answers, 503 means try again.
+export function createRegimeFromOnboarding(userId: string, onboardingId: string): Promise<Regime> {
+  return request("/api/regimes", { method: "POST", userId, body: { onboardingId } });
 }
 
-// Replaces the exercises of a saved regime and returns it as it now stands.
-//
-// Throws on a 404, unlike `getRegimeById`: looking up an id that matches
-// nothing is an ordinary miss, but saving into one means the regime went away
-// while it was being edited, and that is worth putting in front of the user.
-export async function updateRegime(id: string, regime: RegimeEdit[]): Promise<Regime> {
-  const res = await fetch(`${API_URL}/api/regimes/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ regime }),
-  });
-
-  return readOrThrow(res);
+// Every plan this account has generated, newest first. None yet is an empty
+// list, not an error.
+export function listRegimes(userId: string): Promise<Regime[]> {
+  return request("/api/regimes", { userId });
 }
 
-// Deletes a saved regime. The server answers 204 with no body, so there is
-// nothing to hand back and `readOrThrow` does not fit.
-//
-// Throws on a 404 for the same reason `updateRegime` does: the id came from a
-// regime that is on screen, so nothing to delete means it went away underneath
-// the user rather than that they mistyped it.
-export async function deleteRegime(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/regimes/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+// One plan by id, or a 404 ApiError.
+export function getRegimeById(regimeId: string): Promise<Regime> {
+  return request(`/api/regimes/${id(regimeId)}`);
+}
 
-  if (res.ok) {
-    return;
-  }
+// Replaces the doses of a saved plan and returns it as it now stands.
+export function updateRegime(regimeId: string, regime: RegimeEdit[]): Promise<Regime> {
+  return request(`/api/regimes/${id(regimeId)}`, { method: "PUT", body: { regime } });
+}
 
-  // The success case has no body, but a failure does. Still guarded: a dead
-  // server or a proxy in the way answers with HTML, and that must not surface
-  // as a parse error instead of the status.
-  const data = await res.json().catch(() => null);
+// Deletes a saved plan. Hard delete on the server; there is no undo.
+export function deleteRegime(regimeId: string): Promise<void> {
+  return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE" });
+}
 
-  throw new Error(data?.error ?? `Request failed: ${res.status}`);
+// The message to show for anything a call threw.
+export function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

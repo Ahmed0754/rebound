@@ -3,10 +3,13 @@
 
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { SiteHeader } from "@/components/site-header";
+import { CurrentUserProvider } from "@/lib/current-user";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Rebound",
-  description: "Recovery regimes, generated from your symptoms.",
+  description: "Recovery plans, built from a short questionnaire.",
 };
 
 export const viewport: Viewport = {
@@ -15,19 +18,17 @@ export const viewport: Viewport = {
 };
 
 //This is the important function
-//RootLayout: renders the shared HTML shell and drops each page into {children}
+//RootLayout: renders the shared HTML shell and drops each page into {children}.
+//CurrentUserProvider sits around everything so every page can read which
+//account is selected.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body
-        style={{
-          margin: 0,
-          fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-          background: "#fafafa",
-          color: "#111",
-        }}
-      >
-        {children}
+      <body>
+        <CurrentUserProvider>
+          <SiteHeader />
+          {children}
+        </CurrentUserProvider>
       </body>
     </html>
   );

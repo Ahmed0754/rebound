@@ -2,7 +2,7 @@
 
 *For whoever builds the real frontend pages on the `onboarding-test` branch, and for the AI assistant they hand this to as context. The backend described here is built, tested, and running against the shared Supabase database. This document covers what the pages must do; layout and visual design are yours.*
 
-> **Status, 2026-10-11.** Server: done (accounts, onboarding Parts 1–3). Client: only the old single-page app (`app/page.tsx`) and its API helpers (`lib/api.ts`) exist. Nothing below is built yet.
+> **Status, 2026-10-13.** Server: done (accounts, onboarding Parts 1–3). Client: every page below is built and wired to the API. The old body-part flow and `app/onboarding-test/` are gone. Still open: the crisis screen's content needs sign-off (see Open questions).
 
 ---
 
@@ -249,17 +249,17 @@ Every error body is `{"error": "<message for a person>"}`. An unexpected failure
 
 ## Build order
 
-- [ ] Read `node_modules/next/dist/docs/` on the app router, layouts, dynamic routes and loading states
-- [ ] `lib/api.ts`: add the onboarding calls; one shared fetch helper that adds `X-User-Id` and throws the server's `error` message
-- [ ] `useCurrentUser` context in `app/layout.tsx`; `/account` page; `/` redirect
-- [ ] `lib/questionnaire.ts`: the option lists, with plain-word labels for each value
-- [ ] `/onboarding`: four steps, back/next, draft kept in `sessionStorage`, the `none` rule, a 500-character counter, one submit
-- [ ] `/onboarding/[id]`: three outcome screens and the `unavailable` note line
-- [ ] Build-my-plan button, wait state, and 409/503/404 handling
-- [ ] `/plans` list and `/plans/[id]` view/edit/delete, with reps vs holds
+- [x] Read `node_modules/next/dist/docs/` on the app router, layouts, dynamic routes and loading states
+- [x] `lib/api.ts`: add the onboarding calls; one shared fetch helper that adds `X-User-Id` and throws the server's `error` message
+- [x] `useCurrentUser` context in `app/layout.tsx`; `/account` page; `/` redirect
+- [x] `lib/questionnaire.ts`: the option lists, with plain-word labels for each value
+- [x] `/onboarding`: four steps, back/next, draft kept in `sessionStorage`, the `none` rule, a 500-character counter, one submit
+- [x] `/onboarding/[id]`: three outcome screens and the `unavailable` note line
+- [x] Build-my-plan button, wait state, and 409/503/404 handling
+- [x] `/plans` list and `/plans/[id]` view/edit/delete, with reps vs holds
 - [ ] Walk every screen and check it has a way back, and every dead end a way forward
-- [ ] Delete the old body-part flow from `app/page.tsx` once `/` redirects
-- [ ] Delete `app/onboarding-test/` once the real pages cover everything it does
+- [x] Delete the old body-part flow from `app/page.tsx` once `/` redirects
+- [x] Delete `app/onboarding-test/` once the real pages cover everything it does
 
 ## Open questions
 

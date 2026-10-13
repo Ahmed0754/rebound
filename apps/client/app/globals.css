@@ -1,0 +1,366 @@
+/* Shared styles for every page. Small on purpose: a handful of classes the
+   pages compose, so layout lives here instead of in 600-line inline styles. */
+
+:root {
+  --bg: #fafafa;
+  --surface: #fff;
+  --text: #111;
+  --muted: #555;
+  --faint: #777;
+  --border: #e5e5e5;
+  --border-strong: #ccc;
+  --primary: #111;
+  --primary-text: #fff;
+  --danger: #b00020;
+  --danger-bg: #fdecef;
+  --warn-bg: #fff6e5;
+  --warn-text: #7a4b00;
+  --crisis: #5b1a8c;
+  --crisis-bg: #f5eefb;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+}
+
+h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+/* Header */
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.site-header-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.site-nav {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  font-size: 14px;
+}
+
+.site-nav a {
+  text-decoration: none;
+  color: var(--muted);
+}
+
+.site-nav a:hover {
+  color: var(--text);
+}
+
+.account-chip {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+/* Page */
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.lead {
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+.back {
+  display: inline-block;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--text);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.stack > * + * {
+  margin-top: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 13px;
+}
+
+/* Buttons */
+
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-small {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+/* Forms */
+
+.field {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--surface);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.input-number {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font: inherit;
+}
+
+/* Choice buttons: one control for single and multi selects. */
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice {
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.choice[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+.pain-scale {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 4px;
+}
+
+.pain-scale .choice {
+  padding: 8px 0;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.pain-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--faint);
+  margin-top: 4px;
+}
+
+.question {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.question:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.question p {
+  margin: 0 0 8px;
+}
+
+/* Steps */
+
+.steps {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.steps span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.steps span.done {
+  background: var(--primary);
+}
+
+/* Messages */
+
+.error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.notice {
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.crisis {
+  border-color: var(--crisis);
+  background: var(--crisis-bg);
+}
+
+.crisis h1,
+.crisis h2 {
+  color: var(--crisis);
+}
+
+/* Lists */
+
+.plain-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.plan-link {
+  display: block;
+  text-decoration: none;
+}
+
+.plan-link:hover {
+  border-color: var(--border-strong);
+}
+
+.exercise-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dose {
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.rationale {
+  color: var(--faint);
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+
+.how-to {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+
+.how-to summary {
+  cursor: pointer;
+}
