@@ -7,8 +7,12 @@ import type { Answers } from "@/lib/questionnaire";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export type Exercise = {
+  // The catalogue's slug, e.g. "3_4_Sit-Up". Also where its pictures live -
+  // see lib/exercises.ts.
   id: string;
   name: string;
+  // The steps, one per line. Plans made before that change have them run
+  // together on one line instead.
   description: string;
   // A count of repetitions, or a position held for a number of seconds. The
   // server decides which, from the catalogue; exactly one of `reps` and
@@ -33,6 +37,9 @@ export type Regime = {
   // The account that generated it. A tag, not an ownership check: the server
   // does not yet refuse another account's plan on GET/PUT/DELETE by id.
   userId: string | null;
+  // The limits the server validated the plan against. Null for plans made
+  // before the server recorded them.
+  limits: Limits | null;
 };
 
 // One exercise as the server lets a client ask for it. No name and no
@@ -65,6 +72,19 @@ export type Limits = {
   categories: string[];
   // Already written for the user, e.g. "your pain is 7 or above".
   reasons: string[];
+};
+
+// How a questionnaire's answers narrowed the exercise library down: the count
+// left after each filter in turn (each including the ones before it), and how
+// many of those the AI was shown to choose from.
+export type Funnel = {
+  catalogue: number;
+  region: number;
+  equipment: number;
+  level: number;
+  category: number;
+  aggravators: number;
+  shown: number;
 };
 
 export type Screening = "not_needed" | "clear" | "flagged" | "crisis" | "unavailable";
@@ -181,6 +201,13 @@ export function createOnboarding(
 // and for another account's alike.
 export function getOnboarding(userId: string, onboardingId: string): Promise<OnboardingResult> {
   return request(`/api/onboarding/${id(onboardingId)}`, { userId });
+}
+
+// How these answers narrowed the library down. 409 when the answers don't
+// lead to a plan, so there is nothing to narrow.
+export async function getFunnel(userId: string, onboardingId: string): Promise<Funnel> {
+  const body = await request<{ funnel: Funnel }>(`/api/onboarding/${id(onboardingId)}/candidates`, { userId });
+  return body.funnel;
 }
 
 // Generates a plan from a saved questionnaire and saves it. Slow: up to two

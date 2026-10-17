@@ -1,23 +1,49 @@
 /* Shared styles for every page. Small on purpose: a handful of classes the
-   pages compose, so layout lives here instead of in 600-line inline styles. */
+   pages compose, so layout lives here instead of in 600-line inline styles.
+
+   Dark-first, per the design brief: deep charcoal with one high-energy accent,
+   readable in a gym. A light theme should be derived from these tokens, not
+   the other way round. Every colour lives here as a token. */
 
 :root {
-  --bg: #fafafa;
-  --surface: #fff;
-  --text: #111;
-  --muted: #555;
-  --faint: #777;
-  --border: #e5e5e5;
-  --border-strong: #ccc;
-  --primary: #111;
-  --primary-text: #fff;
-  --danger: #b00020;
-  --danger-bg: #fdecef;
-  --warn-bg: #fff6e5;
-  --warn-text: #7a4b00;
-  --crisis: #5b1a8c;
-  --crisis-bg: #f5eefb;
-  --radius: 10px;
+  color-scheme: dark;
+
+  --bg: #0d0f12;
+  --surface: #161a1f;
+  --surface-2: #1d2228;
+  --text: #f2f4f7;
+  --muted: #a3abb5;
+  --faint: #8a929c;
+  --border: #262c33;
+  --border-strong: #3a424b;
+
+  /* The one accent. Buttons and highlights only - never on the clinical
+     screens (see .clinical). */
+  --accent: #c6f432;
+  --accent-text: #0d0f12;
+  /* The accent, deepened into the lightness band chart marks need on a dark
+     surface (checked with the dataviz validator). For data, not for UI. */
+  --chart-mark: #7fa310;
+
+  --primary: var(--accent);
+  --primary-text: var(--accent-text);
+
+  --danger: #ff7a87;
+  --danger-bg: #3a161b;
+  --warn-text: #ffc670;
+  --warn-bg: #33270f;
+  --crisis: #cdb8f5;
+  --crisis-bg: #1d1830;
+
+  --radius: 14px;
+  --tap: 44px;
+}
+
+/* The three screens the design brief keeps clinical: crisis, see a doctor,
+   and (later) escalation. No accent, no energy - a neutral primary button. */
+.clinical {
+  --primary: #e6e9ed;
+  --primary-text: #0d0f12;
 }
 
 * {
@@ -26,10 +52,11 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -37,27 +64,44 @@ a {
 }
 
 h1 {
-  font-size: 28px;
-  line-height: 1.2;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 800;
   margin: 0 0 8px;
 }
 
 h2 {
   font-size: 18px;
+  letter-spacing: -0.01em;
   margin: 0 0 12px;
+}
+
+h3 {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Header */
 
 .site-header {
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: rgba(13, 15, 18, 0.85);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .site-header-inner {
-  max-width: 640px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 12px 16px;
+  padding: 4px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -65,9 +109,23 @@ h2 {
 }
 
 .brand {
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   text-decoration: none;
-  font-size: 18px;
+  font-size: 20px;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: 3px;
+  margin-top: 8px;
 }
 
 .site-nav {
@@ -80,6 +138,9 @@ h2 {
 .site-nav a {
   text-decoration: none;
   color: var(--muted);
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
 }
 
 .site-nav a:hover {
@@ -92,7 +153,37 @@ h2 {
   text-decoration: none;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 0 14px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.account-chip:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* Keep the header to one line on a phone. */
+@media (max-width: 480px) {
+  .site-header-inner,
+  .site-nav {
+    gap: 12px;
+  }
+
+  .site-nav a {
+    white-space: nowrap;
+  }
+
+  .account-chip {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    line-height: 32px;
+  }
 }
 
 /* Page */
@@ -109,10 +200,12 @@ h2 {
 }
 
 .back {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   font-size: 14px;
   color: var(--muted);
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   text-decoration: none;
 }
 
@@ -124,7 +217,7 @@ h2 {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 18px;
   margin-bottom: 16px;
 }
 
@@ -147,19 +240,29 @@ h2 {
   font-size: 13px;
 }
 
-/* Buttons */
+/* Buttons. Every interactive element is at least 44px tall - elderly users
+   are an explicit audience, and it's what a thumb needs. */
 
 .btn {
-  display: inline-block;
-  padding: 10px 18px;
-  border: 1px solid var(--primary);
-  border-radius: 8px;
-  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
   color: var(--text);
   font: inherit;
   font-size: 15px;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  transition: border-color 120ms, filter 120ms;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--muted);
 }
 
 .btn:disabled {
@@ -169,40 +272,62 @@ h2 {
 
 .btn-primary {
   background: var(--primary);
+  border-color: var(--primary);
   color: var(--primary-text);
 }
 
+.btn-primary:hover:not(:disabled) {
+  border-color: var(--primary);
+  filter: brightness(1.08);
+}
+
 .btn-danger {
+  background: transparent;
   border-color: var(--danger);
   color: var(--danger);
 }
 
 .btn-small {
-  padding: 4px 12px;
+  padding: 0 14px;
   font-size: 13px;
+}
+
+.btn-large {
+  min-height: 52px;
+  padding: 0 26px;
+  font-size: 16px;
 }
 
 /* Forms */
 
 .field {
   display: block;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .field-label {
   display: block;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .input,
 .textarea {
   width: 100%;
-  padding: 10px;
+  min-height: var(--tap);
+  padding: 10px 12px;
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: 10px;
   font: inherit;
+  color: var(--text);
   background: var(--surface);
+}
+
+.input:focus,
+.textarea:focus,
+.input-number:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .textarea {
@@ -210,11 +335,14 @@ h2 {
 }
 
 .input-number {
-  width: 72px;
-  padding: 6px 8px;
+  width: 76px;
+  min-height: var(--tap);
+  padding: 6px 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: 8px;
   font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
 }
 
 /* Choice buttons: one control for single and multi selects. */
@@ -226,19 +354,27 @@ h2 {
 }
 
 .choice {
-  padding: 8px 14px;
+  min-height: var(--tap);
+  padding: 0 16px;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: var(--surface);
+  color: var(--text);
   font: inherit;
   font-size: 14px;
   cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+
+.choice:hover:not(:disabled) {
+  border-color: var(--muted);
 }
 
 .choice[aria-pressed="true"] {
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-text);
+  font-weight: 600;
 }
 
 .pain-scale {
@@ -248,7 +384,7 @@ h2 {
 }
 
 .pain-scale .choice {
-  padding: 8px 0;
+  padding: 0;
   border-radius: 8px;
   text-align: center;
 }
@@ -258,11 +394,11 @@ h2 {
   justify-content: space-between;
   font-size: 12px;
   color: var(--faint);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .question {
-  padding: 12px 0;
+  padding: 14px 0;
   border-top: 1px solid var(--border);
 }
 
@@ -272,7 +408,7 @@ h2 {
 }
 
 .question p {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 
 /* Steps */
@@ -287,11 +423,11 @@ h2 {
   flex: 1;
   height: 4px;
   border-radius: 2px;
-  background: var(--border);
+  background: var(--border-strong);
 }
 
 .steps span.done {
-  background: var(--primary);
+  background: var(--accent);
 }
 
 /* Messages */
@@ -299,16 +435,16 @@ h2 {
 .error {
   color: var(--danger);
   background: var(--danger-bg);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   margin: 12px 0;
 }
 
 .notice {
   color: var(--warn-text);
   background: var(--warn-bg);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   margin: 12px 0;
 }
 
@@ -322,6 +458,35 @@ h2 {
   color: var(--crisis);
 }
 
+.building {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.spinner {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+}
+
 /* Lists */
 
 .plain-list {
@@ -333,24 +498,28 @@ h2 {
 .plan-link {
   display: block;
   text-decoration: none;
+  transition: border-color 120ms;
 }
 
 .plan-link:hover {
-  border-color: var(--border-strong);
+  border-color: var(--muted);
 }
 
 .exercise-name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .dose {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--accent);
   margin: 4px 0;
 }
 
 .rationale {
-  color: var(--faint);
+  color: var(--muted);
   font-size: 14px;
   margin: 4px 0 0;
 }
@@ -358,9 +527,269 @@ h2 {
 .how-to {
   font-size: 14px;
   color: var(--muted);
-  margin: 8px 0 0;
+  margin: 12px 0 0;
 }
 
 .how-to summary {
   cursor: pointer;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.steps-list {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.steps-list li + li {
+  margin-top: 6px;
+}
+
+/* An exercise's start and finish pictures. The catalogue's photos have white
+   backgrounds, so they sit in their own rounded frame. */
+
+.exercise-figure {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin-top: 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.exercise-figure img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #fff;
+}
+
+/* Limits: the numbers a plan has to stay inside, as tiles. */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.tile {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.tile dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tile dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 480px) {
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* The funnel: one series, so one colour; bars square at the baseline with a
+   rounded data end, the value at the tip. */
+
+.funnel {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.funnel li + li {
+  margin-top: 10px;
+}
+
+.funnel-label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.funnel-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.funnel-bar {
+  height: 12px;
+  width: calc((100% - 48px) * var(--share));
+  min-width: 3px;
+  background: var(--chart-mark);
+  border-radius: 0 4px 4px 0;
+}
+
+.funnel-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel li:last-child .funnel-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Landing */
+
+.landing {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: 64px 0 56px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+
+.hero-title {
+  font-size: clamp(38px, 6vw, 60px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  margin-bottom: 18px;
+}
+
+.hero-lead {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0 0 28px;
+  max-width: 34em;
+}
+
+.hero-card {
+  margin: 0;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.hero-card .eyebrow {
+  color: var(--faint);
+}
+
+.badge {
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid currentColor;
+}
+
+.landing-section {
+  padding: 40px 0;
+  border-top: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+
+.how-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.how-steps .card {
+  margin: 0;
+}
+
+.how-steps p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 0;
+}
+
+.fact dt {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.fact dd {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.landing-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  font-size: 13px;
+  color: var(--faint);
+  max-width: 44em;
+}
+
+@media (max-width: 760px) {
+  .hero,
+  .how-steps,
+  .facts {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-top: 40px;
+    gap: 32px;
+  }
 }

@@ -6,9 +6,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { ExerciseFigure } from "@/components/exercise-figure";
+import { LimitsPanel } from "@/components/limits";
 import { AccountError, BackLink, ErrorMessage, Loading } from "@/components/ui";
 import { ApiError, deleteRegime, getRegimeById, messageOf, updateRegime, type Exercise, type Regime } from "@/lib/api";
 import { useRequiredUser } from "@/lib/current-user";
+import { steps } from "@/lib/exercises";
 import { regionLabel } from "@/lib/questionnaire";
 
 type Load = { status: "loading" } | { status: "missing" } | { status: "error"; message: string } | { status: "loaded"; plan: Regime };
@@ -23,6 +26,11 @@ type Dose = { sets: string; amount: string };
 function doseText(ex: Exercise): string {
   const sets = `${ex.sets} set${ex.sets === 1 ? "" : "s"}`;
   return ex.unit === "hold" ? `${sets} × ${ex.holdSeconds}s hold` : `${sets} × ${ex.reps} reps`;
+}
+
+//"17 Oct 2026, 2:35 PM": the date and time, without the seconds.
+function when(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 export default function PlanPage() {
@@ -171,8 +179,8 @@ export default function PlanPage() {
 
       <h1>{regionLabel(plan.muscle)} plan</h1>
       <p className="lead small">
-        Made {new Date(plan.createdAt).toLocaleString()}
-        {plan.updatedAt !== plan.createdAt && <> · edited {new Date(plan.updatedAt).toLocaleString()}</>}
+        Made {when(plan.createdAt)}
+        {plan.updatedAt !== plan.createdAt && <> · edited {when(plan.updatedAt)}</>}
       </p>
 
       {!editing && (
@@ -230,9 +238,15 @@ export default function PlanPage() {
               </>
             )}
 
+            <ExerciseFigure exerciseId={ex.id} name={ex.name} />
+
             <details className="how-to">
               <summary>How to do it</summary>
-              <p style={{ marginBottom: 0 }}>{ex.description}</p>
+              <ol className="steps-list">
+                {steps(ex.description).map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
             </details>
           </li>
         ))}
@@ -248,6 +262,9 @@ export default function PlanPage() {
           </button>
         </div>
       )}
+
+      {/* Older plans were saved before the server recorded their limits. */}
+      {plan.limits && <LimitsPanel limits={plan.limits} title="The limits this plan was built inside" />}
     </main>
   );
 }

@@ -20,6 +20,17 @@ const knee = [
 ];
 
 const SAVED_ID = "11111111-2222-3333-4444-555555555555";
+
+// What `getFunnelFor` reports, passed through untouched by the controller.
+const FUNNEL = {
+  catalogue: 873,
+  region: 60,
+  equipment: 41,
+  level: 30,
+  category: 12,
+  aggravators: 9,
+  shown: 9,
+};
 const BROKEN_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
 
 // Declared up here because `saved` below needs it: every regime has an owner.
@@ -124,6 +135,9 @@ vi.mock("./models/regimes.js", () => ({
     };
   }),
   remove: vi.fn(async (id: string) => id === SAVED_ID),
+  getCandidatesFor: vi.fn(async () => []),
+  getFunnelFor: vi.fn(async () => FUNNEL),
+  toCandidateQuery: vi.fn((answers: { region: string }) => ({ region: answers.region })),
 }));
 
 const user = { id: USER_ID, username: "shahid", createdAt: CREATED_AT };
@@ -878,5 +892,29 @@ describe("POST /api/onboarding", () => {
     const res = await postOnboarding({ ...answers, freeText: "OUTAGE sore after football" });
 
     await expect(res.json()).resolves.toMatchObject({ outcome: "ready", screening: "unavailable" });
+  });
+});
+
+describe("GET /api/onboarding/:id/candidates", () => {
+  function getCandidates(onboardingId: string) {
+    return fetch(`${base}/api/onboarding/${onboardingId}/candidates`, {
+      headers: { "X-User-Id": USER_ID },
+    });
+  }
+
+  it("reports how the answers narrowed the catalogue down", async () => {
+    const res = await getCandidates(NARROW_ONBOARDING_ID);
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ funnel: FUNNEL, candidates: [] });
+  });
+
+  // Same gate as generating: no plan, so no exercises to count either.
+  it("returns 409 for answers that lead to crisis resources", async () => {
+    expect((await getCandidates(CRISIS_ONBOARDING_ID)).status).toBe(409);
+  });
+
+  it("returns 404 for an unknown questionnaire", async () => {
+    expect((await getCandidates("99999999-9999-9999-9999-999999999999")).status).toBe(404);
   });
 });

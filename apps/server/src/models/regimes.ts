@@ -3,7 +3,14 @@
 
 import type { Pool, PoolClient } from "pg";
 import { pool } from "./db.js";
-import { getByIds, getByRegion, getCandidates, type Candidate, type Exercise } from "./exercises.js";
+import {
+  countCandidates,
+  getByIds,
+  getByRegion,
+  getCandidates,
+  type Candidate,
+  type Exercise,
+} from "./exercises.js";
 import { proposeRegime } from "./gemini.js";
 import {
   DIFFICULTIES,
@@ -27,6 +34,9 @@ export type Regime = {
   // the same as enforcing it - `get`, `update` and `remove` still do not check
   // it, which is the capitalised TODO further down this file.
   userId: string;
+  // The limits the plan was validated against when it was generated. Null
+  // for plans made before the limits were recorded.
+  limits: Limits | null;
 };
 
 type RegimeRow = {
@@ -36,6 +46,8 @@ type RegimeRow = {
   created_at: Date;
   updated_at: Date;
   user_id: string;
+  // jsonb, so `pg` has already parsed it.
+  limits: Limits | null;
 };
 
 type ItemRow = {
@@ -72,7 +84,7 @@ type Queryable = Pool | PoolClient;
 
 // The columns a regime is built from, written once because four queries select
 // exactly these and one selecting fewer would return a regime missing a field.
-const REGIME_COLUMNS = "id, muscle, body_region, created_at, updated_at, user_id";
+const REGIME_COLUMNS = "id, muscle, body_region, created_at, updated_at, user_id, limits";
 
 /**
  * Thrown when a questionnaire's filters leave fewer exercises than the
@@ -139,6 +151,7 @@ function fromDbRow(row: RegimeRow, items: RegimeItem[]): Regime {
     updatedAt: row.updated_at.toISOString(),
     regime: items,
     userId: row.user_id,
+    limits: row.limits,
   };
 }
 
@@ -309,6 +322,22 @@ export function toCandidateQuery(answers: Answers, limits: Limits) {
  */
 export function getCandidatesFor(answers: Answers, limits: Limits): Promise<Candidate[] | null> {
   return getCandidates(toCandidateQuery(answers, limits));
+}
+
+/**
+ * How a questionnaire narrows the catalogue down: the count left after each
+ * filter, and how many of those the model is then shown. Null when the region
+ * is unknown. Counts, not rows - this is for showing someone the shape of the
+ * selection, not for building a plan.
+ */
+export async function getFunnelFor(answers: Answers, limits: Limits) {
+  const counts = await countCandidates(toCandidateQuery(answers, limits));
+
+  if (counts === null) {
+    return null;
+  }
+
+  return { ...counts, shown: Math.min(counts.aggravators, CANDIDATE_LIMIT) };
 }
 
 // One first try, and one retry told exactly what was wrong with the first.

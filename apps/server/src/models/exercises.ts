@@ -87,12 +87,13 @@ function unitOf(force: string | null): Unit {
 }
 
 // The catalogue stores instructions as steps; the rest of the app wants one
-// string. Joining here means no other file ever sees the array.
+// string. Joining here means no other file ever sees the array. One step per
+// line, so a client can still show them as numbered steps.
 function fromDbRow(row: ExerciseRow): Exercise {
   return {
     id: row.id,
     name: row.name,
-    description: row.instructions.join(" "),
+    description: row.instructions.join("\n"),
     unit: unitOf(row.force),
   };
 }
@@ -194,6 +195,88 @@ type CandidateRow = ExerciseRow & {
   mechanic: string | null;
 };
 
+// The questionnaire's filters, one fragment each, shared by `getCandidates`
+// and `countCandidates` so the counts can never describe a different filter
+// from the one that picks. Parameters are always $1 muscles, $2 equipment,
+// $3 levels, $4 categories, $5 aggravators.
+//
+// A blank `equipment` in the catalogue counts as "body only" - 77 rows leave
+// it out, and nearly all of them are bodyweight stretches. Reading blank as
+// "needs something" instead would take half the stretches away from someone
+// who owns nothing.
+//
+// An exclusion row matches when every pattern column it fills in matches. A
+// null on the exercise side never matches a filled-in pattern, so an exercise
+// the dataset left `force` blank on is not excluded by a `force` rule - the
+// catalogue gives no grounds to say it pushes or pulls.
+const IN_REGION = "e.primary_muscles && $1";
+const HAS_EQUIPMENT = "coalesce(e.equipment, 'body only') = any($2)";
+const AT_LEVEL = "e.level = any($3)";
+const IN_CATEGORY = "e.category = any($4)";
+const NOT_AGGRAVATING = `not exists (
+          select 1
+            from aggravator_exclusions x
+           where x.aggravator = any($5)
+             and (x.exercise_id is null or x.exercise_id = e.id)
+             and (x.muscle is null or x.muscle = any(e.primary_muscles))
+             and (x.force is null or x.force = e.force)
+             and (x.mechanic is null or x.mechanic = e.mechanic)
+             and (x.category is null or x.category = e.category)
+        )`;
+
+type CandidateFilters = {
+  region: string;
+  equipment: string[];
+  levels: string[];
+  categories: string[];
+  // Matched against `aggravator_exclusions`, which says what each one rules out.
+  aggravators: string[];
+};
+
+/**
+ * How many exercises survive each filter in turn, each count including every
+ * filter before it, or null when the region is not one this app knows.
+ *
+ * For showing someone how their answers narrowed the catalogue down. One
+ * pass over the table rather than a query per stage.
+ */
+export async function countCandidates(options: CandidateFilters): Promise<{
+  catalogue: number;
+  region: number;
+  equipment: number;
+  level: number;
+  category: number;
+  aggravators: number;
+} | null> {
+  const regionMuscles = await getRegionMuscles();
+  const muscles = regionMuscles[options.region];
+
+  if (muscles === undefined) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `with f as (
+       select ${IN_REGION} as r,
+              ${HAS_EQUIPMENT} as eq,
+              ${AT_LEVEL} as lv,
+              ${IN_CATEGORY} as cat,
+              ${NOT_AGGRAVATING} as agg
+         from exercises e
+     )
+     select count(*)::int as catalogue,
+            count(*) filter (where r)::int as region,
+            count(*) filter (where r and eq)::int as equipment,
+            count(*) filter (where r and eq and lv)::int as level,
+            count(*) filter (where r and eq and lv and cat)::int as category,
+            count(*) filter (where r and eq and lv and cat and agg)::int as aggravators
+       from f`,
+    [muscles, options.equipment, options.levels, options.categories, options.aggravators]
+  );
+
+  return result.rows[0];
+}
+
 /**
  * The exercises a questionnaire allows for `region`, or null when the region
  * is not one this app knows.
@@ -207,19 +290,9 @@ type CandidateRow = ExerciseRow & {
  * ranks one allowed exercise above another, so random is what keeps the same
  * 20 from coming back every time.
  */
-export async function getCandidates(options: {
-  region: string;
-  // A blank `equipment` in the catalogue counts as "body only" - 77 rows
-  // leave it out, and nearly all of them are bodyweight stretches. Reading
-  // blank as "needs something" instead would take half the stretches away
-  // from someone who owns nothing.
-  equipment: string[];
-  levels: string[];
-  categories: string[];
-  // Matched against `aggravator_exclusions`, which says what each one rules out.
-  aggravators: string[];
-  limit: number;
-}): Promise<Candidate[] | null> {
+export async function getCandidates(
+  options: CandidateFilters & { limit: number }
+): Promise<Candidate[] | null> {
   const regionMuscles = await getRegionMuscles();
   const muscles = regionMuscles[options.region];
 
@@ -227,28 +300,15 @@ export async function getCandidates(options: {
     return null;
   }
 
-  // An exclusion row matches when every pattern column it fills in matches.
-  // A null on the exercise side never matches a filled-in pattern, so an
-  // exercise the dataset left `force` blank on is not excluded by a `force`
-  // rule - the catalogue gives no grounds to say it pushes or pulls.
   const result = await pool.query<CandidateRow>(
     `select e.id, e.name, e.instructions, e.primary_muscles, e.category, e.level,
             e.equipment, e.force, e.mechanic
        from exercises e
-      where e.primary_muscles && $1
-        and coalesce(e.equipment, 'body only') = any($2)
-        and e.level = any($3)
-        and e.category = any($4)
-        and not exists (
-          select 1
-            from aggravator_exclusions x
-           where x.aggravator = any($5)
-             and (x.exercise_id is null or x.exercise_id = e.id)
-             and (x.muscle is null or x.muscle = any(e.primary_muscles))
-             and (x.force is null or x.force = e.force)
-             and (x.mechanic is null or x.mechanic = e.mechanic)
-             and (x.category is null or x.category = e.category)
-        )
+      where ${IN_REGION}
+        and ${HAS_EQUIPMENT}
+        and ${AT_LEVEL}
+        and ${IN_CATEGORY}
+        and ${NOT_AGGRAVATING}
       order by random()
       limit $6`,
     [

@@ -8,12 +8,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { FunnelChart, LimitsPanel } from "@/components/limits";
 import { AccountError, BackLink, ErrorMessage, Loading } from "@/components/ui";
 import {
   ApiError,
   createRegimeFromOnboarding,
+  getFunnel,
   getOnboarding,
   messageOf,
+  type Funnel,
   type OnboardingResult,
   type Screening,
 } from "@/lib/api";
@@ -102,7 +105,7 @@ export default function OutcomePage() {
 // (named in USERFLOW.md); findahelpline.com covers other countries.
 function CrisisScreen() {
   return (
-    <main className="page">
+    <main className="page clinical">
       <section className="card crisis">
         <h1>You don&apos;t have to go through this alone</h1>
         <p>
@@ -141,7 +144,7 @@ function SeeADoctorScreen({ result }: { result: Extract<OnboardingResult, { outc
   const flags = result.redFlags.filter((f): f is RedFlag => f in RED_FLAGS);
 
   return (
-    <main className="page">
+    <main className="page clinical">
       <BackLink href="/plans">My plans</BackLink>
       <h1>Please see a doctor or physio first</h1>
       <p className="lead">
@@ -209,6 +212,23 @@ function ReadyScreen({
   const router = useRouter();
   const [build, setBuild] = useState<Build>({ status: "idle" });
   const [tick, setTick] = useState(0);
+  //Null until it arrives. It only explains the plan, so a failure to load it
+  //leaves it off the page rather than standing in the way of building one.
+  const [funnel, setFunnel] = useState<Funnel | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getFunnel(userId, result.id)
+      .then((f) => {
+        if (!cancelled) setFunnel(f);
+      })
+      .catch((e) => console.error("couldn't load how the answers narrowed the library", e));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, result.id]);
 
   useEffect(() => {
     if (build.status !== "building") return;
@@ -250,24 +270,16 @@ function ReadyScreen({
 
       <ScreeningNote screening={result.screening} />
 
-      <section className="card">
-        <h2>What we&apos;re taking into account</h2>
-        {result.limits.reasons.length === 0 ? (
-          <p className="muted" style={{ margin: 0 }}>
-            Nothing in your answers needs extra caution.
-          </p>
-        ) : (
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {result.limits.reasons.map((reason) => (
-              <li key={reason}>Because {reason}.</li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <LimitsPanel limits={result.limits} title="Your limits" />
+
+      {funnel && <FunnelChart funnel={funnel} />}
 
       {build.status === "building" && (
-        <p className="muted" aria-live="polite">
-          {BUILDING_STEPS[tick]} This can take up to 40 seconds.
+        <p className="building" aria-live="polite">
+          <span className="spinner" aria-hidden />
+          <span>
+            {BUILDING_STEPS[tick]} <span className="muted">This can take up to 40 seconds.</span>
+          </span>
         </p>
       )}
 

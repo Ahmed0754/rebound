@@ -22,7 +22,7 @@ import {
 import { screenNote } from "../models/classifier.js";
 import { listRegions } from "../models/exercises.js";
 import { create, get, type Onboarding } from "../models/onboarding.js";
-import { getCandidatesFor, toCandidateQuery } from "../models/regimes.js";
+import { getCandidatesFor, getFunnelFor, toCandidateQuery } from "../models/regimes.js";
 
 const router = Router();
 
@@ -301,6 +301,8 @@ router.get("/:id", async (req, res) => {
 // The exercises these answers allow, before Gemini picks any - and the
 // filters, in the catalogue's vocabulary, that produced them. A random sample
 // of the allowed pool, so it will not be the exact 20 a generate call sees.
+// `funnel` is the count left after each filter in turn, for showing someone
+// how their answers narrowed the catalogue down.
 router.get("/:id/candidates", async (req, res) => {
   const userId = readUserId(req);
 
@@ -324,9 +326,12 @@ router.get("/:id/candidates", async (req, res) => {
   }
 
   const limits = getLimits(found.answers);
-  const candidates = await getCandidatesFor(found.answers, limits);
+  const [candidates, funnel] = await Promise.all([
+    getCandidatesFor(found.answers, limits),
+    getFunnelFor(found.answers, limits),
+  ]);
 
-  res.send({ query: toCandidateQuery(found.answers, limits), candidates: candidates ?? [] });
+  res.send({ query: toCandidateQuery(found.answers, limits), funnel, candidates: candidates ?? [] });
 });
 
 export default router;

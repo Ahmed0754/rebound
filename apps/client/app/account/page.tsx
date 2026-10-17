@@ -27,11 +27,11 @@ export default function AccountPage() {
       .catch((e) => setError(messageOf(e)));
   }, []);
 
-  //Picking an account goes home, which sends it on to its plans or to the
-  //questionnaire.
-  function choose(user: User) {
+  //A new account has no plans yet, so it goes straight to the questionnaire;
+  //an existing one goes to its plans.
+  function choose(user: User, next: "/plans" | "/onboarding" = "/plans") {
     select(user);
-    router.push("/");
+    router.push(next);
   }
 
   async function create() {
@@ -44,7 +44,7 @@ export default function AccountPage() {
     try {
       //The server's 400/409 message is shown as-is: it is more specific than
       //anything this page would say.
-      choose(await createUser(name));
+      choose(await createUser(name), "/onboarding");
     } catch (e) {
       setError(messageOf(e));
       setBusy(false);
@@ -92,7 +92,7 @@ export default function AccountPage() {
             <strong>{current.username}</strong>
           </p>
           <div className="row">
-            <button type="button" className="btn btn-primary" onClick={() => router.push("/")}>
+            <button type="button" className="btn btn-primary" onClick={() => router.push("/plans")}>
               Continue
             </button>
             <button type="button" className="btn btn-danger" onClick={removeCurrent} disabled={busy}>

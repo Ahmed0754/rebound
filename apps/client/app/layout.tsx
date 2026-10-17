@@ -2,10 +2,15 @@
 //it wraps every page, sets the <html>/<body>, page metadata, and the base styling.
 
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { CurrentUserProvider } from "@/lib/current-user";
 import "./globals.css";
+
+//Self-hosted by Next at build time, so the browser never calls Google. Exposed
+//as a CSS variable that globals.css puts first in the font stack.
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Rebound",
@@ -15,6 +20,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#0d0f12",
 };
 
 //This is the important function
@@ -23,7 +29,7 @@ export const viewport: Viewport = {
 //account is selected.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <CurrentUserProvider>
           <SiteHeader />
