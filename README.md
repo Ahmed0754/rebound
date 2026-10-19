@@ -36,15 +36,6 @@ flowchart LR
 
 The original single-endpoint request path is drawn in [`diagrams/request-flow.svg`](./diagrams/request-flow.svg). It predates accounts and the questionnaire.
 
-### Where the safety lives
-
-- **[`apps/server/src/clinical.ts`](./apps/server/src/clinical.ts)** holds every rule and number that bounds a plan, and has no imports. A physiotherapist can review it without reading the rest of the app, and its tests need no database or API key.
-- **The note is screened by its own Gemini call** ([`models/classifier.ts`](./apps/server/src/models/classifier.ts)), separate from the call that writes the plan, so a note can't argue the plan-writer out of screening it.
-- **Crisis language is also matched by fixed patterns**, so it is caught even if the classifier is down.
-- **The decision is made twice,** when the answers are saved and again when a plan is generated, so posting a questionnaire id straight to the generate route can't skip it.
-
-**These thresholds are evidence-informed starting points and have not been clinically reviewed.**
-
 ### Not built yet
 
 - **No authentication.** An account is a uuid the browser remembers, and every request names it in an `X-User-Id` header.
