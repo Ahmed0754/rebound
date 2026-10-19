@@ -20,10 +20,10 @@ function kinds(categories: string[]): string {
   return categories.length === 1 ? `${capitalise(categories[0])} only` : "Any";
 }
 
-// The numbers as a row of tiles, then the reasons they are as tight as they
+// The numbers as a small table, then the reasons they are as tight as they
 // are. `reasons` are already sentences written for the user.
 export function LimitsPanel({ limits, title }: { limits: Limits; title: string }) {
-  const tiles: [string, string][] = [
+  const rows: [string, string][] = [
     ["Exercises", range(limits.count)],
     ["Sets each", range(limits.sets)],
     ["Reps per set", range(limits.reps)],
@@ -36,14 +36,16 @@ export function LimitsPanel({ limits, title }: { limits: Limits; title: string }
     <section className="card">
       <h2>{title}</h2>
 
-      <dl className="tiles">
-        {tiles.map(([label, value]) => (
-          <div key={label} className="tile">
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <table className="limits-table">
+        <tbody>
+          {rows.map(([label, value]) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {limits.reasons.length === 0 ? (
         <p className="muted small" style={{ margin: "12px 0 0" }}>

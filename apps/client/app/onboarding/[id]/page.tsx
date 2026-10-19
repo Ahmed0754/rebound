@@ -105,7 +105,7 @@ export default function OutcomePage() {
 // (named in USERFLOW.md); findahelpline.com covers other countries.
 function CrisisScreen() {
   return (
-    <main className="page clinical">
+    <main className="page">
       <section className="card crisis">
         <h1>You don&apos;t have to go through this alone</h1>
         <p>
@@ -144,7 +144,7 @@ function SeeADoctorScreen({ result }: { result: Extract<OnboardingResult, { outc
   const flags = result.redFlags.filter((f): f is RedFlag => f in RED_FLAGS);
 
   return (
-    <main className="page clinical">
+    <main className="page">
       <BackLink href="/plans">My plans</BackLink>
       <h1>Please see a doctor or physio first</h1>
       <p className="lead">
@@ -275,11 +275,8 @@ function ReadyScreen({
       {funnel && <FunnelChart funnel={funnel} />}
 
       {build.status === "building" && (
-        <p className="building" aria-live="polite">
-          <span className="spinner" aria-hidden />
-          <span>
-            {BUILDING_STEPS[tick]} <span className="muted">This can take up to 40 seconds.</span>
-          </span>
+        <p aria-live="polite">
+          {BUILDING_STEPS[tick]} <span className="muted">This can take up to 40 seconds.</span>
         </p>
       )}
 
