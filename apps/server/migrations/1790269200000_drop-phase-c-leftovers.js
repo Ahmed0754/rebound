@@ -2,7 +2,7 @@
  * Removes the Phase C schema that is no longer part of this project.
  *
  * Background: an earlier round of work built a 13-table production-grade data
- * layer, then stripped it back off `main` (see `roadmap/session-logs/2026-09-03.md`).
+ * layer, then stripped it back off `main` (see `roadmap/HISTORY.md`, 2026-09-03).
  * Deleting the migration *files* from the repo did not undo what had already
  * been applied to the live database, so the two drifted: the repo described one
  * table, the database held fourteen, and `pgmigrations` recorded two migrations

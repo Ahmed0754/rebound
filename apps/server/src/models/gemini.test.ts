@@ -40,7 +40,7 @@ function request(overrides: Partial<Parameters<typeof buildGenerationRequest>[0]
 }
 
 describe("buildGenerationRequest", () => {
-  // TDD.md rule 4: v1's adapter silently dropped the system prompt.
+  // roadmap/ARCHITECTURE.md, Gemini rule 4: v1's adapter silently dropped the system prompt.
   it("sends a system instruction", () => {
     expect(request().system).toContain("You build short rehabilitation exercise plans");
   });

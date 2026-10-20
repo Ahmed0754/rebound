@@ -25,7 +25,7 @@ function replies(...answers: (object | Error)[]) {
 }
 
 describe("buildClassifierRequest", () => {
-  // TDD.md rule 4, for this call as for generation.
+  // roadmap/ARCHITECTURE.md, Gemini rule 4, for this call as for generation.
   it("sends a system instruction, at temperature 0", () => {
     const { config } = buildClassifierRequest("my knee hurts");
 

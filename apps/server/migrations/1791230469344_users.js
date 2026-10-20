@@ -1,7 +1,7 @@
 /**
  * The account a regime will eventually belong to. No password and no session
  * table: this is not authentication, and identity is trusted as sent - see
- * ACCOUNTS.md. Regimes are not yet linked to a user; this migration only
+ * ADR 0014. Regimes are not yet linked to a user; this migration only
  * creates the accounts themselves.
  *
  * RLS enabled with no policy at all, which denies everything to `anon` and

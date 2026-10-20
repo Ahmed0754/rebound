@@ -102,7 +102,7 @@ export default function OutcomePage() {
 //
 // TODO before shipping: confirm these numbers, the wording and which countries
 // they cover, and get sign-off on it. 988 and Crisis Text Line are US services
-// (named in USERFLOW.md); findahelpline.com covers other countries.
+// (named in roadmap/PRODUCT.md); findahelpline.com covers other countries.
 function CrisisScreen() {
   return (
     <main className="page">

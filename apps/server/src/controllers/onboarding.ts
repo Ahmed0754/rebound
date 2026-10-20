@@ -199,7 +199,7 @@ function parseFreeText(body: unknown): { freeText: string | null } | { error: st
  * `outcome` carries the decision rather than the status code, because the
  * request was valid either way and "see a doctor" is a product answer. It is
  * one of three, and the client shows a different screen for each: crisis is
- * never folded into "see a doctor" (USERFLOW.md is explicit about that).
+ * never folded into "see a doctor" (roadmap/PRODUCT.md is explicit about that).
  * `limits` is only present when there is a plan for them to bound.
  *
  * `screening` is sent so the client can say when a note could not be checked.

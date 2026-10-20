@@ -295,10 +295,6 @@ export function widestLimits(): Limits {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Free text
-// ---------------------------------------------------------------------------
-
 // Long enough to say what the tick-boxes missed, short enough to keep the
 // prompt small and the injection surface smaller. The database enforces the
 // same number.

@@ -1,5 +1,5 @@
 // The model for accounts: create, list, get, remove. No passwords and no
-// sessions - see ACCOUNTS.md. Every account is a test account.
+// sessions - see ADR 0014. Every account is a test account.
 
 import { pool } from "./db.js";
 
