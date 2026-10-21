@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getLimits, type Answers, type DraftItem } from "../clinical.js";
 import { create, GenerationFailed, toCandidateQuery } from "./regimes.js";
 import { proposeRegime } from "./gemini.js";
-import type { Exercise } from "./exercises.js";
+import type { Candidate, Exercise } from "./exercises.js";
 
 // Hoisted above the imports by vitest, so regimes.ts sees these.
 const db = vi.hoisted(() => {
@@ -15,12 +15,13 @@ const db = vi.hoisted(() => {
 });
 
 vi.mock("./db.js", () => ({ pool: db.pool }));
-vi.mock("./gemini.js", () => ({ proposeRegime: vi.fn() }));
+vi.mock("./gemini.js", () => ({ proposeRegime: vi.fn(), REQUEST_TIMEOUT_MS: 20_000 }));
 
-const CANDIDATES: (Exercise & { primaryMuscles: string[] })[] = [
-  { id: "Squat", name: "Squat", description: "Squat.", unit: "reps", primaryMuscles: ["quadriceps"] },
-  { id: "Bridge", name: "Bridge", description: "Bridge.", unit: "reps", primaryMuscles: ["glutes"] },
-  { id: "Calf_Stretch", name: "Calf Stretch", description: "Lean.", unit: "hold", primaryMuscles: ["calves"] },
+// The tags the quality checks read, and nothing they don't.
+const CANDIDATES: (Exercise & Pick<Candidate, "primaryMuscles" | "category">)[] = [
+  { id: "Squat", name: "Squat", description: "Squat.", unit: "reps", primaryMuscles: ["quadriceps"], category: "strength" },
+  { id: "Bridge", name: "Bridge", description: "Bridge.", unit: "reps", primaryMuscles: ["glutes"], category: "strength" },
+  { id: "Calf_Stretch", name: "Calf Stretch", description: "Lean.", unit: "hold", primaryMuscles: ["calves"], category: "stretching" },
 ];
 
 vi.mock("./exercises.js", () => ({
@@ -181,10 +182,13 @@ describe("create, from a questionnaire", () => {
     );
   });
 
-  it("refuses after two rejected answers, and saves nothing", async () => {
+  // Answers that come back instantly never run the 20-second budget down, so
+  // the attempt cap is what stops this.
+  it("refuses when every answer breaks the limits, and saves nothing", async () => {
     propose.mockResolvedValue(answer(overLimit));
 
     await expect(build()).rejects.toBeInstanceOf(GenerationFailed);
+    expect(propose).toHaveBeenCalledTimes(5);
     expect(db.pool.connect).not.toHaveBeenCalled();
   });
 
@@ -203,6 +207,157 @@ describe("create, from a questionnaire", () => {
 
     await expect(build(note)).rejects.toBeInstanceOf(GenerationFailed);
     expect(propose.mock.calls[0][0].freeText).toBe(note);
+    expect(db.pool.connect).not.toHaveBeenCalled();
+  });
+});
+
+// ADR 0024. These answers allow stretching only (pain 8), so of the quality
+// criteria only KNEE-1 applies: something for the quadriceps or hamstrings.
+describe("create, checking quality before it saves", () => {
+  const answers: Answers = { ...WELL, painNow: 8 };
+  const limits = getLimits(answers);
+  const propose = vi.mocked(proposeRegime);
+
+  const withSquat: DraftItem[] = [
+    { id: "Squat", unit: "reps", sets: 2, reps: 8, holdSeconds: null },
+    { id: "Calf_Stretch", unit: "hold", sets: 1, reps: null, holdSeconds: 20 },
+  ];
+
+  // Inside every limit, but nothing for the quadriceps or hamstrings.
+  const missesKnee: DraftItem[] = [
+    { id: "Bridge", unit: "reps", sets: 2, reps: 8, holdSeconds: null },
+    { id: "Calf_Stretch", unit: "hold", sets: 1, reps: null, holdSeconds: 20 },
+  ];
+
+  const answer = (draft: DraftItem[], rationale = (id: string) => `why ${id}`) => ({
+    draft,
+    rationales: new Map(draft.map((item) => [item.id, rationale(item.id)])),
+  });
+
+  function build() {
+    return create({ muscle: "knee", userId: "u", onboarding: { answers, limits, freeText: null } });
+  }
+
+  // The quality column is the insert's fifth parameter.
+  function savedQuality() {
+    const insert = db.client.query.mock.calls.find(([sql]) => String(sql).includes("insert into regimes"));
+    return JSON.parse(insert![1][4]);
+  }
+
+  beforeEach(() => {
+    propose.mockReset();
+    db.pool.connect.mockClear();
+    db.client.query.mockReset();
+    db.client.query.mockImplementation(async (sql: string) =>
+      sql.includes("insert into regimes")
+        ? {
+            rows: [
+              {
+                id: "r",
+                muscle: "knee",
+                body_region: "knee",
+                created_at: new Date(0),
+                updated_at: new Date(0),
+                user_id: "u",
+              },
+            ],
+          }
+        : { rows: [] }
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("never mentions the criteria in the first prompt", async () => {
+    propose.mockResolvedValueOnce(answer(withSquat));
+
+    await build();
+
+    expect(propose.mock.calls[0][0].rejection).toEqual([]);
+  });
+
+  it("saves a plan that meets every criterion on the first try, and records it", async () => {
+    propose.mockResolvedValueOnce(answer(withSquat));
+
+    await build();
+
+    expect(propose).toHaveBeenCalledTimes(1);
+    expect(savedQuality()).toMatchObject({ attempts: 1, firstMissed: [], met: ["KNEE-1"], missed: [] });
+  });
+
+  it("retries a miss, telling the model what it missed, and saves the better plan", async () => {
+    propose.mockResolvedValueOnce(answer(missesKnee)).mockResolvedValueOnce(answer(withSquat));
+
+    const regime = await build();
+
+    expect(propose).toHaveBeenCalledTimes(2);
+    expect(propose.mock.calls[1][0].rejection).toEqual([
+      "Include at least one exercise for the quadriceps or hamstrings. (KNEE-1)",
+    ]);
+    expect(regime?.regime.map((item) => item.id)).toEqual(["Squat", "Calf_Stretch"]);
+    expect(savedQuality()).toMatchObject({ attempts: 2, firstMissed: ["KNEE-1"], missed: [] });
+  });
+
+  // A quality miss is never a refusal: when time runs out, the plan that passed
+  // the hard checks is saved, with what it missed recorded.
+  it("saves the best plan it has when the 20-second budget runs out", async () => {
+    let now = 0;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+
+    // Each answer takes 6 seconds: attempts start at 0s, 6s and 12s, and at
+    // 18s only 2s are left - under the 4 seconds an attempt needs.
+    propose.mockImplementation(async () => {
+      now += 6_000;
+      return answer(missesKnee);
+    });
+
+    try {
+      const regime = await build();
+
+      expect(propose).toHaveBeenCalledTimes(3);
+      expect(regime?.regime.map((item) => item.id)).toEqual(["Bridge", "Calf_Stretch"]);
+      expect(savedQuality()).toMatchObject({ attempts: 3, firstMissed: ["KNEE-1"], missed: ["KNEE-1"] });
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("cuts each call's timeout to the time that is left", async () => {
+    let now = 0;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+
+    propose.mockImplementationOnce(async () => {
+      now += 15_000;
+      return answer(missesKnee);
+    });
+    propose.mockImplementationOnce(async () => answer(withSquat));
+
+    try {
+      await build();
+
+      expect(propose.mock.calls[0][0].timeoutMs).toBe(20_000);
+      expect(propose.mock.calls[1][0].timeoutMs).toBe(5_000);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("retries a rationale that tells someone to push through pain", async () => {
+    propose
+      .mockResolvedValueOnce(answer(withSquat, () => "Push through the pain."))
+      .mockResolvedValueOnce(answer(withSquat));
+
+    await build();
+
+    expect(propose).toHaveBeenCalledTimes(2);
+    expect(propose.mock.calls[1][0].rejection?.[0]).toContain("carry on through pain");
+  });
+
+  // The rationale checks are hard checks: a plan that only ever claims to
+  // heal is refused, not saved as the best of a bad lot.
+  it("refuses when every rationale claims to treat the injury, and saves nothing", async () => {
+    propose.mockResolvedValue(answer(withSquat, () => "This heals your knee."));
+
+    await expect(build()).rejects.toBeInstanceOf(GenerationFailed);
     expect(db.pool.connect).not.toHaveBeenCalled();
   });
 });

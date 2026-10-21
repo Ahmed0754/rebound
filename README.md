@@ -17,7 +17,10 @@ Step by step:
 4. **Rules set the limits.** Nine rules each look at one answer and can only lower a ceiling (sets, reps, hold time, number of exercises, difficulty, stretching vs strength). They stack.
 5. **The library is filtered.** 703 exercises are narrowed by body area, your equipment, your level, the kinds of exercise your limits allow, and the movements you said make it worse. The page shows the count left after each step.
 6. **Gemini picks and doses.** It is shown up to 20 of what's left and picks 2–5 with sets, reps or hold times, plus one line on why each suits you.
-7. **A validator checks every number.** If the plan breaks a limit or names an exercise it wasn't given, Gemini is told exactly what was wrong and gets one retry. If that fails too, nothing is saved and you're asked to try again later. Nothing is quietly patched.
+7. **Every plan is checked before it's saved, in two tiers.**
+   - **Hard checks:** every number is inside the limits, every exercise was one it was given, and no rationale says to push through pain or claims to heal anything. A plan that fails is never saved.
+   - **Quality checks:** criteria taken from published sources (AAOS, APTA, ACSM, credited in [`apps/server/eval/REFERENCES.md`](./apps/server/eval/REFERENCES.md)). For example, a knee plan should include something for the quadriceps or hamstrings. A criterion only counts when the limits allow it and one of the candidates could meet it.
+   - **What happens on a miss:** Gemini is told exactly what was wrong and tries again, for up to 20 seconds in total. If time runs out, the plan that passed the hard checks with the fewest quality misses is saved. If none passed, nothing is saved and you're asked to try again later. Nothing is quietly patched.
 8. **You get the plan:** each exercise with start and finish photos, numbered steps, its dose and its rationale, and the limits it was built inside. You can edit doses or delete it.
 
 ```mermaid
@@ -28,10 +31,12 @@ flowchart LR
   D -- clear --> L[Rules set limits]
   L --> F[Filter 703 exercises]
   F --> G[Gemini picks + doses]
-  G --> V{Validator}
-  V -- breaks a limit, 1st try --> G
-  V -- breaks a limit, 2nd try --> X[Refuse, save nothing]
-  V -- ok --> P[Saved plan]
+  G --> V{Hard checks}
+  V -- fails, time left --> G
+  V -- fails, out of time --> X[Refuse, save nothing]
+  V -- passes --> Q{Quality checks}
+  Q -- misses, time left --> G
+  Q -- passes, or out of time --> P[Save the best plan so far]
 ```
 
 The original single-endpoint request path is drawn in [`diagrams/request-flow.svg`](./diagrams/request-flow.svg). It predates accounts and the questionnaire.
@@ -137,7 +142,7 @@ The JSON shapes the API returns, since they are the contract between the two hal
 
 **Tooling**
 - [pnpm](https://pnpm.io/) workspaces: a monorepo with `apps/server` and `apps/client`
-- [Vitest](https://vitest.dev/): 169 tests across 5 files in `apps/server/src`
+- [Vitest](https://vitest.dev/): 209 tests across 6 files in `apps/server/src`
 - ESLint and `tsc` across both apps
 
 ## The database

@@ -470,3 +470,61 @@ export function validateRegime(
 
   return problems.length === 0 ? { ok: true } : { ok: false, problems };
 }
+
+// ---------------------------------------------------------------------------
+// Checking what a plan says
+// ---------------------------------------------------------------------------
+
+// Telling someone to carry on through pain. Every AAOS program says "You
+// should not feel pain during an exercise" (SAFE-1, AAOS-* in
+// eval/REFERENCES.md), so a rationale that says otherwise contradicts the one
+// thing every source agrees on.
+//
+// "Push through" alone is not enough to match: "push through your heels" is
+// an ordinary cue for a bridge. It has to be pain being pushed through.
+const THROUGH_PAIN = [
+  /\b(push|work|power|fight|grit)(ing)? through (the |any |your )?(pain|discomfort|hurt)/,
+  /\bno pain,? no gain\b/,
+  /\bignor(e|ing) (the |any |your )?(pain|discomfort)\b/,
+  /\beven (if|when|though) it hurts\b/,
+];
+
+// Saying an exercise treats a condition. The sources present their programs
+// as general conditioning done under a doctor's supervision, and ADR 0016
+// draws the same line: "this exercise treats your shoulder" is a clinical
+// claim the app cannot make (SAFE-2).
+//
+// Whole words with their own endings, so "healthy" is not "heal".
+const TREATMENT_CLAIM = /\b(treat(s|ing|ment)?|heal(s|ing|ed)?|cure(s|d)?|repair(s|ing|ed)?)\b/;
+
+/**
+ * What is wrong with the rationales a plan came with, in words the model is
+ * told on a retry. Empty when nothing is.
+ *
+ * A hard check, like `validateRegime`: a plan that fails it is never saved,
+ * however well it does otherwise (ADR 0024).
+ */
+export function checkRationales(rationales: Map<string, string>): string[] {
+  const problems: string[] = [];
+
+  for (const [id, rationale] of rationales) {
+    // Curly apostrophes, as models sometimes write them, become straight ones.
+    const text = rationale.toLowerCase().replace(/[‘’]/g, "'");
+
+    if (THROUGH_PAIN.some((pattern) => pattern.test(text))) {
+      problems.push(
+        `the rationale for "${id}" tells the user to carry on through pain; no exercise should hurt, so say to stop if it does`
+      );
+    }
+
+    const claim = TREATMENT_CLAIM.exec(text);
+
+    if (claim !== null) {
+      problems.push(
+        `the rationale for "${id}" claims the exercise treats a condition ("${claim[0]}"); say what the exercise works, not what it cures`
+      );
+    }
+  }
+
+  return problems;
+}

@@ -38,8 +38,12 @@ export type GenerationInput = {
   // Absent on the type-a-body-part path, which has no questionnaire.
   answers?: Answers;
   freeText?: string | null;
-  // The validator's problems with the previous attempt, for the one retry.
+  // What was wrong with the previous attempt, for a retry: the validator's
+  // problems, or the quality criteria it missed.
   rejection?: string[];
+  // How long this call may take. Defaults to REQUEST_TIMEOUT_MS; generation
+  // passes less once its overall budget is running out (ADR 0024).
+  timeoutMs?: number;
 };
 
 function systemInstruction(limits: Limits): string {
@@ -120,7 +124,7 @@ export function buildGenerationRequest(input: GenerationInput): GenerateContentP
     contents: userContent(input),
     config: {
       systemInstruction: systemInstruction(input.limits),
-      httpOptions: { timeout: REQUEST_TIMEOUT_MS },
+      httpOptions: { timeout: input.timeoutMs ?? REQUEST_TIMEOUT_MS },
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,

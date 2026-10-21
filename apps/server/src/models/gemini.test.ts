@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from "vitest";
 import { getLimits, type Answers } from "../clinical.js";
-import { buildGenerationRequest, delimitNote, parseDraft } from "./gemini.js";
+import { buildGenerationRequest, delimitNote, parseDraft, REQUEST_TIMEOUT_MS } from "./gemini.js";
 import type { Exercise } from "./exercises.js";
 
 const answers: Answers = {
@@ -133,5 +133,20 @@ describe("parseDraft", () => {
     );
 
     expect(draft).toEqual([{ id: "Made_Up", unit: "reps", sets: 2, reps: 8, holdSeconds: null }]);
+  });
+});
+
+describe("the request timeout", () => {
+  const timeout = (overrides: Partial<Parameters<typeof buildGenerationRequest>[0]> = {}) =>
+    buildGenerationRequest({ region: "knee", candidates, limits, answers, ...overrides }).config?.httpOptions
+      ?.timeout;
+
+  it("defaults to the full request timeout", () => {
+    expect(timeout()).toBe(REQUEST_TIMEOUT_MS);
+  });
+
+  // Generation shortens it once its 20-second budget is running out (ADR 0024).
+  it("uses a shorter timeout when one is given", () => {
+    expect(timeout({ timeoutMs: 5_000 })).toBe(5_000);
   });
 });

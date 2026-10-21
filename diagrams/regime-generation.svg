@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 2062" width="1300" height="2062" role="img" aria-labelledby="t d">
+  <title id="t">Regime generation</title>
+  <desc id="d">Sequence diagram of how a Rebound plan is made. Part one: the browser posts the questionnaire; the API validates it, checks the region against region_muscles, runs the fixed crisis patterns, screens any note with a Gemini classifier, saves the response, and returns an outcome of ready, see a doctor, or crisis. Part two: the browser posts the onboarding id; the API reloads the answers, re-runs the decision, computes limits from nine stacking caps, and fetches up to twenty random candidates. It then loops for up to twenty seconds and five attempts: Gemini proposes a plan, hard checks (validateRegime and checkRationales) reject anything outside the limits or claiming to cure, and quality checks from quality.ts compare it to ten sourced criteria, retrying on a miss. The best plan that passed the hard checks is saved with its limits and quality record in one transaction, or the request is refused with a 503.</desc>
+  <style>
+    text { font-family: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace; }
+    .bg { fill: #FBFBF9; }
+    .head { fill: #EEF0F4; stroke: #D5D9E2; }
+    .headtext { font-size: 12.5px; font-weight: 600; fill: #2B2F38; }
+    .life { stroke: #C9CCD3; stroke-width: 1; stroke-dasharray: 4 5; }
+    .banner { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; fill: #5A5F6B; }
+    .rule { stroke: #E2E4E9; }
+    .label { font-size: 12px; font-weight: 600; }
+    .sub { font-size: 10.5px; fill: #6E7380; }
+    .note { fill: #FFFFFF; stroke: #D3D6DD; }
+    .accent { stroke: #2B8584; stroke-width: 1.5; }
+    .file { font-size: 10px; fill: #8A8F9B; }
+    .name { font-size: 12.5px; font-weight: 700; fill: #22252C; }
+    .loop { fill: #F1F3F7; stroke: #C5CAD4; stroke-dasharray: 5 4; }
+    .looptitle { font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; fill: #4A4F5B; }
+  </style>
+  <rect width="1300" height="2062" class="bg"/>
+  <rect x="265" y="1416" width="865" height="342" rx="9" class="loop"/>
+  <text x="281" y="1435" class="looptitle">LOOP · UNTIL A PLAN PASSES BOTH TIERS · 20 s BUDGET · ≤ 5 ATTEMPTS · NONE STARTS WITH &lt; 4 s LEFT</text>
+  <line x1="150" y1="58" x2="150" y2="2046" class="life"/>
+  <line x1="385" y1="58" x2="385" y2="2046" class="life"/>
+  <line x1="620" y1="58" x2="620" y2="2046" class="life"/>
+  <line x1="840" y1="58" x2="840" y2="2046" class="life"/>
+  <line x1="1020" y1="58" x2="1020" y2="2046" class="life"/>
+  <line x1="1195" y1="58" x2="1195" y2="2046" class="life"/>
+  <rect x="74.65" y="20" width="150.7" height="30" rx="6" class="head"/><text x="150" y="40" class="headtext" text-anchor="middle">Browser · Next.js</text>
+  <rect x="330.95" y="20" width="108.1" height="30" rx="6" class="head"/><text x="385" y="40" class="headtext" text-anchor="middle">Express API</text>
+  <rect x="526.9" y="20" width="186.2" height="30" rx="6" class="head"/><text x="620" y="40" class="headtext" text-anchor="middle">Rules · pure functions</text>
+  <rect x="757.55" y="20" width="164.9" height="30" rx="6" class="head"/><text x="840" y="40" class="headtext" text-anchor="middle">Gemini · classifier</text>
+  <rect x="941.1" y="20" width="157.8" height="30" rx="6" class="head"/><text x="1020" y="40" class="headtext" text-anchor="middle">Gemini · generator</text>
+  <rect x="1112.55" y="20" width="164.9" height="30" rx="6" class="head"/><text x="1195" y="40" class="headtext" text-anchor="middle">Postgres · Supabase</text>
+  <text x="24" y="112" class="banner">1 · SUBMIT THE QUESTIONNAIRE</text>
+  <line x1="24" y1="120" x2="1276" y2="120" class="rule"/>
+  <rect x="17.05000000000001" y="146" width="265.9" height="58" rx="7" class="note"/>
+  <text x="150" y="162" class="file" text-anchor="middle">app/onboarding</text>
+  <text x="150" y="179" class="name" text-anchor="middle">answer four steps</text>
+  <text x="150" y="195" class="sub" text-anchor="middle">region · pain · red flags · gear · note</text>
+  <text x="267.5" y="226" class="label" fill="#A3286A" text-anchor="middle">POST /api/onboarding</text>
+  <line x1="150" y1="235" x2="381" y2="235" stroke="#A3286A" stroke-width="1.8"/>
+  <path d="M 385 235 l -9 -4.5 l 0 9 z" fill="#A3286A"/>
+  <text x="267.5" y="251" class="sub" text-anchor="middle">answers + freeText · X-User-Id</text>
+  <rect x="242.9" y="276" width="284.2" height="58" rx="7" class="note"/>
+  <text x="385" y="292" class="file" text-anchor="middle">controllers/onboarding.ts</text>
+  <text x="385" y="309" class="name" text-anchor="middle">parseAnswers() · parseFreeText()</text>
+  <text x="385" y="325" class="sub" text-anchor="middle">a bad value → 400, naming the allowed ones</text>
+  <text x="790" y="356" class="label" fill="#9A6A2C" text-anchor="middle">listRegions()</text>
+  <line x1="385" y1="365" x2="1191" y2="365" stroke="#9A6A2C" stroke-width="1.8"/>
+  <path d="M 1195 365 l -9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="381" class="sub" text-anchor="middle">region_muscles · read once, then cached</text>
+  <text x="790" y="406" class="label" fill="#9A6A2C" text-anchor="middle">the 10 region names</text>
+  <line x1="1195" y1="415" x2="389" y2="415" stroke="#9A6A2C" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 415 l 9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="431" class="sub" text-anchor="middle">region has to match one exactly</text>
+  <text x="502.5" y="456" class="label" fill="#4E7A35" text-anchor="middle">isCrisisText(note)</text>
+  <line x1="385" y1="465" x2="616" y2="465" stroke="#4E7A35" stroke-width="1.8"/>
+  <path d="M 620 465 l -9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="502.5" y="481" class="sub" text-anchor="middle">fixed patterns · no model</text>
+  <text x="502.5" y="506" class="label" fill="#4E7A35" text-anchor="middle">crisis → stop</text>
+  <line x1="620" y1="515" x2="389" y2="515" stroke="#4E7A35" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 515 l 9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="502.5" y="531" class="sub" text-anchor="middle">no model call</text>
+  <text x="612.5" y="556" class="label" fill="#4A55B5" text-anchor="middle">screenNote(note)</text>
+  <line x1="385" y1="565" x2="836" y2="565" stroke="#4A55B5" stroke-width="1.8"/>
+  <path d="M 840 565 l -9 -4.5 l 0 9 z" fill="#4A55B5"/>
+  <text x="612.5" y="581" class="sub" text-anchor="middle">only if there is a note · temperature 0 · 2 tries</text>
+  <text x="612.5" y="606" class="label" fill="#4A55B5" text-anchor="middle">clear · flagged · crisis</text>
+  <line x1="840" y1="615" x2="389" y2="615" stroke="#4A55B5" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 615 l 9 -4.5 l 0 9 z" fill="#4A55B5"/>
+  <text x="612.5" y="631" class="sub" text-anchor="middle">unreachable → 'unavailable', let through (ADR 0021)</text>
+  <text x="790" y="656" class="label" fill="#9A6A2C" text-anchor="middle">insert onboarding_responses</text>
+  <line x1="385" y1="665" x2="1191" y2="665" stroke="#9A6A2C" stroke-width="1.8"/>
+  <path d="M 1195 665 l -9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="681" class="sub" text-anchor="middle">saved even when the answers turn someone away</text>
+  <text x="502.5" y="706" class="label" fill="#4E7A35" text-anchor="middle">decide() · getLimits()</text>
+  <line x1="385" y1="715" x2="616" y2="715" stroke="#4E7A35" stroke-width="1.8"/>
+  <path d="M 620 715 l -9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="502.5" y="731" class="sub" text-anchor="middle">7 red flags + screening</text>
+  <text x="399" y="756" class="label" fill="#4E7A35" text-anchor="start">ready · see_a_doctor · crisis</text>
+  <line x1="620" y1="765" x2="389" y2="765" stroke="#4E7A35" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 765 l 9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="399" y="781" class="sub" text-anchor="start">+ limits and their reasons, when ready</text>
+  <text x="267.5" y="806" class="label" fill="#A3286A" text-anchor="middle">201 {id, outcome, …}</text>
+  <line x1="385" y1="815" x2="154" y2="815" stroke="#A3286A" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 150 815 l 9 -4.5 l 0 9 z" fill="#A3286A"/>
+  <text x="267.5" y="831" class="sub" text-anchor="middle">branch on outcome, never the status</text>
+  <rect x="14" y="856" width="326.9" height="58" rx="7" class="note"/>
+  <text x="177.45" y="872" class="file" text-anchor="middle">app/onboarding/[id]</text>
+  <text x="177.45" y="889" class="name" text-anchor="middle">outcome screen</text>
+  <text x="177.45" y="905" class="sub" text-anchor="middle">crisis → 988 · doctor → referral · ready → limits</text>
+  <text x="24" y="952" class="banner">2 · GENERATE THE PLAN</text>
+  <line x1="24" y1="960" x2="1276" y2="960" class="rule"/>
+  <text x="267.5" y="986" class="label" fill="#A3286A" text-anchor="middle">POST /api/regimes</text>
+  <line x1="150" y1="995" x2="381" y2="995" stroke="#A3286A" stroke-width="1.8"/>
+  <path d="M 385 995 l -9 -4.5 l 0 9 z" fill="#A3286A"/>
+  <text x="267.5" y="1011" class="sub" text-anchor="middle">{onboardingId} · X-User-Id</text>
+  <text x="790" y="1036" class="label" fill="#9A6A2C" text-anchor="middle">getOnboarding(id, userId)</text>
+  <line x1="385" y1="1045" x2="1191" y2="1045" stroke="#9A6A2C" stroke-width="1.8"/>
+  <path d="M 1195 1045 l -9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="1061" class="sub" text-anchor="middle">another account's id → 404</text>
+  <text x="790" y="1086" class="label" fill="#9A6A2C" text-anchor="middle">answers + note + screening</text>
+  <line x1="1195" y1="1095" x2="389" y2="1095" stroke="#9A6A2C" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 1095 l 9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="1111" class="sub" text-anchor="middle"></text>
+  <text x="502.5" y="1136" class="label" fill="#4E7A35" text-anchor="middle">decide() again · getLimits()</text>
+  <line x1="385" y1="1145" x2="616" y2="1145" stroke="#4E7A35" stroke-width="1.8"/>
+  <path d="M 620 1145 l -9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="502.5" y="1161" class="sub" text-anchor="middle">not ready → 409 · 9 stacking caps</text>
+  <text x="399" y="1186" class="label" fill="#4E7A35" text-anchor="start">limits</text>
+  <line x1="620" y1="1195" x2="389" y2="1195" stroke="#4E7A35" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 1195 l 9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="399" y="1211" class="sub" text-anchor="start">sets · reps · hold · count · difficulty · categories</text>
+  <text x="790" y="1236" class="label" fill="#9A6A2C" text-anchor="middle">getCandidates()</text>
+  <line x1="385" y1="1245" x2="1191" y2="1245" stroke="#9A6A2C" stroke-width="1.8"/>
+  <path d="M 1195 1245 l -9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="1261" class="sub" text-anchor="middle">region · equipment · level · category · aggravators</text>
+  <text x="790" y="1286" class="label" fill="#9A6A2C" text-anchor="middle">≤ 20 candidates, order by random()</text>
+  <line x1="1195" y1="1295" x2="389" y2="1295" stroke="#9A6A2C" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 1295 l 9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="1311" class="sub" text-anchor="middle">with tags: primaryMuscles · category · force</text>
+  <rect x="239.85" y="1336" width="290.3" height="58" rx="7" class="note"/>
+  <text x="385" y="1352" class="file" text-anchor="middle">models/regimes.ts</text>
+  <text x="385" y="1369" class="name" text-anchor="middle">create()</text>
+  <text x="385" y="1385" class="sub" text-anchor="middle">fewer than count.min → 409 TooFewCandidates</text>
+  <text x="702.5" y="1464" class="label" fill="#2B8584" text-anchor="middle">proposeRegime()</text>
+  <line x1="385" y1="1473" x2="1016" y2="1473" stroke="#2B8584" stroke-width="1.8"/>
+  <path d="M 1020 1473 l -9 -4.5 l 0 9 z" fill="#2B8584"/>
+  <text x="702.5" y="1489" class="sub" text-anchor="middle">limits in system prompt · answers · candidates · note · last problems</text>
+  <text x="702.5" y="1514" class="label" fill="#2B8584" text-anchor="middle">picks: id · sets · amount · rationale</text>
+  <line x1="1020" y1="1523" x2="389" y2="1523" stroke="#2B8584" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 1523 l 9 -4.5 l 0 9 z" fill="#2B8584"/>
+  <text x="702.5" y="1539" class="sub" text-anchor="middle">JSON schema · timeout = min(20 s, time left)</text>
+  <text x="399" y="1564" class="label" fill="#4E7A35" text-anchor="start">validateRegime() + checkRationales()</text>
+  <line x1="385" y1="1573" x2="616" y2="1573" stroke="#4E7A35" stroke-width="1.8"/>
+  <path d="M 620 1573 l -9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="399" y="1589" class="sub" text-anchor="start">HARD · doses inside limits · ids offered · no pain or cure claims</text>
+  <text x="399" y="1614" class="label" fill="#4E7A35" text-anchor="start">problems[]</text>
+  <line x1="620" y1="1623" x2="389" y2="1623" stroke="#4E7A35" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 1623 l 9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="399" y="1639" class="sub" text-anchor="start">any → retry, told every problem · never saved</text>
+  <text x="399" y="1664" class="label" fill="#4E7A35" text-anchor="start">checkQuality(plan, candidates)</text>
+  <line x1="385" y1="1673" x2="616" y2="1673" stroke="#4E7A35" stroke-width="1.8"/>
+  <path d="M 620 1673 l -9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="399" y="1689" class="sub" text-anchor="start">QUALITY · quality.ts · 10 criteria from AAOS / APTA</text>
+  <text x="399" y="1714" class="label" fill="#4E7A35" text-anchor="start">met · missed · n/a · unsatisfiable</text>
+  <line x1="620" y1="1723" x2="389" y2="1723" stroke="#4E7A35" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 385 1723 l 9 -4.5 l 0 9 z" fill="#4E7A35"/>
+  <text x="399" y="1739" class="sub" text-anchor="start">keep the best so far · a miss → retry with asksFor()</text>
+  <rect x="224.60000000000002" y="1782" width="320.79999999999995" height="58" rx="7" class="note accent"/>
+  <text x="385" y="1798" class="file" text-anchor="middle">models/regimes.ts</text>
+  <text x="385" y="1815" class="name" text-anchor="middle">generate() → the best plan</text>
+  <text x="385" y="1831" class="sub" text-anchor="middle">none passed the hard checks → 503, nothing saved</text>
+  <text x="790" y="1862" class="label" fill="#9A6A2C" text-anchor="middle">insert regimes + regime_exercises</text>
+  <line x1="385" y1="1871" x2="1191" y2="1871" stroke="#9A6A2C" stroke-width="1.8"/>
+  <path d="M 1195 1871 l -9 -4.5 l 0 9 z" fill="#9A6A2C"/>
+  <text x="790" y="1887" class="sub" text-anchor="middle">one transaction · limits + quality jsonb</text>
+  <text x="267.5" y="1912" class="label" fill="#A3286A" text-anchor="middle">201 plan</text>
+  <line x1="385" y1="1921" x2="154" y2="1921" stroke="#A3286A" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <path d="M 150 1921 l 9 -4.5 l 0 9 z" fill="#A3286A"/>
+  <text x="267.5" y="1937" class="sub" text-anchor="middle">quality is stored, not returned</text>
+  <rect x="14" y="1962" width="284.2" height="58" rx="7" class="note"/>
+  <text x="156.1" y="1978" class="file" text-anchor="middle">app/plans/[id]</text>
+  <text x="156.1" y="1995" class="name" text-anchor="middle">plan page</text>
+  <text x="156.1" y="2011" class="sub" text-anchor="middle">photos · steps · dose · rationale · limits</text>
+</svg>

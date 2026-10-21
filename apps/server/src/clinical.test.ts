@@ -3,6 +3,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  checkRationales,
   decide,
   getLimits,
   hasRedFlag,
@@ -316,5 +317,59 @@ describe("validateRegime", () => {
     expect(problems([reps("squat", 1.5, 8), reps("lunge", 2, 8)])).toEqual([
       '"squat" has 1.5 sets; sets must be between 1 and 2',
     ]);
+  });
+});
+
+describe("checkRationales", () => {
+  const problems = (rationale: string) => checkRationales(new Map([["squat", rationale]]));
+
+  it("accepts a rationale that says what the exercise works", () => {
+    expect(problems("Builds strength in the front of your thigh without loading the joint.")).toEqual([]);
+  });
+
+  it("rejects telling someone to carry on through pain", () => {
+    for (const rationale of [
+      "Push through the pain for the last few reps.",
+      "Work through any discomfort you feel.",
+      "No pain, no gain.",
+      "Ignore the pain and keep going.",
+      "Keep going even if it hurts a little.",
+    ]) {
+      expect(problems(rationale), rationale).toEqual([
+        'the rationale for "squat" tells the user to carry on through pain; no exercise should hurt, so say to stop if it does',
+      ]);
+    }
+  });
+
+  // An ordinary cue for a bridge, not advice about pain.
+  it("does not flag pushing through your heels", () => {
+    expect(problems("Push through your heels to lift your hips.")).toEqual([]);
+  });
+
+  it("rejects a claim that the exercise treats a condition", () => {
+    expect(problems("This stretch heals your knee.")).toEqual([
+      'the rationale for "squat" claims the exercise treats a condition ("heals"); say what the exercise works, not what it cures',
+    ]);
+    expect(problems("A good treatment for tendonitis.")).toHaveLength(1);
+    expect(problems("It cures stiffness.")).toHaveLength(1);
+    expect(problems("Helps repair the tendon.")).toHaveLength(1);
+  });
+
+  it("does not mistake 'healthy' for 'heal'", () => {
+    expect(problems("Keeps the joint healthy and moving.")).toEqual([]);
+  });
+
+  it("names every rationale with a problem, not just the first", () => {
+    const found = checkRationales(
+      new Map([
+        ["squat", "Push through the pain."],
+        ["lunge", "Fine."],
+        ["calf_stretch", "Heals the calf."],
+      ])
+    );
+
+    expect(found).toHaveLength(2);
+    expect(found[0]).toContain('"squat"');
+    expect(found[1]).toContain('"calf_stretch"');
   });
 });

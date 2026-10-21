@@ -11,8 +11,9 @@ import {
   type Candidate,
   type Exercise,
 } from "./exercises.js";
-import { proposeRegime } from "./gemini.js";
+import { proposeRegime, REQUEST_TIMEOUT_MS } from "./gemini.js";
 import {
+  checkRationales,
   DIFFICULTIES,
   validateRegime,
   widestLimits,
@@ -20,6 +21,7 @@ import {
   type Equipment,
   type Limits,
 } from "../clinical.js";
+import { asksFor, checkQuality, type QualityResult } from "../quality.js";
 import type { RegimeEdit, RegimeItem, Unit } from "../types/index.js";
 
 export type Regime = {
@@ -107,8 +109,9 @@ export class TooFewCandidates extends Error {
 }
 
 /**
- * Thrown when no valid plan came back: the model could not be reached, or its
- * answer broke the limits twice - once, then again after being told why.
+ * Thrown when no valid plan came back inside the time budget: the model could
+ * not be reached, or every answer failed the hard checks, even after being
+ * told why (ADR 0024).
  *
  * Refused rather than patched, by decision (ADR 0022): there are
  * no presets to fall back to, and a plan assembled some other way would not
@@ -340,15 +343,41 @@ export async function getFunnelFor(answers: Answers, limits: Limits) {
   return { ...counts, shown: Math.min(counts.aggravators, CANDIDATE_LIMIT) };
 }
 
-// One first try, and one retry told exactly what was wrong with the first.
-const GENERATION_ATTEMPTS = 2;
+// Every attempt at a plan, retries included, has to fit inside this, by
+// decision (ADR 0024). A plan still being retried after 20 seconds is not
+// worth the wait it costs the person on the other end.
+const GENERATION_BUDGET_MS = 20_000;
+
+// No attempt starts with less than this left: a call cut off before Gemini can
+// answer is wasted, and the time is better spent returning what there is.
+const MIN_ATTEMPT_MS = 4_000;
+
+// A backstop, not the limit. Without it, a model failing instantly would be
+// called over and over until the budget ran out.
+const MAX_ATTEMPTS = 5;
+
+/** What the quality checks made of the plan that was saved. Stored, not returned. */
+export type Quality = QualityResult & {
+  attempts: number;
+  // The misses of the first plan that passed the hard checks, before any retry
+  // told the model about the criteria - how well it does unprompted.
+  firstMissed: string[];
+};
 
 /**
- * Asks Gemini for a plan and accepts it only once `validateRegime` does.
+ * Asks Gemini for a plan, checks it, and keeps asking until one passes or the
+ * time budget runs out (ADR 0024).
  *
- * A failed call and a rejected answer cost the same attempt. The retry is
- * sent the validator's problems, so it is a correction rather than a re-roll.
- * Throws `GenerationFailed` when neither attempt produces a valid plan.
+ * Two tiers. The hard checks - `validateRegime` and `checkRationales` - decide
+ * whether a plan can be saved at all. The quality checks decide whether it is
+ * worth trying again for a better one. A failed call, a rejected plan and a
+ * quality miss each cost an attempt, and every retry is told what was wrong,
+ * so it is a correction rather than a re-roll.
+ *
+ * Quality is only checked when the candidates carry the catalogue's tags,
+ * which only questionnaire candidates do. When the budget runs out, the plan
+ * that passed the hard checks with the fewest misses is the one returned.
+ * Throws `GenerationFailed` when no attempt passed the hard checks.
  */
 async function generate(input: {
   region: string;
@@ -356,32 +385,52 @@ async function generate(input: {
   limits: Limits;
   answers?: Answers;
   freeText?: string | null;
-}): Promise<RegimeItem[]> {
+  // The same candidates with their catalogue tags, from a questionnaire.
+  tagged?: Candidate[];
+}): Promise<{ items: RegimeItem[]; quality: Quality | null }> {
+  const { tagged, ...request } = input;
   const byId = new Map(input.candidates.map((candidate) => [candidate.id, candidate]));
   const allowed = new Map(input.candidates.map((candidate) => [candidate.id, candidate.unit]));
+  const tags = new Map((tagged ?? []).map((candidate) => [candidate.id, candidate]));
+  const deadline = Date.now() + GENERATION_BUDGET_MS;
   let problems: string[] = [];
+  let best: { items: RegimeItem[]; result: QualityResult } | null = null;
+  let firstMissed: string[] | null = null;
+  let attempts = 0;
 
-  for (let attempt = 1; attempt <= GENERATION_ATTEMPTS; attempt++) {
+  while (attempts < MAX_ATTEMPTS) {
+    const left = deadline - Date.now();
+
+    if (left < MIN_ATTEMPT_MS) {
+      break;
+    }
+
+    attempts++;
     let proposal;
 
     try {
-      proposal = await proposeRegime({ ...input, rejection: problems });
+      proposal = await proposeRegime({
+        ...request,
+        rejection: problems,
+        timeoutMs: Math.min(REQUEST_TIMEOUT_MS, left),
+      });
     } catch (error) {
-      console.error(`regime generation failed (attempt ${attempt} of ${GENERATION_ATTEMPTS})`, error);
+      console.error(`regime generation failed (attempt ${attempts})`, error);
       problems = [];
       continue;
     }
 
     const verdict = validateRegime(proposal.draft, input.limits, allowed);
+    const hard = [...(verdict.ok ? [] : verdict.problems), ...checkRationales(proposal.rationales)];
 
-    if (!verdict.ok) {
-      console.error(`regime rejected (attempt ${attempt} of ${GENERATION_ATTEMPTS})`, verdict.problems);
-      problems = verdict.problems;
+    if (hard.length > 0) {
+      console.error(`regime rejected (attempt ${attempts})`, hard);
+      problems = hard;
       continue;
     }
 
     // Every id is known by now - the validator rejected any that were not.
-    return proposal.draft.map((item) => {
+    const items = proposal.draft.map((item) => {
       const source = byId.get(item.id)!;
 
       return {
@@ -395,9 +444,36 @@ async function generate(input: {
         rationale: proposal.rationales.get(item.id) ?? null,
       };
     });
+
+    if (tagged === undefined || input.answers === undefined) {
+      return { items, quality: null };
+    }
+
+    const result = checkQuality(
+      items.map((item) => tags.get(item.id)!),
+      tagged,
+      { region: input.region, answers: input.answers, limits: input.limits }
+    );
+
+    firstMissed ??= result.missed;
+
+    if (best === null || result.missed.length < best.result.missed.length) {
+      best = { items, result };
+    }
+
+    if (result.missed.length === 0) {
+      break;
+    }
+
+    console.error(`regime missed quality criteria (attempt ${attempts})`, result.missed);
+    problems = asksFor(result.missed);
   }
 
-  throw new GenerationFailed(problems);
+  if (best === null) {
+    throw new GenerationFailed(problems);
+  }
+
+  return { items: best.items, quality: { ...best.result, attempts, firstMissed: firstMissed ?? [] } };
 }
 
 /**
@@ -425,6 +501,7 @@ export async function create(input: {
   const limits = onboarding?.limits ?? widestLimits();
   let region: string;
   let exercises: Exercise[];
+  let tagged: Candidate[] | undefined;
 
   if (onboarding === undefined) {
     const match = await getByRegion(muscle);
@@ -443,26 +520,24 @@ export async function create(input: {
     }
 
     region = onboarding.answers.region;
-    // Only what a plain exercise has: the filter fields are not part of what
-    // a regime records or the model needs.
-    exercises = candidates.map(({ id, name, description, unit }) => ({
-      id,
-      name,
-      description,
-      unit,
-    }));
+    // The model is only ever sent the plain exercise fields (see
+    // `userContent`), so the catalogue tags can travel with the candidates:
+    // the quality checks need them.
+    exercises = candidates;
+    tagged = candidates;
   }
 
   if (exercises.length < limits.count.min) {
     throw new TooFewCandidates(exercises.length, limits.count.min);
   }
 
-  const items = await generate({
+  const { items, quality } = await generate({
     region,
     candidates: exercises,
     limits,
     answers: onboarding?.answers,
     freeText: onboarding?.freeText,
+    tagged,
   });
 
   // A transaction needs one connection for every statement, so take a client
@@ -473,10 +548,10 @@ export async function create(input: {
     await client.query("begin");
 
     const created = await client.query<RegimeRow>(
-      `insert into regimes (muscle, body_region, user_id, limits)
-       values ($1, $2, $3, $4)
+      `insert into regimes (muscle, body_region, user_id, limits, quality)
+       values ($1, $2, $3, $4, $5)
        returning ${REGIME_COLUMNS}`,
-      [muscle, region, userId, JSON.stringify(limits)]
+      [muscle, region, userId, JSON.stringify(limits), quality === null ? null : JSON.stringify(quality)]
     );
 
     const row = created.rows[0];
