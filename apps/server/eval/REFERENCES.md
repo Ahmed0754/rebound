@@ -8,6 +8,7 @@
 - **Code checks** use the dose benchmarks and the reference plans.
 - **The LLM judge** uses the region criteria and the safety statements, one score per criterion.
 - **Every score names its criterion, and every criterion names its source**, so a report reads like *"missed hip-targeted work (APTA PFP 2019)"*.
+- **[`clinical.ts`](../src/clinical.ts) cites these ids** beside each constant and rule that can be traced to one. Anything without an id is marked there as judgment.
 
 ## Credit rules
 
@@ -362,5 +363,6 @@ What scanning the sources turned up, before any plan has been graded. These are 
 - [ ] **Read `APTA-ELBOW-2022` and `CPG-RC-2025`** and add elbow and shoulder criteria.
 - [ ] **Find a readable elbow and wrist source**, such as an NHS trust leaflet or NHS inform in a browser, and record its licence.
 - [ ] **Add `KISNER-8` entries** with page numbers.
+- [ ] **Find sources for the red flags** (`RED_FLAGS` in `clinical.ts`), which nothing here covers yet.
 - [ ] **Compare the "close" catalogue matches' instructions** with AAOS's.
 - [ ] **Convert to `references.ts`,** with `sources` as a required, non-empty field on every entry.

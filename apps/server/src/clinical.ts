@@ -6,6 +6,10 @@
 //
 // None of these numbers has been reviewed by a physiotherapist. Keeping them
 // in one file is what lets a clinician read and change them in one place.
+//
+// Where a number has a published source, the comment beside it names the
+// source's id in eval/REFERENCES.md, which says how each one was read.
+// "Judgment" means no source was found for it.
 
 export const GOALS = [
   "return_to_movement",
@@ -112,11 +116,21 @@ export type Limits = {
 // The widest plan anyone can get. Rules only lower a ceiling; nothing raises
 // one and nothing moves a floor.
 const ABSOLUTE = {
+  // Source: AAOS-* (2-3 sets for most exercises, 3-4 for shoulder rotation).
   sets: { min: 1, max: 4 },
+  // Source: ACSM-RT-2009 (8-12 for novices) and AAOS-* (mostly 8-12). Stricter
+  // than AAOS's 20-rep hip and shoulder endurance work. The floor of 5 is
+  // judgment.
   reps: { min: 5, max: 15 },
   // General fitness guidance usually quotes 10-30s per static stretch. The
   // floor is 15 because a shorter hold is barely a stretch.
+  //
+  // Source: ACSM-FLEX-2021 (10-30s for most adults). Stricter than AAOS-KNEE
+  // and AAOS-HIP, which hold knee and hamstring stretches 30-60s. This range
+  // also doses isometric holds like a plank, which AAOS-SPINE holds 15-30s.
   hold: { min: 15, max: 30 },
+  // Judgment. The AAOS programs list 9-18 exercises across 4-6 weeks, not a
+  // per-session count, so they don't compare.
   count: { min: 2, max: 5 },
 } as const;
 
@@ -124,6 +138,10 @@ const ABSOLUTE = {
 // itself, so it adds nothing to `reasons`: being a recreational exerciser is
 // not something a plan was restricted *because of*, it is just the starting
 // point. A rule can only take this lower, never higher.
+//
+// Source: ACSM-RT-2009 sorts people into novice, intermediate and advanced by
+// training experience - untrained or not training for years, about six months
+// of consistent training, years of it - which is roughly the same ladder.
 const ACTIVITY_DIFFICULTY: Record<ActivityLevel, Difficulty> = {
   sedentary: "beginner",
   recreational: "beginner",
@@ -150,6 +168,10 @@ type Rule = {
 // Not risk tiers: tiers collapse everyone who trips any threshold into one
 // bucket, so someone who is 70 with pain of 2 comes out the same as someone
 // who is 30 with pain of 8. Here the caps stack.
+//
+// Every number in these rules is judgment. No source we read says what to cut
+// at a given pain level, age or session length. Where a source agrees or
+// disagrees with a rule, the rule says so.
 const RULES: Rule[] = [
   {
     id: "high_pain",
@@ -173,18 +195,27 @@ const RULES: Rule[] = [
     when: (a) => a.onset === "acute",
     // Under a week old. Same reasoning as high pain: no loaded work on a
     // fresh flare.
+    //
+    // Stricter than APTA-LBP-2021 for the lower back, which allows trunk
+    // muscle activation in acute low back pain (grade C, "can use").
     cap: { sets: 2, hold: 20, count: 3, categories: ["stretching"] },
   },
   {
     id: "chronic",
     reason: "this has been going on a while",
     when: (a) => a.onset === "chronic",
+    // Consistent with APTA-LBP-2021, which says to use trunk strengthening and
+    // endurance for chronic low back pain (grade A). This still allows it.
     cap: { sets: 3, reps: 12 },
   },
   {
     id: "older_adult",
     // Was 65+ until the bands moved younger. Keeping the same caps at 50 is
     // the cautious reading of a band that now starts 15 years earlier.
+    //
+    // Consistent with APTA-LBP-2021 (general exercise for older adults with
+    // chronic low back pain, grade A). Runs against ACSM-FLEX-2021, which
+    // suggests 30-60s holds for older people - nothing here lengthens a hold.
     reason: "you are 50 or over",
     when: (a) => a.ageBand === "50_plus",
     cap: { sets: 2, reps: 10, difficulty: "beginner" },
