@@ -54,8 +54,8 @@ describe("buildGenerationRequest", () => {
     expect(system).toContain("between 15 and 20");
   });
 
-  it("tells the model the dose overrides the catalogue's own wording", () => {
-    expect(request().system).toContain("override anything in an exercise's own description");
+  it("tells the model what each exercise's tags mean", () => {
+    expect(request().system).toContain('the muscles it mainly works ("muscles")');
   });
 
   it("labels each candidate with the unit the catalogue doses it in", () => {
@@ -63,6 +63,31 @@ describe("buildGenerationRequest", () => {
 
     expect(contents).toContain('"id":"Bodyweight_Squat","name":"Bodyweight Squat","unit":"reps"');
     expect(contents).toContain('"id":"Calf_Stretch","name":"Calf Stretch","unit":"seconds"');
+  });
+
+  it("shows the model what each candidate works, from the catalogue's tags", () => {
+    const { contents } = request({
+      candidates: [
+        { ...candidates[0], primaryMuscles: ["quadriceps"], category: "strength", level: "beginner" },
+        candidates[1],
+      ],
+    });
+
+    expect(contents).toContain('"muscles":["quadriceps"],"category":"strength","level":"beginner"');
+  });
+
+  // The type-a-body-part path's exercises carry no tags.
+  it("leaves out tags a candidate does not have, rather than sending them empty", () => {
+    expect(request().contents).not.toContain('"muscles"');
+  });
+
+  // The steps are most of each row's text and say nothing about which
+  // exercise suits whom. They are rebuilt from the catalogue, never the model.
+  it("does not send the step-by-step descriptions", () => {
+    const { contents } = request();
+
+    expect(contents).not.toContain("Squat down.");
+    expect(contents).not.toContain("Lean on a wall.");
   });
 
   it("leaves the note out entirely when there is none", () => {

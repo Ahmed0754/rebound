@@ -142,7 +142,7 @@ The JSON shapes the API returns, since they are the contract between the two hal
 
 **Tooling**
 - [pnpm](https://pnpm.io/) workspaces: a monorepo with `apps/server` and `apps/client`
-- [Vitest](https://vitest.dev/): 209 tests across 6 files in `apps/server/src`
+- [Vitest](https://vitest.dev/): 212 tests across 6 files in `apps/server/src`
 - ESLint and `tsc` across both apps
 
 ## The database
