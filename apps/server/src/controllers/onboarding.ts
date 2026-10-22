@@ -23,21 +23,18 @@ import { screenNote } from "../models/classifier.js";
 import { listRegions } from "../models/exercises.js";
 import { create, get, type Onboarding } from "../models/onboarding.js";
 import { getCandidatesFor, getFunnelFor, toCandidateQuery } from "../models/regimes.js";
+import { requireUser, userIdOf } from "../require-user.js";
 
 const router = Router();
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// A questionnaire belongs to whoever filled it in, and only they can read it back.
+router.use(requireUser);
 
 // Long enough for "my lower back and left hip", short enough not to be a
 // free-text field in disguise.
 const MAX_REGION_LENGTH = 100;
 
 const PAIN = { min: 0, max: 10 } as const;
-
-function readUserId(req: { header(name: string): string | undefined }): string | null {
-  const id = req.header("X-User-Id");
-  return id !== undefined && UUID.test(id) ? id : null;
-}
 
 /** One value out of a closed list, or null. */
 function one<T extends string>(value: unknown, allowed: readonly T[]): T | null {
@@ -228,12 +225,7 @@ function present({ id, answers, note }: Onboarding) {
 }
 
 router.post("/", async (req, res) => {
-  const userId = readUserId(req);
-
-  if (userId === null) {
-    res.status(400).send({ error: "X-User-Id must be a user id" });
-    return;
-  }
+  const userId = userIdOf(res);
 
   const parsed = parseAnswers(req.body);
 
@@ -281,12 +273,7 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const userId = readUserId(req);
-
-  if (userId === null) {
-    res.status(400).send({ error: "X-User-Id must be a user id" });
-    return;
-  }
+  const userId = userIdOf(res);
 
   const found = await get(req.params.id, userId);
 
@@ -304,12 +291,7 @@ router.get("/:id", async (req, res) => {
 // `funnel` is the count left after each filter in turn, for showing someone
 // how their answers narrowed the catalogue down.
 router.get("/:id/candidates", async (req, res) => {
-  const userId = readUserId(req);
-
-  if (userId === null) {
-    res.status(400).send({ error: "X-User-Id must be a user id" });
-    return;
-  }
+  const userId = userIdOf(res);
 
   const found = await get(req.params.id, userId);
 

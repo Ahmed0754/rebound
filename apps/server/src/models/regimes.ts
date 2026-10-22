@@ -32,9 +32,8 @@ export type Regime = {
   updatedAt: string;
   regime: RegimeItem[];
   // The account that made it. Never null: `regimes.user_id` is `not null`, so
-  // a regime cannot exist without an owner. Recording the owner is not yet
-  // the same as enforcing it - `get`, `update` and `remove` still do not check
-  // it, which is the capitalised TODO further down this file.
+  // a regime cannot exist without an owner. `get`, `update` and `remove` only
+  // ever find a regime for its owner.
   userId: string;
   // The limits the plan was validated against when it was generated. Null
   // for plans made before the limits were recorded.
@@ -571,8 +570,11 @@ export async function create(input: {
   }
 }
 
-/** One regime by id, or null when no regime has that id, malformed ids included. */
-export async function get(id: string): Promise<Regime | null> {
+/**
+ * One regime by id, or null when `userId` has no regime with that id -
+ * another account's included, malformed ids too.
+ */
+export async function get(id: string, userId: string): Promise<Regime | null> {
   if (!UUID.test(id)) {
     return null;
   }
@@ -580,8 +582,8 @@ export async function get(id: string): Promise<Regime | null> {
   const found = await pool.query<RegimeRow>(
     `select ${REGIME_COLUMNS}
        from regimes
-      where id = $1`,
-    [id]
+      where id = $1 and user_id = $2`,
+    [id, userId]
   );
 
   if (found.rows.length === 0) {
@@ -652,19 +654,18 @@ async function resolveItems(
 
 /**
  * Replaces the exercises of one regime and returns it as it now stands, or
- * null when no regime has that id. Throws `UnknownExercise` when an edit names
+ * null when `userId` has no regime with that id. Throws `UnknownExercise` when an edit names
  * an exercise that is neither already in the regime nor in the catalogue.
  *
  * Replace, not update in place: the number of exercises can change, and
  * `position` is half the primary key, so there is no row to update when the
  * list grows or shrinks.
- *
- * NO OWNERSHIP CHECK EXISTS. Anyone holding an id can rewrite that regime.
- * That is only tolerable while regimes belong to nobody; the commit that adds
- * `user_id` has to add `and user_id = $2` here, or accounts ship with every
- * user able to edit every other user's plan.
  */
-export async function update(id: string, picks: RegimeEdit[]): Promise<Regime | null> {
+export async function update(
+  id: string,
+  userId: string,
+  picks: RegimeEdit[]
+): Promise<Regime | null> {
   if (!UUID.test(id)) {
     return null;
   }
@@ -681,9 +682,9 @@ export async function update(id: string, picks: RegimeEdit[]): Promise<Regime | 
     const found = await client.query<RegimeRow>(
       `select ${REGIME_COLUMNS}
          from regimes
-        where id = $1
+        where id = $1 and user_id = $2
         for update`,
-      [id]
+      [id, userId]
     );
 
     if (found.rows.length === 0) {
@@ -720,7 +721,7 @@ export async function update(id: string, picks: RegimeEdit[]): Promise<Regime | 
 }
 
 /**
- * Deletes one regime, and reports whether there was one to delete.
+ * Deletes one of `userId`'s regimes, and reports whether there was one to delete.
  *
  * The exercises go with it without being named here: `regime_exercises.regime_id`
  * is declared `on delete cascade`, so this is one statement and needs no
@@ -730,16 +731,13 @@ export async function update(id: string, picks: RegimeEdit[]): Promise<Regime | 
  * user-facing "delete my plan" wants once there is history worth keeping, but
  * that filter would then have to be added to every read, so it is not worth
  * carrying before there is anything to keep.
- *
- * NO OWNERSHIP CHECK EXISTS - see `update` above. This one destroys data, so
- * of the two it is the more urgent to fix when `user_id` arrives.
  */
-export async function remove(id: string): Promise<boolean> {
+export async function remove(id: string, userId: string): Promise<boolean> {
   if (!UUID.test(id)) {
     return false;
   }
 
-  const deleted = await pool.query(`delete from regimes where id = $1`, [id]);
+  const deleted = await pool.query(`delete from regimes where id = $1 and user_id = $2`, [id, userId]);
 
   return deleted.rowCount === 1;
 }

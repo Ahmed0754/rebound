@@ -1,7 +1,7 @@
 "use client";
 
 // The bar across the top of every page: home, the two places worth going, and
-// which account is current (which is also the way to switch).
+// which account is logged in (which is also the way to log out).
 
 import Link from "next/link";
 import { useCurrentUser } from "@/lib/current-user";
@@ -26,7 +26,7 @@ export function SiteHeader() {
         </nav>
 
         <Link href="/account" className="account-chip">
-          {state.status === "ready" ? state.user.username : "Choose account"}
+          {state.status === "ready" ? state.user.username : "Log in"}
         </Link>
       </div>
     </header>

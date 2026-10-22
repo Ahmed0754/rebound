@@ -34,9 +34,9 @@ export type Regime = {
   createdAt: string;
   updatedAt: string;
   regime: Exercise[];
-  // The account that generated it. A tag, not an ownership check: the server
-  // does not yet refuse another account's plan on GET/PUT/DELETE by id.
-  userId: string | null;
+  // The account that generated it. The server only ever returns a plan to
+  // its own account.
+  userId: string;
   // The limits the server validated the plan against. Null for plans made
   // before the server recorded them.
   limits: Limits | null;
@@ -52,12 +52,16 @@ export type RegimeEdit = {
   holdSeconds: number | null;
 };
 
-// A test account. No password: anyone holding the id can act as it.
+// An account. The password never comes back from the server.
 export type User = {
   id: string;
   username: string;
   createdAt: string;
 };
+
+// What signing up and logging in both return: the account, and the session
+// token every later call has to send.
+export type Session = { user: User; token: string };
 
 export type Range = { min: number; max: number };
 
@@ -104,7 +108,8 @@ export type OnboardingResult =
   | { id: string; outcome: "crisis"; screening: Screening };
 
 // A failed request, with the server's own message and the status, so a page
-// can tell a 409 ("no plan from these answers") from a 503 ("try again").
+// can tell a 409 ("no plan from these answers") from a 503 ("try again"), and
+// a 401 (logged out, or the session expired) from either.
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -114,7 +119,7 @@ export class ApiError extends Error {
   }
 }
 
-// Every call goes through here. It adds `X-User-Id` when there is one, and
+// Every call goes through here. It sends the session token when there is one, and
 // turns a failure into an ApiError carrying the server's message - that is
 // more specific than anything this client would invent.
 //
@@ -123,7 +128,7 @@ export class ApiError extends Error {
 // must not surface as a parse error instead of the status.
 async function request<T>(
   path: string,
-  { method = "GET", body, userId }: { method?: string; body?: unknown; userId?: string } = {}
+  { method = "GET", body, token }: { method?: string; body?: unknown; token?: string } = {}
 ): Promise<T> {
   let res: Response;
 
@@ -132,7 +137,7 @@ async function request<T>(
       method,
       headers: {
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-        ...(userId ? { "X-User-Id": userId } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -167,74 +172,84 @@ export function listRegions(): Promise<string[]> {
   return request("/api/regions");
 }
 
-// Creates an account. Throws on a 400 (bad username) or a 409 (taken).
-export function createUser(username: string): Promise<User> {
-  return request("/api/users", { method: "POST", body: { username } });
+// Creates an account and logs it in. Throws on a 400 (bad username or
+// password) or a 409 (username taken).
+export function signUp(username: string, password: string): Promise<Session> {
+  return request("/api/users", { method: "POST", body: { username, password } });
 }
 
-// Every account, so a test session can pick one instead of remembering a uuid.
-export function listUsers(): Promise<User[]> {
-  return request("/api/users");
+// Logs in. A 401 means the username or the password is wrong - the server
+// deliberately doesn't say which.
+export function logIn(username: string, password: string): Promise<Session> {
+  return request("/api/sessions", { method: "POST", body: { username, password } });
 }
 
-// One account, or a 404 ApiError if it has been deleted.
-export function getUser(userId: string): Promise<User> {
-  return request(`/api/users/${id(userId)}`);
+// Ends this session on the server, so the token stops working even if it leaked.
+export function logOut(token: string): Promise<void> {
+  return request("/api/sessions", { method: "DELETE", token });
 }
 
-// Deletes an account, and with it every plan and questionnaire it owns.
-export function deleteUser(userId: string): Promise<void> {
-  return request(`/api/users/${id(userId)}`, { method: "DELETE" });
+// The account a token belongs to, or a 401 ApiError once it has expired or
+// the account is gone.
+export function getMe(token: string): Promise<User> {
+  return request("/api/users/me", { token });
+}
+
+// Deletes the logged-in account, and with it every plan and questionnaire it owns.
+export function deleteMe(token: string): Promise<void> {
+  return request("/api/users/me", { method: "DELETE", token });
 }
 
 // Saves a whole questionnaire in one go and returns the server's decision.
 // Slow when there is a note: the server screens it with Gemini first.
 export function createOnboarding(
-  userId: string,
+  token: string,
   answers: Answers,
   freeText: string
 ): Promise<OnboardingResult> {
-  return request("/api/onboarding", { method: "POST", userId, body: { ...answers, freeText } });
+  return request("/api/onboarding", { method: "POST", token, body: { ...answers, freeText } });
 }
 
 // Reads a saved questionnaire's decision back by id. A 404 for an unknown id
 // and for another account's alike.
-export function getOnboarding(userId: string, onboardingId: string): Promise<OnboardingResult> {
-  return request(`/api/onboarding/${id(onboardingId)}`, { userId });
+export function getOnboarding(token: string, onboardingId: string): Promise<OnboardingResult> {
+  return request(`/api/onboarding/${id(onboardingId)}`, { token });
 }
 
 // How these answers narrowed the library down. 409 when the answers don't
 // lead to a plan, so there is nothing to narrow.
-export async function getFunnel(userId: string, onboardingId: string): Promise<Funnel> {
-  const body = await request<{ funnel: Funnel }>(`/api/onboarding/${id(onboardingId)}/candidates`, { userId });
+export async function getFunnel(token: string, onboardingId: string): Promise<Funnel> {
+  const body = await request<{ funnel: Funnel }>(`/api/onboarding/${id(onboardingId)}/candidates`, { token });
   return body.funnel;
 }
 
-// Generates a plan from a saved questionnaire and saves it. Slow: up to two
-// Gemini calls. 409 means no plan from these answers, 503 means try again.
-export function createRegimeFromOnboarding(userId: string, onboardingId: string): Promise<Regime> {
-  return request("/api/regimes", { method: "POST", userId, body: { onboardingId } });
+// Generates a plan from a saved questionnaire and saves it. Slow: the server
+// keeps retrying Gemini for up to 20 seconds. 409 means no plan from these
+// answers, 503 means try again.
+export function createRegimeFromOnboarding(token: string, onboardingId: string): Promise<Regime> {
+  return request("/api/regimes", { method: "POST", token, body: { onboardingId } });
 }
 
 // Every plan this account has generated, newest first. None yet is an empty
 // list, not an error.
-export function listRegimes(userId: string): Promise<Regime[]> {
-  return request("/api/regimes", { userId });
+export function listRegimes(token: string): Promise<Regime[]> {
+  return request("/api/regimes", { token });
 }
 
-// One plan by id, or a 404 ApiError.
-export function getRegimeById(regimeId: string): Promise<Regime> {
-  return request(`/api/regimes/${id(regimeId)}`);
+// One of this account's plans by id, or a 404 ApiError - for another
+// account's plan too.
+export function getRegimeById(token: string, regimeId: string): Promise<Regime> {
+  return request(`/api/regimes/${id(regimeId)}`, { token });
 }
 
 // Replaces the doses of a saved plan and returns it as it now stands.
-export function updateRegime(regimeId: string, regime: RegimeEdit[]): Promise<Regime> {
-  return request(`/api/regimes/${id(regimeId)}`, { method: "PUT", body: { regime } });
+export function updateRegime(token: string, regimeId: string, regime: RegimeEdit[]): Promise<Regime> {
+  return request(`/api/regimes/${id(regimeId)}`, { method: "PUT", token, body: { regime } });
 }
 
 // Deletes a saved plan. Hard delete on the server; there is no undo.
-export function deleteRegime(regimeId: string): Promise<void> {
-  return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE" });
+export function deleteRegime(token: string, regimeId: string): Promise<void> {
+  return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE", token });
 }
 
 // The message to show for anything a call threw.

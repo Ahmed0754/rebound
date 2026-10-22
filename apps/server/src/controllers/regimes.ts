@@ -15,29 +15,15 @@ import {
   UnknownExercise,
   WrongUnit,
 } from "../models/regimes.js";
+import { requireUser, userIdOf } from "../require-user.js";
 import type { RegimeEdit } from "../types/index.js";
 
 const router = Router();
 
-// Same shape as the one in models/regimes.ts and models/users.ts. Checked
-// here, not left to the database, because an invalid uuid reaching a foreign
-// key would surface as a 500 for what is only a bad header.
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Required on create, since `regimes.user_id` is `not null` - there is no such
-// thing as a regime belonging to nobody, so a request that names nobody cannot
-// make one. A missing and a malformed header are the same answer: a caller who
-// sent a broken id has not identified an account either, and quietly treating
-// it as "no account" is how a frontend bug turns into plans saved under
-// nothing.
-//
-// Still not authentication. Nothing checks that the caller is entitled to act
-// as this account, and `get`, `update` and `remove` do not read it at all -
-// see the capitalised TODO in models/regimes.ts.
-function readUserId(req: { header(name: string): string | undefined }): string | null {
-  const id = req.header("X-User-Id");
-  return id !== undefined && UUID.test(id) ? id : null;
-}
+// Every route here acts for the logged-in account, and only ever on that
+// account's own regimes: another account's regime is a 404, the same as one
+// that does not exist, so ids cannot be probed.
+router.use(requireUser);
 
 // A regime edited by hand still has to be a regime: at least one exercise,
 // and not an unbounded list. Three is what the app generates and shows.
@@ -213,15 +199,7 @@ async function fromOnboarding(onboardingId: string, userId: string) {
 }
 
 router.post("/", async (req, res) => {
-  const userId = readUserId(req);
-
-  // A plan is saved to an account, so one has to be named. 400 rather than
-  // 401: there is no authentication to have failed, the request is simply
-  // missing something it needs.
-  if (userId === null) {
-    res.status(400).send({ error: "X-User-Id must be a user id" });
-    return;
-  }
+  const userId = userIdOf(res);
 
   const onboardingId =
     typeof req.body?.onboardingId === "string" ? req.body.onboardingId.trim() : "";
@@ -253,21 +231,14 @@ router.post("/", async (req, res) => {
 
 // The caller's own regimes, newest first. Declared before "/:id" so the bare
 // path is not read as an id.
-router.get("/", async (req, res) => {
-  const userId = readUserId(req);
-
-  if (userId === null) {
-    res.status(400).send({ error: "X-User-Id must be a user id" });
-    return;
-  }
-
+router.get("/", async (_req, res) => {
   // An account with no regimes is an empty list, not a 404: the question
   // "what has this account made" has an answer, and it is "nothing yet".
-  res.send(await list(userId));
+  res.send(await list(userIdOf(res)));
 });
 
 router.get("/:id", async (req, res) => {
-  const regime = await get(req.params.id);
+  const regime = await get(req.params.id, userIdOf(res));
 
   // An unused id and a malformed one get the same answer, so a stranger
   // learns nothing about how ids are shaped.
@@ -295,7 +266,7 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    const regime = await update(req.params.id, parsed.items);
+    const regime = await update(req.params.id, userIdOf(res), parsed.items);
 
     // Replace-only, not create-or-replace. An unknown id is a miss: there is
     // nothing in the request to build a regime out of, since `muscle` and the
@@ -319,7 +290,7 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const deleted = await remove(req.params.id);
+  const deleted = await remove(req.params.id, userIdOf(res));
 
   // 404 rather than an unconditional 204, so this matches GET on the same path
   // and a UI can tell whether it deleted anything. The cost is that a retried

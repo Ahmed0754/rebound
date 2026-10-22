@@ -8,7 +8,7 @@ You answer a short questionnaire about what hurts. Rebound checks it's safe to g
 
 Step by step:
 
-1. **Pick or create an account.** These are test accounts: a username, no password.
+1. **Sign up or log in** with a username and password.
 2. **Answer four short steps:** where it hurts and how badly, seven yes/no warning-sign questions, your age, activity level, equipment and session length, and an optional note.
 3. **The server decides one of three outcomes:**
    - **See a doctor:** any warning sign, or a note that mentions one, means no plan is generated.
@@ -43,31 +43,31 @@ The original single-endpoint request path is drawn in [`diagrams/request-flow.sv
 
 ### Not built yet
 
-- **No authentication.** An account is a uuid the browser remembers, and every request names it in an `X-User-Id` header.
-- **`GET`, `PUT` and `DELETE /api/regimes/:id` don't check ownership yet.** The client hides other accounts' plans, but the server doesn't refuse them.
+- **No password reset or change, and no limit on login attempts.**
 - **Edits are bounded by fixed ranges** (1–20 sets, 1–100 reps, 1–600s holds), not by the limits the plan was generated under.
 - **No daily check-ins, streaks or weekly plan reviews.** See [Where this is going](#where-this-is-going).
 
 ## The API
 
-Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 need an `X-User-Id` header and answer `400` without one.
+Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 need `Authorization: Bearer <token>`, with the token from signing up or logging in, and answer `401` without a valid one. They only ever act on the logged-in account's own data: another account's plan or questionnaire is a `404`, the same as one that doesn't exist.
 
 | Method | Path | Body | Success | Failures |
 | --- | --- | --- | --- | --- |
 | `GET` | `/health` | — | `200 {ok: true}` | — |
 | `GET` | `/api/regions` | — | `200` region names | — |
-| `POST` | `/api/users` | `{username}` | `201` user | `400` bad name · `409` taken |
-| `GET` | `/api/users` | — | `200` every account | — |
-| `GET` | `/api/users/:id` | — | `200` user | `404` |
-| `DELETE` | `/api/users/:id` | — | `204`, and its plans and questionnaires with it | `404` |
+| `POST` | `/api/users` | `{username, password}` | `201 {user, token}`, logged in | `400` bad name or password · `409` taken |
+| `GET` | `/api/users/me` 👤 | — | `200` user | `401` |
+| `DELETE` | `/api/users/me` 👤 | — | `204`, and its plans, questionnaires and sessions with it | `401` |
+| `POST` | `/api/sessions` | `{username, password}` | `200 {user, token}` | `401` wrong username or password (never says which) |
+| `DELETE` | `/api/sessions` 👤 | — | `204`, the token stops working | `401` |
 | `POST` | `/api/onboarding` 👤 | answers + optional `freeText` | `201` `{id, outcome, screening, …}` | `400` names the expected values |
 | `GET` | `/api/onboarding/:id` 👤 | — | `200` the saved outcome | `404`, including another account's |
 | `GET` | `/api/onboarding/:id/candidates` 👤 | — | `200` `{query, funnel, candidates}` | `404` · `409` no plan from these answers |
 | `POST` | `/api/regimes` 👤 | `{onboardingId}` | `201` plan | `404` · `409` no plan from these answers, or too few exercises fit · `503` generation failed, nothing saved |
 | `GET` | `/api/regimes` 👤 | — | `200` this account's plans, newest first | — |
-| `GET` | `/api/regimes/:id` | — | `200` plan | `404` |
-| `PUT` | `/api/regimes/:id` | `{regime: [{id, sets, reps \| holdSeconds}]}` | `200` plan | `400` bad list or unknown exercise · `404` |
-| `DELETE` | `/api/regimes/:id` | — | `204` | `404` |
+| `GET` | `/api/regimes/:id` 👤 | — | `200` plan | `404` |
+| `PUT` | `/api/regimes/:id` 👤 | `{regime: [{id, sets, reps \| holdSeconds}]}` | `200` plan | `400` bad list or unknown exercise · `404` |
+| `DELETE` | `/api/regimes/:id` 👤 | — | `204` | `404` |
 
 `outcome` is `ready`, `see_a_doctor` or `crisis`. All three come back as a success, so a client must branch on `outcome`, never on the HTTP status. `POST /api/regimes` still accepts the original `{muscle}` body, which builds a plan with no questionnaire, held only to the widest limits.
 
@@ -99,6 +99,12 @@ Three decisions about plans worth knowing:
 - **An edit that changes a dose drops that exercise's rationale,** because the rationale explained the old dose.
 - **A malformed id is a `404`, not a `400`,** so probing the API reveals nothing about how ids are shaped.
 
+How accounts are kept safe:
+
+- **Passwords are hashed with scrypt and a random salt** (Node's built-in `crypto`, no extra dependency), so the database never holds a password. The code is in [`apps/server/src/auth.ts`](./apps/server/src/auth.ts).
+- **A session token is 32 random bytes, and only its SHA-256 is stored,** so someone who can read the `sessions` table still can't log in as anyone. Sessions last 7 days.
+- **A wrong password and an unknown username get the same answer in about the same time,** so the login form can't be used to find out who has an account.
+
 ## Where this is going
 
 What's above is the working core. The product it's being built into is bigger:
@@ -118,7 +124,7 @@ The whole bet is that most people don't need a clinician managing every decision
 The Express server and its routes; input validation and error responses; the rules layer in `clinical.ts`; the candidate filters; the Gemini calls and the response schemas they enforce; the validator and retry; the migrations and the seed script; the tests.
 
 **Frontend / UI — Syed Ahmed Ali** (`apps/client`)
-The Next.js app: the landing page, account picker, questionnaire, outcome screens and plan pages; loading and error states; and how plans, limits and exercises are presented.
+The Next.js app: the landing page, log-in and sign-up page, questionnaire, outcome screens and plan pages; loading and error states; and how plans, limits and exercises are presented.
 
 **Shared decisions — both**
 The JSON shapes the API returns, since they are the contract between the two halves; the database tables; and the scope of each stage — what's working now and what comes next.
@@ -142,7 +148,7 @@ The JSON shapes the API returns, since they are the contract between the two hal
 
 **Tooling**
 - [pnpm](https://pnpm.io/) workspaces: a monorepo with `apps/server` and `apps/client`
-- [Vitest](https://vitest.dev/): 212 tests across 6 files in `apps/server/src`
+- [Vitest](https://vitest.dev/): 238 tests across 7 files in `apps/server/src`
 - ESLint and `tsc` across both apps
 
 ## The database
@@ -152,12 +158,13 @@ The JSON shapes the API returns, since they are the contract between the two hal
 | `exercises` | The catalogue: 703 exercises from free-exercise-db, with muscles, equipment, level, category and steps |
 | `region_muscles` | Which muscles each of the 10 body areas maps to |
 | `aggravator_exclusions` | Which exercises each "makes it worse" answer rules out |
-| `users` | Test accounts |
+| `users` | Accounts: username and scrypt password hash. Accounts made before passwords have no hash and can't log in |
+| `sessions` | One row per login: the SHA-256 of its token, the account, and when it expires |
 | `onboarding_responses` | Each questionnaire: the answers, the note, and how the note was screened. The outcome is worked out from these each time, not stored |
 | `regimes` | Each plan: owner, body region, and the limits it was validated against |
 | `regime_exercises` | The exercises of each plan, a snapshot of exactly what the user was shown |
 
-Deleting an account cascades to its questionnaires and plans.
+Deleting an account cascades to its questionnaires, plans and sessions.
 
 ## How to run it locally
 
@@ -206,3 +213,8 @@ A running summary of what got added each week, for anyone who wants the gist wit
 - Exercises are dosed in reps or in held seconds, depending on the exercise.
 - Real pages for accounts, the questionnaire, outcomes and plans replaced the single test screen.
 - A landing page and a new visual design; plans show exercise photos, numbered steps, and the limits they were built inside; the ready screen shows how the library was narrowed down.
+
+**Week of Oct 19 – Oct 25**
+- Every plan is checked against criteria from published sources (AAOS, APTA, ACSM) before it's saved, with retries for up to 20 seconds.
+- Real accounts: sign up and log in with a password, stored only as a salted scrypt hash. Logins are 7-day session tokens.
+- Every plan and questionnaire route now checks that it belongs to the logged-in account.

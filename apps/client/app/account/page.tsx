@@ -1,63 +1,58 @@
 "use client";
 
-//this is the account page: create an account, pick an existing one, or
-//delete the current one. Test accounts only - no password, no login.
+//this is the account page: log in, sign up, log out, or delete the account.
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorMessage, Loading } from "@/components/ui";
-import { createUser, deleteUser, listUsers, messageOf, type User } from "@/lib/api";
+import { deleteMe, logIn, messageOf, signUp } from "@/lib/api";
 import { useCurrentUser } from "@/lib/current-user";
 import { KEYS, remove } from "@/lib/storage";
 
-export default function AccountPage() {
-  const { state, select, clear } = useCurrentUser();
-  const router = useRouter();
-  const current = state.status === "ready" ? state.user : null;
+type Mode = "log_in" | "sign_up";
 
-  //null until the first load lands, so "no accounts yet" isn't shown early.
-  const [users, setUsers] = useState<User[] | null>(null);
+export default function AccountPage() {
+  const { state, signIn, signOut } = useCurrentUser();
+  const router = useRouter();
+
+  const [mode, setMode] = useState<Mode>("log_in");
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    listUsers()
-      .then(setUsers)
-      .catch((e) => setError(messageOf(e)));
-  }, []);
-
-  //A new account has no plans yet, so it goes straight to the questionnaire;
-  //an existing one goes to its plans.
-  function choose(user: User, next: "/plans" | "/onboarding" = "/plans") {
-    select(user);
-    router.push(next);
-  }
-
-  async function create() {
-    const name = username.trim();
-    if (!name) return;
-
+  async function submit() {
     setBusy(true);
     setError(null);
 
     try {
-      //The server's 400/409 message is shown as-is: it is more specific than
-      //anything this page would say.
-      choose(await createUser(name), "/onboarding");
+      //The server's message is shown as-is: it is more specific than anything
+      //this page would say, and for a failed login it deliberately doesn't say
+      //whether it was the username or the password.
+      const session = mode === "sign_up" ? await signUp(username, password) : await logIn(username, password);
+
+      signIn(session);
+      //A new account has no plans yet, so it goes straight to the questionnaire.
+      router.push(mode === "sign_up" ? "/onboarding" : "/plans");
     } catch (e) {
       setError(messageOf(e));
       setBusy(false);
     }
   }
 
+  function switchTo(next: Mode) {
+    setMode(next);
+    setError(null);
+  }
+
   //The database cascades this to every plan and questionnaire the account
   //owns, so it is confirmed first.
-  async function removeCurrent() {
-    if (!current) return;
+  async function removeAccount() {
+    if (state.status !== "ready") return;
 
+    const { user, token } = state;
     const ok = window.confirm(
-      `Delete "${current.username}"? This also deletes all of its plans and questionnaires, and can't be undone.`
+      `Delete "${user.username}"? This also deletes all of its plans and questionnaires, and can't be undone.`
     );
     if (!ok) return;
 
@@ -65,10 +60,9 @@ export default function AccountPage() {
     setError(null);
 
     try {
-      await deleteUser(current.id);
-      remove("local", KEYS.lastOnboarding(current.id));
-      clear();
-      setUsers((list) => list?.filter((u) => u.id !== current.id) ?? null);
+      await deleteMe(token);
+      remove("local", KEYS.lastOnboarding(user.id));
+      await signOut();
     } catch (e) {
       setError(messageOf(e));
     } finally {
@@ -76,77 +70,98 @@ export default function AccountPage() {
     }
   }
 
-  const others = users?.filter((u) => u.id !== current?.id) ?? [];
+  if (state.status === "loading") {
+    return (
+      <main className="page">
+        <Loading />
+      </main>
+    );
+  }
 
-  return (
-    <main className="page">
-      <h1>Account</h1>
-      <p className="lead">These are test accounts: no password, and anyone can pick any of them.</p>
+  if (state.status === "ready") {
+    return (
+      <main className="page">
+        <h1>Account</h1>
 
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
 
-      {current && (
         <section className="card">
-          <h2>Current account</h2>
           <p style={{ marginTop: 0 }}>
-            <strong>{current.username}</strong>
+            Logged in as <strong>{state.user.username}</strong>
           </p>
           <div className="row">
             <button type="button" className="btn btn-primary" onClick={() => router.push("/plans")}>
               Continue
             </button>
-            <button type="button" className="btn btn-danger" onClick={removeCurrent} disabled={busy}>
+            <button type="button" className="btn" onClick={signOut} disabled={busy}>
+              Log out
+            </button>
+            <button type="button" className="btn btn-danger" onClick={removeAccount} disabled={busy}>
               Delete this account
             </button>
           </div>
         </section>
-      )}
+      </main>
+    );
+  }
+
+  const signingUp = mode === "sign_up";
+
+  return (
+    <main className="page">
+      <h1>{signingUp ? "Create an account" : "Log in"}</h1>
+
+      {state.status === "error" && <ErrorMessage>{state.message}</ErrorMessage>}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
 
       <section className="card">
-        <h2>Create an account</h2>
         <form
-          className="row"
           onSubmit={(e) => {
             e.preventDefault();
-            create();
+            submit();
           }}
         >
-          <input
-            className="input"
-            style={{ flex: 1, minWidth: 180 }}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="username"
-            aria-label="Username"
-            autoComplete="off"
-          />
-          <button type="submit" className="btn btn-primary" disabled={busy || !username.trim()}>
-            Create
+          <label className="field">
+            <span className="field-label">Username</span>
+            <input
+              className="input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              autoCapitalize="none"
+              required
+            />
+          </label>
+          <label className="field">
+            <span className="field-label">Password</span>
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              //Tells password managers whether to offer a saved password or generate a new one.
+              autoComplete={signingUp ? "new-password" : "current-password"}
+              minLength={signingUp ? 8 : undefined}
+              required
+            />
+          </label>
+          {signingUp && (
+            <p className="muted small">
+              Username: 3–30 characters, lowercase letters, numbers and underscores. Password: at least 8 characters.
+            </p>
+          )}
+          <button type="submit" className="btn btn-primary" disabled={busy || !username.trim() || !password}>
+            {signingUp ? "Create account" : "Log in"}
           </button>
         </form>
-        <p className="muted small" style={{ marginBottom: 0 }}>
-          3–30 characters: lowercase letters, numbers and underscores.
-        </p>
       </section>
 
-      <section className="card">
-        <h2>{current ? "Switch to another account" : "Pick an existing account"}</h2>
-        {users === null ? (
-          <Loading />
-        ) : others.length === 0 ? (
-          <p className="muted" style={{ margin: 0 }}>
-            No other accounts yet.
-          </p>
-        ) : (
-          <div className="choices">
-            {others.map((u) => (
-              <button key={u.id} type="button" className="choice" onClick={() => choose(u)} disabled={busy}>
-                {u.username}
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+      <p className="muted">
+        {signingUp ? "Already have an account? " : "New here? "}
+        <button type="button" className="link-button" onClick={() => switchTo(signingUp ? "log_in" : "sign_up")}>
+          {signingUp ? "Log in" : "Create an account"}
+        </button>
+      </p>
     </main>
   );
 }

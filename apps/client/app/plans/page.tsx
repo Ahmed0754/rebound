@@ -13,7 +13,7 @@ import { regionLabel } from "@/lib/questionnaire";
 import { KEYS, read } from "@/lib/storage";
 
 export default function PlansPage() {
-  const { user, error: accountError } = useRequiredUser();
+  const { user, token, error: accountError } = useRequiredUser();
   const [plans, setPlans] = useState<Regime[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   //The latest questionnaire, so someone sent to a doctor can find that screen
@@ -21,13 +21,13 @@ export default function PlansPage() {
   const [lastOnboarding, setLastOnboarding] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !token) return;
 
     setLastOnboarding(read("local", KEYS.lastOnboarding(user.id)));
 
     let cancelled = false;
 
-    listRegimes(user.id)
+    listRegimes(token)
       .then((list) => {
         if (!cancelled) setPlans(list);
       })
@@ -38,7 +38,7 @@ export default function PlansPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, token]);
 
   if (accountError) {
     return (

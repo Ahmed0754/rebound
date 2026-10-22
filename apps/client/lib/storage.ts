@@ -2,8 +2,12 @@
 // quota reads as "nothing stored" instead of throwing.
 
 export const KEYS = {
-  // The current account's id. The only thing that makes someone "signed in".
-  userId: "rebound.userId",
+  // The session token from logging in. Whoever holds it is logged in as that
+  // account until it expires or they log out.
+  token: "rebound.sessionToken",
+  // From before passwords: an account id this browser trusted as-is. Only
+  // read to delete it.
+  legacyUserId: "rebound.userId",
   // The questionnaire in progress, so a refresh mid-way doesn't lose it.
   draft: "rebound.onboardingDraft",
   // The latest questionnaire each account submitted. There is no endpoint

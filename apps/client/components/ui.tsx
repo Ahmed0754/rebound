@@ -64,7 +64,7 @@ export function AccountError({ message }: { message: string }) {
     <>
       <ErrorMessage>{message}</ErrorMessage>
       <Link className="btn" href="/account">
-        Choose an account
+        Go to your account
       </Link>
     </>
   );
