@@ -101,9 +101,9 @@ export function FunnelChart({ funnel }: { funnel: Funnel }) {
       </ol>
 
       <p className="muted small" style={{ margin: "12px 0 0" }}>
-        The AI picks from these and sets the doses inside your limits. Software then checks every number. If
-        anything is out of bounds, the AI is told what and gets one more try; a plan that still breaks the limits
-        is never saved.
+        The AI picks from these and sets the doses inside your limits. Software then checks every number and
+        compares the plan with published exercise guidance. If anything falls short, the AI is told what and
+        tries again, for up to 20 seconds. A plan that still breaks the limits is never saved.
       </p>
     </section>
   );
