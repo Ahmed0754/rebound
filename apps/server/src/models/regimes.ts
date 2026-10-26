@@ -378,8 +378,11 @@ export type Quality = QualityResult & {
  * which only questionnaire candidates do. When the budget runs out, the plan
  * that passed the hard checks with the fewest misses is the one returned.
  * Throws `GenerationFailed` when no attempt passed the hard checks.
+ *
+ * Exported, and saves nothing, so the offline eval (eval/run.ts) can call it
+ * with frozen candidates. `create` is the only caller that saves.
  */
-async function generate(input: {
+export async function generate(input: {
   region: string;
   candidates: Exercise[];
   limits: Limits;
@@ -387,8 +390,12 @@ async function generate(input: {
   freeText?: string | null;
   // The same candidates with their catalogue tags, from a questionnaire.
   tagged?: Candidate[];
+  // False keeps the hard checks and still records quality, but takes the first
+  // plan that passes the hard checks instead of retrying for quality - how the
+  // eval measures what the quality tier adds. Only the eval turns it off.
+  enforceQuality?: boolean;
 }): Promise<{ items: RegimeItem[]; quality: Quality | null }> {
-  const { tagged, ...request } = input;
+  const { tagged, enforceQuality = true, ...request } = input;
   const byId = new Map(input.candidates.map((candidate) => [candidate.id, candidate]));
   const allowed = new Map(input.candidates.map((candidate) => [candidate.id, candidate.unit]));
   const tags = new Map((tagged ?? []).map((candidate) => [candidate.id, candidate]));
@@ -461,7 +468,7 @@ async function generate(input: {
       best = { items, result };
     }
 
-    if (result.missed.length === 0) {
+    if (result.missed.length === 0 || !enforceQuality) {
       break;
     }
 
@@ -520,9 +527,9 @@ export async function create(input: {
     }
 
     region = onboarding.answers.region;
-    // The model is only ever sent the plain exercise fields (see
-    // `userContent`), so the catalogue tags can travel with the candidates:
-    // the quality checks need them.
+    // The model is sent each candidate's tags but never its filter-only
+    // fields (see `userContent`), so the full rows can travel with the
+    // candidates: the quality checks need the tags.
     exercises = candidates;
     tagged = candidates;
   }
