@@ -1,0 +1,122 @@
+{
+  "about": "A fresh, severe shoulder flare-up at 50+ with an autoimmune condition.",
+  "answers": {
+    "goal": "reduce_pain",
+    "region": "shoulder",
+    "onset": "acute",
+    "painNow": 9,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "50_plus",
+    "conditions": [
+      "autoimmune"
+    ],
+    "equipment": [
+      "none"
+    ],
+    "activityLevel": "recreational",
+    "sessionMinutes": 10
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.501Z",
+  "candidates": [
+    {
+      "id": "Elbow_Circles",
+      "name": "Elbow Circles",
+      "description": "Sit or stand with your feet slightly apart.\nPlace your hands on your shoulders with your elbows at shoulder level and pointing out.\nSlowly make a circle with your elbows. Breathe out as you start the circle and breathe in as you complete the circle.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Arm_Circles",
+      "name": "Arm Circles",
+      "description": "Stand up and extend your arms straight out by the sides. The arms should be parallel to the floor and perpendicular (90-degree angle) to your torso. This will be your starting position.\nSlowly start to make circles of about 1 foot in diameter with each outstretched arm. Breathe normally as you perform the movement.\nContinue the circular motion of the outstretched arms for about ten seconds. Then reverse the movement, going the opposite direction.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Shoulder_Raise",
+      "name": "Shoulder Raise",
+      "description": "Relax your arms to your sides and raise your shoulders up toward your ears, then back down.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Shoulder_Stretch",
+      "name": "Shoulder Stretch",
+      "description": "Reach your left arm across your body and hold it straight.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Shoulder_Circles",
+      "name": "Shoulder Circles",
+      "description": "With shoulders relaxed and arms resting loosely at your sides (or in your lap if you're seated), gently roll your shoulders forward, up, back, and down.\nReverse direction. You can do this exercise alternating shoulders or both at the same time.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Upward_Stretch",
+      "name": "Upward Stretch",
+      "description": "Extend both hands straight above your head, palms touching.\nSlowly push your hands up and back, keeping your back straight.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Side_Wrist_Pull",
+      "name": "Side Wrist Pull",
+      "description": "This stretch works best standing. Cross your left arm over the midline of your body and hold the left wrist in your right hand down at the level of your hips. Start the stretch with a bent left arm.\nSlowly straighten, pull, and lift it up to shoulder height, as pictured. Feel this stretch originate in your back, not your shoulders, and don't pull too hard on the shoulders joint. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    }
+  ]
+}

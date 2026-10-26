@@ -13,6 +13,7 @@
     "db:migrate:down": "dotenv -e ../../.env -- node-pg-migrate down",
     "db:seed": "dotenv -e ../../.env -- tsx scripts/seed.ts",
     "eval": "dotenv -e ../../.env -- tsx eval/run.ts",
+    "eval:freeze": "dotenv -e ../../.env -- tsx eval/freeze.ts",
     "db:setup": "pnpm run db:migrate && pnpm run db:seed"
   },
   "dependencies": {

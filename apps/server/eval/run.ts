@@ -6,8 +6,9 @@
 // picks from the same exercises. Limits are worked out from the answers at
 // run time, so a change to the rules shows up in the next report.
 //
-// So far this is the plumbing (piece 0). The graders and the two baselines
-// come next (pieces A and B).
+// Every plan is graded in code (graders.ts), and each run writes two files:
+// the JSON with everything, and the markdown summary a person reads
+// (report.ts). The two baselines come next (piece B).
 
 import { execSync } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
@@ -17,6 +18,8 @@ import type { Candidate } from "../src/models/exercises.js";
 import { MODEL } from "../src/models/gemini.js";
 import { generate, type Quality } from "../src/models/regimes.js";
 import type { RegimeItem } from "../src/types/index.js";
+import { grade, rubric } from "./graders.js";
+import { toMarkdown, type Graded, type Stamp } from "./report.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
 const REPORTS = join(import.meta.dirname, "reports");
@@ -29,6 +32,8 @@ type Fixture = {
   about: string;
   answers: Answers;
   freeText: string | null;
+  // When `pnpm eval:freeze` drew the candidates.
+  frozenAt: string;
   candidates: Candidate[];
 };
 
@@ -60,13 +65,6 @@ const MAKERS: Maker[] = [
   { id: "gemini-no-quality", make: gemini(false) },
 ];
 
-/** What one maker made of one fixture. A failure is kept, never dropped. */
-type Result = {
-  fixture: string;
-  maker: string;
-  ms: number;
-} & ({ ok: true; plan: Plan } | { ok: false; error: string });
-
 async function loadFixtures(): Promise<Fixture[]> {
   await mkdir(FIXTURES, { recursive: true });
   const files = (await readdir(FIXTURES)).filter((file) => file.endsWith(".json")).sort();
@@ -79,27 +77,35 @@ async function loadFixtures(): Promise<Fixture[]> {
   );
 }
 
-async function run(maker: Maker, fixture: Fixture): Promise<Result> {
+// What one maker made of one fixture, graded. A failure is kept, never
+// dropped: it is graded as an empty plan.
+async function run(maker: Maker, fixture: Fixture): Promise<Graded> {
   const limits = getLimits(fixture.answers);
+  const context = { region: fixture.answers.region, answers: fixture.answers, limits };
   const started = Date.now();
-  const timed = { fixture: fixture.id, maker: maker.id };
+  let plan: Plan | null = null;
+  let error: string | null = null;
 
   // The same refusal `create` makes before it calls the model.
   if (fixture.candidates.length < limits.count.min) {
-    return {
-      ...timed,
-      ms: 0,
-      ok: false,
-      error: `${fixture.candidates.length} candidates, fewer than the ${limits.count.min} a plan needs`,
-    };
+    error = `${fixture.candidates.length} candidates, fewer than the ${limits.count.min} a plan needs`;
+  } else {
+    try {
+      plan = await maker.make(fixture, limits);
+    } catch (caught) {
+      error = String(caught);
+    }
   }
 
-  try {
-    const plan = await maker.make(fixture, limits);
-    return { ...timed, ms: Date.now() - started, ok: true, plan };
-  } catch (error) {
-    return { ...timed, ms: Date.now() - started, ok: false, error: String(error) };
-  }
+  return {
+    fixture: fixture.id,
+    maker: maker.id,
+    ms: Date.now() - started,
+    error,
+    items: plan?.items ?? null,
+    quality: plan?.quality ?? null,
+    grade: grade(plan?.items ?? null, fixture.candidates, context),
+  };
 }
 
 async function main() {
@@ -110,7 +116,7 @@ async function main() {
     return;
   }
 
-  const results: Result[] = [];
+  const results: Graded[] = [];
 
   // One at a time: the Gemini makers share one API key's rate limit, and the
   // time each plan takes is part of what is measured.
@@ -119,26 +125,33 @@ async function main() {
       const result = await run(maker, fixture);
       results.push(result);
       console.log(
-        `${fixture.id} · ${maker.id} · ${result.ok ? `${result.plan.items.length} exercises` : `failed: ${result.error}`} · ${result.ms} ms`
+        `${fixture.id} · ${maker.id} · ${result.error === null ? `${result.items!.length} exercises` : `failed: ${result.error}`} · ${result.ms} ms`
       );
     }
   }
 
-  const ranAt = new Date().toISOString();
-  const report = {
-    ranAt,
+  const stamp: Stamp = {
+    ranAt: new Date().toISOString(),
     // "-dirty" when the code that ran was not all committed.
     commit: execSync("git describe --always --dirty").toString().trim(),
     model: MODEL,
+    rubric: rubric().version,
     fixtures: fixtures.length,
     makers: MAKERS.map((maker) => maker.id),
+  };
+  const report = {
+    ...stamp,
+    rubric: rubric(),
+    frozenAt: Object.fromEntries(fixtures.map((fixture) => [fixture.id, fixture.frozenAt])),
     results,
   };
+  const markdown = toMarkdown(stamp, results);
 
   await mkdir(REPORTS, { recursive: true });
-  const file = join(REPORTS, `${ranAt.replace(/[:.]/g, "-")}.json`);
-  await writeFile(file, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(`Wrote ${file}`);
+  const file = join(REPORTS, stamp.ranAt.replace(/[:.]/g, "-"));
+  await writeFile(`${file}.json`, `${JSON.stringify(report, null, 2)}\n`);
+  await writeFile(`${file}.md`, markdown);
+  console.log(`\n${markdown}\nWrote ${file}.json and .md`);
 }
 
 await main();

@@ -1,0 +1,248 @@
+{
+  "about": "A fresh low back flare-up that bending under load sets off.",
+  "answers": {
+    "goal": "reduce_pain",
+    "region": "lower back",
+    "onset": "acute",
+    "painNow": 6,
+    "aggravators": [
+      "loaded_flexion"
+    ],
+    "redFlags": [],
+    "ageBand": "30_49",
+    "conditions": [],
+    "equipment": [
+      "none"
+    ],
+    "activityLevel": "recreational",
+    "sessionMinutes": 10
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.398Z",
+  "candidates": [
+    {
+      "id": "Toe_Touchers",
+      "name": "Toe Touchers",
+      "description": "To begin, lie down on the floor or an exercise mat with your back pressed against the floor. Your arms should be lying across your sides with the palms facing down.\nYour legs should be touching each other. Slowly elevate your legs up in the air until they are almost perpendicular to the floor with a slight bend at the knees. Your feet should be parallel to the floor.\nMove your arms so that they are fully extended at a 45 degree angle from the floor. This is the starting position.\nWhile keeping your lower back pressed against the floor, slowly lift your torso and use your hands to try and touch your toes. Remember to exhale while perform this part of the exercise.\nSlowly begin to lower your torso and arms back down to the starting position while inhaling. Remember to keep your arms straight out pointing towards your toes.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Lateral_Stretch",
+      "name": "Standing Lateral Stretch",
+      "description": "Take a slightly wider than hip distance stance with your knees slightly bent.\nPlace your right hand on your right hip to support the spine.\nRaise your left arm in a vertical line and place your left hand behind your head. Keep it there as you incline your torso to the right.\nKeep your weight evenly distributed between both legs (don't lean into your left hip). Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Stomach_Vacuum",
+      "name": "Stomach Vacuum",
+      "description": "To begin, stand straight with your feet shoulder width apart from each other. Place your hands on your hips. This is the starting position.\nNow slowly inhale as much air as possible and then start to exhale as much as possible while bringing your stomach in as much as possible and hold this position. Try to visualize your navel touching your backbone.\nOne isometric contraction is around 20 seconds. During the 20 second hold, try to breathe normally. Then inhale and bring your stomach back to the starting position.\nOnce you have practiced this exercise, try to perform this exercise for longer than 20 seconds. Tip: You can work your way up to 40-60 seconds.\nRepeat for the recommended amount of sets.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Superman",
+      "name": "Superman",
+      "description": "To begin, lie straight and face down on the floor or exercise mat. Your arms should be fully extended in front of you. This is the starting position.\nSimultaneously raise your arms, legs, and chest off of the floor and hold this contraction for 2 seconds. Tip: Squeeze your lower back to get the best results from this exercise. Remember to exhale during this movement. Note: When holding the contracted position, you should look like superman when he is flying.\nSlowly begin to lower your arms, legs and chest back down to the starting position while inhaling.\nRepeat for the recommended amount of repetitions prescribed in your program.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Overhead_Stretch",
+      "name": "Seated Overhead Stretch",
+      "description": "Sit up straight on an exercise mat.\nTouch the soles of your feet together with your feet six to eight inches in front of your hips.\nPlace one hand on the floor beside you and your other hand behind your head.\nLift your elbow to the ceiling as you incline your torso to the other side. Hold for 10 to 20 seconds, then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dancers_Stretch",
+      "name": "Dancer's Stretch",
+      "description": "Sit up on the floor.\nCross your right leg over your left, keeping the knee bent. Your left leg is straight and down on the floor.\nPlace your left arm on your right leg and your right hand on the floor.\nRotate your upper body to the right, and hold for 10-20 seconds. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "One_Knee_To_Chest",
+      "name": "One Knee To Chest",
+      "description": "Start off by lying on the floor.\nExtend one leg straight and pull the other knee to your chest. Hold under the knee joint to protect the kneecap.\nGently tug that knee toward your nose.\nSwitch sides. This stretches the buttocks and lower back of the bent leg and the hip flexor of the straight leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Lower_Back_Curl",
+      "name": "Lower Back Curl",
+      "description": "Lie on your stomach with your arms out to your sides. This will be your starting position.\nUsing your lower back muscles, extend your spine lifting your chest off of the ground. Do not use your arms to push yourself up. Keep your head up during the movement. Repeat for 10-20 repetitions.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Scissor_Kick",
+      "name": "Scissor Kick",
+      "description": "To begin, lie down with your back pressed against the floor or on an exercise mat (optional). Your arms should be fully extended to the sides with your palms facing down. Note: The arms should be stationary the entire time.\nWith a slight bend at the knees, lift your legs up so that your heels are about 6 inches off the ground. This is the starting position.\nNow lift your left leg up to about a 45 degree angle while your right leg is lowered until the heel is about 2-3 inches from the ground.\nSwitch movements by raising your right leg up and lowering your left leg. Remember to breathe while performing this exercise.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Childs_Pose",
+      "name": "Child's Pose",
+      "description": "Get on your hands and knees, walk your hands in front of you.\nLower your buttocks down to sit on your heels. Let your arms drag along the floor as you sit back to stretch your entire spine.\nOnce you settle onto your heels, bring your hands next to your feet and relax. \"breathe\" into your back. Rest your forehead on the floor. Avoid this position if you have knee problems.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Hug_Knees_To_Chest",
+      "name": "Hug Knees To Chest",
+      "description": "Lie down on your back and pull both knees up to your chest.\nHold your arms under the knees, not over (that would put to much pressure on your knee joints).\nSlowly pull the knees toward your shoulders. This also stretches your buttocks muscles.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Standing_Pelvic_Tilt",
+      "name": "Standing Pelvic Tilt",
+      "description": "Start off with your feet hip-distance apart.\nBend your knees slightly to keep them soft and springy.\nYou may want to move your pelvis forward and backward and back few times before holding the tailbone forward in this stretch.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Overhead_Stretch",
+      "name": "Overhead Stretch",
+      "description": "Standing straight up, lace your fingers together and open your palms to the ceiling. Keep your shoulders down as you extend your arms up.\nTo create a full torso stretch, pull your tailbone down and stabilize your torso as you do this. Stretch the muscles on both the front and the back of the torso.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Knee_Across_The_Body",
+      "name": "Knee Across The Body",
+      "description": "Lie down on the floor with your right leg straight. Bend your left leg and lower it across your body, holding the knee down toward the floor with your right hand. (The knee doesn't need to touch the floor if you're tight.)\nPlace your left arm comfortably beside you and turn your head to the left. Imagine you have a weight tied to your tailbone. let your tailbone fall back toward the floor as your chest reaches in the opposite direction to stretch your lower back. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Ankle_On_The_Knee",
+      "name": "Ankle On The Knee",
+      "description": "From a lying position, bend your knees and keep your feet on the floor.\nPlace your ankle of one foot on your opposite knee.\nGrasp the thigh or knee of the bottom leg and pull both of your legs into the chest. Relax your neck and shoulders. Hold for 10-20 seconds and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Cat_Stretch",
+      "name": "Cat Stretch",
+      "description": "Position yourself on the floor on your hands and knees.\nPull your belly in and round your spine, lower back, shoulders, and neck, letting your head drop.\nHold for 15 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    }
+  ]
+}

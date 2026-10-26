@@ -1,0 +1,302 @@
+{
+  "about": "Chronic, low pain, competitive, full gym: the widest shoulder pool.",
+  "answers": {
+    "goal": "prevent_recurrence",
+    "region": "shoulder",
+    "onset": "chronic",
+    "painNow": 2,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "under_30",
+    "conditions": [],
+    "equipment": [
+      "full_gym"
+    ],
+    "activityLevel": "competitive",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.486Z",
+  "candidates": [
+    {
+      "id": "Cable_Shoulder_Press",
+      "name": "Cable Shoulder Press",
+      "description": "Move the cables to the bottom of the towers and select an appropriate weight.\nStand directly in between the uprights. Grasp the cables and hold them at shoulder height, palms facing forward. This will be your starting position.\nKeeping your head and chest up, extend through the elbow to press the handles directly over head.\nAfter pausing at the top, return to the starting position and repeat.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "cable",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One-Arm_Kettlebell_Para_Press",
+      "name": "One-Arm Kettlebell Para Press",
+      "description": "Clean a kettlebell to your shoulder. Clean the kettlebell to your shoulder by extending through the legs and hips as you pull the kettlebell towards your shoulder. Rotate your wrist as you do so, so that the palm faces forward. This will be your starting position.\nHold the kettlebell with the elbow out to the side, and press it up and out until it is locked out overhead.\nLower the kettlebell back to your shoulder under control and repeat. Make sure to contract your lat, butt, and stomach forcefully for added stability and strength.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Sled_Overhead_Backward_Walk",
+      "name": "Sled Overhead Backward Walk",
+      "description": "Attach dual handles to a sled connected by a rope or chain. Load the sled to a light weight.\nFace the sled, backing up until there is some tension in the line. Hold your hands directly above your head with your elbows extended. This will be your starting position.\nWalk backwards, keeping your arms raised above your head. Avoid jerky movements.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Barbell_Shrug",
+      "name": "Barbell Shrug",
+      "description": "Stand up straight with your feet at shoulder width as you hold a barbell with both hands in front of you using a pronated grip (palms facing the thighs). Tip: Your hands should be a little wider than shoulder width apart. You can use wrist wraps for this exercise for a better grip. This will be your starting position.\nRaise your shoulders up as far as you can go as you breathe out and hold the contraction for a second. Tip: Refrain from trying to lift the barbell by using your biceps.\nSlowly return to the starting position as you breathe in.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Car_Drivers",
+      "name": "Car Drivers",
+      "description": "While standing upright, hold a barbell plate in both hands at the 3 and 9 o'clock positions. Your palms should be facing each other and your arms should be extended straight out in front of you. This will be your starting position.\nInitiate the movement by rotating the plate as far to one side as possible. Use the same type of movement you would use to turn a steering wheel to one side.\nReverse the motion, turning it all the way to the opposite side.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "barbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Shrug",
+      "name": "Dumbbell Shrug",
+      "description": "Stand erect with a dumbbell on each hand (palms facing your torso), arms extended on the sides.\nLift the dumbbells by elevating the shoulders as high as possible while you exhale. Hold the contraction at the top for a second. Tip: The arms should remain extended at all times. Refrain from using the biceps to help lift the dumbbells. Only the shoulders should be moving up and down.\nLower the dumbbells back to the original position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Smith_Machine_Overhead_Shoulder_Press",
+      "name": "Smith Machine Overhead Shoulder Press",
+      "description": "To begin, place a flat bench (or preferably one with back support) underneath a smith machine. Position the barbell at a height so that when seated on the flat bench, the arms must be almost fully extended to reach the barbell.\nOnce you have the correct height, sit slightly in behind the barbell so that there is an imaginary straight line from the tip of your nose to the barbell. Your feet should be stationary. Grab the barbell with the palms facing forward, unlock it and lift it up so that your arms are fully extended. This is the starting position.\nSlowly begin to lower the barbell until it is level with your chin while inhaling.\nThen lift the barbell back to the starting position using your shoulders while exhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One-Arm_Kettlebell_Snatch",
+      "name": "One-Arm Kettlebell Snatch",
+      "description": "Place a kettlebell between your feet. Bend your knees and push your butt back to get in the proper starting position.\nLook straight ahead and swing the kettlebell back between your legs.\nImmediately reverse the direction and drive through with your hips and knees, accelerating the kettlebell upward. As the kettlebell rises to your shoulder rotate your hand and punch straight up, using momentum to receive the weight locked out overhead.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "expert",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Alternating_Cable_Shoulder_Press",
+      "name": "Alternating Cable Shoulder Press",
+      "description": "Move the cables to the bottom of the tower and select an appropriate weight.\nGrasp the cables and hold them at shoulder height, palms facing forward. This will be your starting position.\nKeeping your head and chest up, extend through the elbow to press one side directly over head.\nAfter pausing at the top, return to the starting position and repeat on the opposite side.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "cable",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Reverse_Flyes_With_External_Rotation",
+      "name": "Reverse Flyes With External Rotation",
+      "description": "To begin, lie down on an incline bench set at a 30-degree angle with the chest and stomach pressing against the incline.\nHave the dumbbells in each hand with the palms facing down to the floor. Your arms should be in front of you so that they are perpendicular to the angle of the bench. Tip: Your elbows should have a slight bend. The legs should be stationary while applying pressure with the ball of your toes (your heels should not be touching the floor). This is the starting position.\nMaintaining the slight bend of the elbows, move the weights out and away from each other in an arc motion while exhaling.\nAs you lift the weight, your wrist should externally rotate by 90-degrees so that you go from a palms down (pronated) grip to a palms facing each other (neutral) grip. Tip: Try to squeeze your shoulder blades together to get the best results from this exercise.\nThe arms should be elevated until they are level with the head.\nFeel the contraction and slowly lower the weights back down to the starting position while inhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Kettlebell_Thruster",
+      "name": "Kettlebell Thruster",
+      "description": "Clean two kettlebells to your shoulders. Clean the kettlebells to your shoulders by extending through the legs and hips as you pull the kettlebells towards your shoulders. Rotate your wrists as you do so. This will be your starting position.\nBegin to squat by flexing your hips and knees, lowering your hips between your legs. Maintain an upright, straight back as you descend as low as you can.\nAt the bottom, reverse direction and squat by extending your knees and hips, driving through your heels. As you do so, press both kettlebells overhead by extending your arms straight up, using the momentum from the squat to help drive the weights upward.\nAs you begin the next repetition, return the weights to the shoulders.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Front_Cable_Raise",
+      "name": "Front Cable Raise",
+      "description": "Select the weight on a low pulley machine and grasp the single hand cable attachment that is attached to the low pulley with your left hand.\nFace away from the pulley and put your arm straight down with the hand cable attachment in front of your thighs at arms' length with the palms of the hand facing your thighs. This will be your starting position.\nWhile maintaining the torso stationary (no swinging), lift the left arm to the front with a slight bend on the elbow and the palms of the hand always faces down. Continue to go up until you arm is slightly above parallel to the floor. Exhale as you execute this portion of the movement and pause for a second at the top.\nNow as you inhale lower the arm back down slowly to the starting position.\nOnce all of the recommended amount of repetitions have been performed for this arm, switch arms and perform the exercise with the right one.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "cable",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Lateral_Raise_-_With_Bands",
+      "name": "Lateral Raise - With Bands",
+      "description": "To begin, stand on an exercise band so that tension begins at arm's length. Grasp the handles using a pronated (palms facing your thighs) grip that is slightly less than shoulder width. The handles should be resting on the sides of your thighs. Your arms should be extended with a slight bend at the elbows and your back should be straight. This will be your starting position.\nUse your side shoulders to lift the handles to the sides as you exhale. Continue to lift the handles until they are slightly above parallel. Tip: As you lift the handles, slightly tilt the hand as if you were pouring water and keep your arms extended. Also, keep your torso stationary and pause for a second at the top of the movement.\nLower the handles back down slowly to the starting position. Inhale as you perform this portion of the movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Internal_Rotation_with_Band",
+      "name": "Internal Rotation with Band",
+      "description": "Choke the band around a post. The band should be at the same height as your elbow. Stand with your right side to the band a couple of feet away.\nGrasp the end of the band with your right hand, and keep your elbow pressed firmly to your side. We recommend you hold a pad or foam roll in place with your elbow to keep it firmly in position.\nWith your upper arm in position, your elbow should be flexed to 90 degrees with your hand reaching away from your torso. This will be your starting position.\nExecute the movement by rotating your arm in a forehand motion, keeping your elbow in place.\nContinue as far as you are able, pause, and then return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": null,
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Alternating_Kettlebell_Press",
+      "name": "Alternating Kettlebell Press",
+      "description": "Clean two kettlebells to your shoulders. Clean the kettlebells to your shoulders by extending through the legs and hips as you pull the kettlebells towards your shoulders. Rotate your wrists as you do so.\nPress one directly overhead by extending through the elbow, turning it so the palm faces forward while holding the other kettlebell stationary .\nLower the pressed kettlebell to the starting position and immediately press with your other arm.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Dumbbell_Press",
+      "name": "Seated Dumbbell Press",
+      "description": "Grab a couple of dumbbells and sit on a military press bench or a utility bench that has a back support on it as you place the dumbbells upright on top of your thighs.\nClean the dumbbells up one at a time by using your thighs to bring the dumbbells up to shoulder height at each side.\nRotate the wrists so that the palms of your hands are facing forward. This is your starting position.\nAs you exhale, push the dumbbells up until they touch at the top.\nAfter a second pause, slowly come down back to the starting position as you inhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One-Arm_Kettlebell_Split_Jerk",
+      "name": "One-Arm Kettlebell Split Jerk",
+      "description": "Hold a kettlebell by the handle. Clean the kettlebell to your shoulder by extending through the legs and hips as you pull the kettlebell towards your shoulder. Rotate your wrist as you do so, so that the palm faces forward. This will be your starting position.\nDip your body by bending the knees, keeping your torso upright.\nImmediately reverse direction, driving through the heels, in essence jumping to create momentum. As you do so, press the kettlebell overhead to lockout by extending the arms, using your body's momentum to move the weight.\nReceive the weight overhead by returning to a squat position underneath the weight, positioning one leg in front of you and one leg behind you.\nKeeping the weight overhead, return to a standing position and bring your feet together. Lower the weight to perform the next repetition.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Cuban_Press",
+      "name": "Cuban Press",
+      "description": "Take a dumbbell in each hand with a pronated grip in a standing position. Raise your upper arms so that they are parallel to the floor, allowing your lower arms to hang in the \"scarecrow\" position. This will be your starting position.\nTo initiate the movement, externally rotate the shoulders to move the upper arm 180 degrees. Keep the upper arms in place, rotating the upper arms until the wrists are directly above the elbows, the forearms perpendicular to the floor.\nNow press the dumbbells by extending at the elbows, straightening your arms overhead.\nReturn to the starting position as you breathe in by reversing the steps.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Barbell_Shoulder_Press",
+      "name": "Barbell Shoulder Press",
+      "description": "Sit on a bench with back support in a squat rack. Position a barbell at a height that is just above your head. Grab the barbell with a pronated grip (palms facing forward).\nOnce you pick up the barbell with the correct grip width, lift the bar up over your head by locking your arms. Hold at about shoulder level and slightly in front of your head. This is your starting position.\nLower the bar down to the shoulders slowly as you inhale.\nLift the bar back up to the starting position as you exhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "barbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Dumbbell_Scaption",
+      "name": "Dumbbell Scaption",
+      "description": "This corrective exercise strengthens the muscles that stabilize your shoulder blade. Hold a light weight in each hand, hanging at your sides. Your thumbs should pointing up.\nBegin the movement raising your arms out in front of you, about 30 degrees off center. Your arms should be fully extended as you perform the movement.\nContinue until your arms are parallel to the ground, and then return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    }
+  ]
+}
