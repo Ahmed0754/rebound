@@ -8,7 +8,7 @@
 //
 // Every plan is graded in code (graders.ts), and each run writes two files:
 // the JSON with everything, and the markdown summary a person reads
-// (report.ts). The two baselines come next (piece B).
+// (report.ts). Two of the makers are Gemini; two use no model (baselines.ts).
 
 import { execSync } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
@@ -18,6 +18,7 @@ import type { Candidate } from "../src/models/exercises.js";
 import { MODEL } from "../src/models/gemini.js";
 import { generate, type Quality } from "../src/models/regimes.js";
 import type { RegimeItem } from "../src/types/index.js";
+import { heuristicPlan, randomPlan } from "./baselines.js";
 import { grade, rubric } from "./graders.js";
 import { toMarkdown, type Graded, type Stamp } from "./report.js";
 
@@ -63,6 +64,9 @@ const MAKERS: Maker[] = [
   { id: "gemini", make: gemini(true) },
   // The same, without retrying for quality: what the quality tier adds.
   { id: "gemini-no-quality", make: gemini(false) },
+  // No model at all: what Gemini adds over a few rules, and over chance.
+  { id: "heuristic", make: heuristicPlan },
+  { id: "random", make: randomPlan },
 ];
 
 async function loadFixtures(): Promise<Fixture[]> {
