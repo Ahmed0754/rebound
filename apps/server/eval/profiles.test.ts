@@ -4,6 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { firedRules, getLimits, hasRedFlag, RULE_IDS } from "../src/clinical.js";
 import { CRITERIA } from "../src/quality.js";
+import { PROVISIONAL } from "./graders.js";
 import { PROFILES } from "./profiles.js";
 
 // The regions `region_muscles` holds (migration 1790783482000).
@@ -24,6 +25,16 @@ describe("eval profiles", () => {
     );
 
     expect(CRITERIA.filter((criterion) => !applied.includes(criterion)).map((c) => c.id)).toEqual([]);
+  });
+
+  it("make every provisional criterion apply at least once", () => {
+    const applied = PROVISIONAL.filter((criterion) =>
+      PROFILES.some((p) =>
+        criterion.appliesTo({ region: p.answers.region, answers: p.answers, limits: getLimits(p.answers) })
+      )
+    );
+
+    expect(PROVISIONAL.filter((criterion) => !applied.includes(criterion)).map((c) => c.id)).toEqual([]);
   });
 
   it("cover every region", () => {

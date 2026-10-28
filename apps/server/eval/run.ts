@@ -11,32 +11,16 @@
 // (report.ts). Two of the makers are Gemini; two use no model (baselines.ts).
 
 import { execSync } from "node:child_process";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
-import { getLimits, type Answers, type Limits } from "../src/clinical.js";
-import type { Candidate } from "../src/models/exercises.js";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { getLimits, type Limits } from "../src/clinical.js";
 import { MODEL } from "../src/models/gemini.js";
 import { generate, type Quality } from "../src/models/regimes.js";
 import type { RegimeItem } from "../src/types/index.js";
 import { heuristicPlan, randomPlan } from "./baselines.js";
+import { FIXTURES, loadFixtures, type Fixture } from "./fixture.js";
 import { grade, rubric } from "./graders.js";
-import { toMarkdown, type Graded, type Stamp } from "./report.js";
-
-const FIXTURES = join(import.meta.dirname, "fixtures");
-const REPORTS = join(import.meta.dirname, "reports");
-
-/** A made-up person and the exercises they were offered, frozen. */
-type Fixture = {
-  // The file name, without .json.
-  id: string;
-  // What this fixture is here to test, in a line.
-  about: string;
-  answers: Answers;
-  freeText: string | null;
-  // When `pnpm eval:freeze` drew the candidates.
-  frozenAt: string;
-  candidates: Candidate[];
-};
+import { REPORTS, toMarkdown, type Graded, type Stamp } from "./report.js";
 
 type Plan = { items: RegimeItem[]; quality: Quality | null };
 
@@ -68,18 +52,6 @@ const MAKERS: Maker[] = [
   { id: "heuristic", make: heuristicPlan },
   { id: "random", make: randomPlan },
 ];
-
-async function loadFixtures(): Promise<Fixture[]> {
-  await mkdir(FIXTURES, { recursive: true });
-  const files = (await readdir(FIXTURES)).filter((file) => file.endsWith(".json")).sort();
-
-  return Promise.all(
-    files.map(async (file) => ({
-      ...JSON.parse(await readFile(join(FIXTURES, file), "utf8")),
-      id: basename(file, ".json"),
-    }))
-  );
-}
 
 // What one maker made of one fixture, graded. A failure is kept, never
 // dropped: it is graded as an empty plan.

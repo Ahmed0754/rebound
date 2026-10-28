@@ -138,7 +138,7 @@ Criterion kinds:
 | Id | Criterion | Kind | Check | Sources |
 |---|---|---|---|---|
 | `HIP-1` | Includes abductor or gluteus medius work when strength is allowed | core | code | `AAOS-HIP` |
-| `HIP-2` | Combines strengthening with mobility or stretching | condition-specific (hip osteoarthritis: exercise therapy is grade A, individualised strengthening plus mobility), provisional | code | `APTA-HIPOA-2025` via Physiotutors; `AAOS-HIP` |
+| `HIP-2` | Combines strengthening with mobility or stretching | condition-specific (hip osteoarthritis: exercise therapy is grade A, individualised strengthening plus mobility), provisional | judge, since in tags it would be `ALL-1`, which the live check already enforces | `APTA-HIPOA-2025` via Physiotutors; `AAOS-HIP` |
 
 ### Hamstring
 

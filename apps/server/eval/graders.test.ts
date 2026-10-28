@@ -3,8 +3,9 @@
 import { describe, it, expect } from "vitest";
 import { getLimits, type Answers } from "../src/clinical.js";
 import type { Candidate } from "../src/models/exercises.js";
+import { CRITERIA } from "../src/quality.js";
 import type { RegimeItem } from "../src/types/index.js";
-import { grade } from "./graders.js";
+import { grade, PROVISIONAL } from "./graders.js";
 
 const answers: Answers = {
   goal: "return_to_movement",
@@ -104,5 +105,46 @@ describe("grade", () => {
     const result = grade([item("Squat", {}), item("Split_Squat", {})], CANDIDATES, context);
 
     expect(result.overlap).toEqual([["Squat", "Split_Squat"]]);
+  });
+});
+
+describe("grade, provisional criteria", () => {
+  const withGlutes = [...CANDIDATES, candidate("Glute_Bridge", { primaryMuscles: ["glutes"], force: "push" })];
+
+  it("grades KNEE-2 apart from the live criteria", () => {
+    const met = grade([item("Squat", {}), item("Glute_Bridge", {})], withGlutes, context);
+    const missed = grade([item("Squat", {})], withGlutes, context);
+
+    expect(met.provisional).toMatchObject({ met: ["KNEE-2"], missed: [] });
+    expect(missed.provisional).toMatchObject({ met: [], missed: ["KNEE-2"] });
+    // The live result is unchanged by it.
+    expect(missed.quality.missed).toEqual(["ALL-1"]);
+  });
+
+  it("holds nothing against a plan when no candidate could meet it", () => {
+    const result = grade([item("Squat", {})], CANDIDATES, context);
+
+    expect(result.provisional).toMatchObject({ missed: [], unsatisfiable: ["KNEE-2"] });
+  });
+
+  it("grades a failed generation as missing what it could have met", () => {
+    expect(grade(null, withGlutes, context).provisional.missed).toEqual(["KNEE-2"]);
+  });
+
+  it("leaves the criteria only the judge can grade out of the code grade", () => {
+    const hip = getLimits({ ...answers, region: "hip" });
+    const result = grade(null, withGlutes, { region: "hip", answers: { ...answers, region: "hip" }, limits: hip });
+    const graded = Object.values(result.provisional).flat();
+
+    expect(graded).not.toContain("HIP-2");
+    expect(graded).not.toContain("HAM-1");
+  });
+});
+
+describe("PROVISIONAL", () => {
+  it("never repeats a live criterion", () => {
+    const live = new Set(CRITERIA.map((criterion) => criterion.id));
+
+    expect(PROVISIONAL.filter((criterion) => live.has(criterion.id))).toEqual([]);
   });
 });
