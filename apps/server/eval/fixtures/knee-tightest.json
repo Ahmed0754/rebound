@@ -1,0 +1,304 @@
+{
+  "about": "Every capping rule at once: severe, fresh, 50+, a condition, sedentary, 5 minutes, nothing to use.",
+  "answers": {
+    "goal": "return_to_movement",
+    "region": "knee",
+    "onset": "acute",
+    "painNow": 9,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "50_plus",
+    "conditions": [
+      "osteoporosis"
+    ],
+    "equipment": [
+      "none"
+    ],
+    "activityLevel": "sedentary",
+    "sessionMinutes": 5
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.196Z",
+  "candidates": [
+    {
+      "id": "Upper_Back-Leg_Grab",
+      "name": "Upper Back-Leg Grab",
+      "description": "While seated, bend forward to hug your thighs from underneath with both arms.\nKeep your knees together and your legs extended out as you bring your chest down to your knees. You can also stretch your middle back by pulling your back away from your knees as your hugging them.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "On_Your_Side_Quad_Stretch",
+      "name": "On Your Side Quad Stretch",
+      "description": "Start off by lying on your right side, with your right knee bent at a 90-degree angle resting on the floor in front of you (this stabilizes the torso).\nBend your left knee behind you and hold your left foot with your left hand. To stretch your hip flexor, press your left hip forward as you push your left foot back into your hand. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Calf_Stretch_Elbows_Against_Wall",
+      "name": "Calf Stretch Elbows Against Wall",
+      "description": "Stand facing a wall from a couple feet away.\nLean against the wall, placing your weight on your forearms.\nAttempt to keep your heels on the ground. Hold for 10-20 seconds. You may move further or closer the wall, making it more or less difficult, respectively.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Hip_Flexors",
+      "name": "Standing Hip Flexors",
+      "description": "Stand up straight with the spine vertical, the left foot slightly in front of the right.\nBend both knees and lift the back heel off the floor as you press the right hip forward. You can't get a thorough, deep stretch in this position, however, because it's hard to relax the hip flexor and stand on it at the same time. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Rear_Leg_Raises",
+      "name": "Rear Leg Raises",
+      "description": "Place yourself on your hands knees on an exercise mat. Your head should be looking forward and the bend of the knees should create a 90-degree angle between the hamstrings and the calves. This will be your starting position.\nExtend one leg up and behind you. The knee and hip should both extend. Repeat for 5-10 repetitions, and then switch sides.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": null
+    },
+    {
+      "id": "Standing_Gastrocnemius_Calf_Stretch",
+      "name": "Standing Gastrocnemius Calf Stretch",
+      "description": "Place your right heel on a step with your knee extended and lean forward to grab your right toe with your right hand. Your left knee should be slightly bent and your back should be straight.\nSupport your weight on your left leg and place your left hand on your left thigh.\nPull your right toes toward your knee until you feel a stretch in your calf.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Hamstring_Stretch",
+      "name": "Hamstring Stretch",
+      "description": "Lie on your back with one leg extended above you, with the hip at ninety degrees. Keep the other leg flat on the floor.\nLoop a belt, band, or rope over the ball of your foot. This will be your starting position.\nPull on the belt to create tension in the calves and hamstrings. Hold this stretch for 10-30 seconds, and repeat with the other leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Kneeling_Hip_Flexor",
+      "name": "Kneeling Hip Flexor",
+      "description": "Kneel on a mat and bring your right knee up so the bottom of your foot is on the floor and extend your left leg out behind you so the top of your foot is on the floor.\nShift your weight forward until you feel a stretch in your hip. Hold for 15 seconds, then repeat for your other side.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Sit_Squats",
+      "name": "Sit Squats",
+      "description": "Stand with your feet shoulder width apart. This will be your starting position.\nBegin the movement by flexing your knees and hips, sitting back with your hips.\nContinue until you have squatted a portion of the way down, but are above parallel, and quickly reverse the motion until you return to the starting position. Repeat for 5-10 repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "push",
+      "mechanic": null
+    },
+    {
+      "id": "Inchworm",
+      "name": "Inchworm",
+      "description": "Stand with your feet close together. Keeping your legs straight, stretch down and put your hands on the floor directly in front of you. This will be your starting position.\nBegin by walking your hands forward slowly, alternating your left and your right. As you do so, bend only at the hip, keeping your legs straight.\nKeep going until your body is parallel to the ground in a pushup position.\nNow, keep your hands in place and slowly take short steps with your feet, moving only a few inches at a time.\nContinue walking until your feet are by hour hands, keeping your legs straight as you do so.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": null,
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Calf_Stretch",
+      "name": "Seated Calf Stretch",
+      "description": "Sit up straight on an exercise mat.\nBend one knee and put that foot on the floor to stabilize the torso.\nStraighten your other leg and flex your ankle.\nUsing a band, towel, or your hand if you can reach, pull the toes toward you. Hold for 10 to 20 seconds, then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Ankle_On_The_Knee",
+      "name": "Ankle On The Knee",
+      "description": "From a lying position, bend your knees and keep your feet on the floor.\nPlace your ankle of one foot on your opposite knee.\nGrasp the thigh or knee of the bottom leg and pull both of your legs into the chest. Relax your neck and shoulders. Hold for 10-20 seconds and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "One_Knee_To_Chest",
+      "name": "One Knee To Chest",
+      "description": "Start off by lying on the floor.\nExtend one leg straight and pull the other knee to your chest. Hold under the knee joint to protect the kneecap.\nGently tug that knee toward your nose.\nSwitch sides. This stretches the buttocks and lower back of the bent leg and the hip flexor of the straight leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Runners_Stretch",
+      "name": "Runner's Stretch",
+      "description": "It's easiest to get into this stretch if you start standing up, put one leg behind you, and slowly lower your torso down to the floor.\nKeep the front heel on the floor (if it lifts up, scoot your other leg further back).\nPlace your hands on either side of your front leg. To get more out of this stretch, push your butt up toward the ceiling, and then gradually lower it back toward the floor. You'll Stretch the hip flexor of the back leg and the hamstring and buttocks of the front.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Knee_Circles",
+      "name": "Knee Circles",
+      "description": "Stand with your legs together and hands by your waist.\nNow move your knees in a circular motion as you breathe normally.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Knee_Across_The_Body",
+      "name": "Knee Across The Body",
+      "description": "Lie down on the floor with your right leg straight. Bend your left leg and lower it across your body, holding the knee down toward the floor with your right hand. (The knee doesn't need to touch the floor if you're tight.)\nPlace your left arm comfortably beside you and turn your head to the left. Imagine you have a weight tied to your tailbone. let your tailbone fall back toward the floor as your chest reaches in the opposite direction to stretch your lower back. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Ankle_Circles",
+      "name": "Ankle Circles",
+      "description": "Use a sturdy object like a squat rack to hold yourself.\nLift the right leg in the air (just around 2 inches from the floor) and perform a circular motion with the big toe. Pretend that you are drawing a big circle with it. Tip: One circle equals 1 repetition. Breathe normally as you perform the movement.\nWhen you are done with the right foot, then repeat with the left leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Leg-Up_Hamstring_Stretch",
+      "name": "Leg-Up Hamstring Stretch",
+      "description": "Lie flat on your back, bend one knee, and put that foot flat on the floor to stabilize your spine.\nExtend the other leg in the air. If you're tight, you wont be able to straighten it. That's okay. Extend the knee so that the sole of the lifted foot faces the ceiling (or as close as you can get it).\nSlowly straighten the legs as much as possible and then pull the leg toward your nose. Switch sides.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Front_Leg_Raises",
+      "name": "Front Leg Raises",
+      "description": "Stand next to a chair or other support, holding on with one hand.\nSwing your leg forward, keeping the leg straight. Continue with a downward swing, bringing the leg as far back as your flexibility allows. Repeat 5-10 times, and then switch legs.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Standing_Toe_Touches",
+      "name": "Standing Toe Touches",
+      "description": "Stand with some space in front and behind you.\nBend at the waist, keeping your legs straight, until you can relax and let your upper body hang down in front of you. Let your arms and hands hang down naturally. Hold for 10 to 20 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    }
+  ]
+}

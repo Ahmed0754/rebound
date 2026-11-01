@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getLimits, type Answers, type DraftItem } from "../clinical.js";
-import { create, GenerationFailed, toCandidateQuery } from "./regimes.js";
+import { create, generate, GenerationFailed, toCandidateQuery } from "./regimes.js";
 import { proposeRegime } from "./gemini.js";
 import type { Candidate, Exercise } from "./exercises.js";
 
@@ -295,6 +295,25 @@ describe("create, checking quality before it saves", () => {
     ]);
     expect(regime?.regime.map((item) => item.id)).toEqual(["Squat", "Calf_Stretch"]);
     expect(savedQuality()).toMatchObject({ attempts: 2, firstMissed: ["KNEE-1"], missed: [] });
+  });
+
+  // How the eval measures the quality tier: the same loop, minus its retries.
+  it("takes the first plan that passes the hard checks when quality is not enforced", async () => {
+    propose.mockResolvedValueOnce(answer(missesKnee)).mockResolvedValueOnce(answer(withSquat));
+
+    const { items, quality } = await generate({
+      region: "knee",
+      candidates: CANDIDATES as Candidate[],
+      tagged: CANDIDATES as Candidate[],
+      limits,
+      answers,
+      enforceQuality: false,
+    });
+
+    expect(propose).toHaveBeenCalledTimes(1);
+    expect(items.map((item) => item.id)).toEqual(["Bridge", "Calf_Stretch"]);
+    expect(quality).toMatchObject({ attempts: 1, firstMissed: ["KNEE-1"], missed: ["KNEE-1"] });
+    expect(db.pool.connect).not.toHaveBeenCalled();
   });
 
   // A quality miss is never a refusal: when time runs out, the plan that passed

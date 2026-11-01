@@ -246,6 +246,14 @@ const RULES: Rule[] = [
   },
 ];
 
+/** Every rule's id, so the eval can check its fixtures fire each one. */
+export const RULE_IDS = RULES.map((rule) => rule.id);
+
+/** The ids of the rules these answers fire - what `getLimits` applies. */
+export function firedRules(answers: Answers): string[] {
+  return RULES.filter((rule) => rule.when(answers)).map((rule) => rule.id);
+}
+
 /**
  * Whether these answers rule out generating a plan.
  *

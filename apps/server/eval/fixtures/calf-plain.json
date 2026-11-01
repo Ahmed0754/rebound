@@ -1,0 +1,120 @@
+{
+  "about": "Calf, owns nothing - REFERENCES.md found no bodyweight calf raise.",
+  "answers": {
+    "goal": "return_to_movement",
+    "region": "calf",
+    "onset": "subacute",
+    "painNow": 2,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "30_49",
+    "conditions": [],
+    "equipment": [
+      "none"
+    ],
+    "activityLevel": "recreational",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.332Z",
+  "candidates": [
+    {
+      "id": "Seated_Calf_Stretch",
+      "name": "Seated Calf Stretch",
+      "description": "Sit up straight on an exercise mat.\nBend one knee and put that foot on the floor to stabilize the torso.\nStraighten your other leg and flex your ankle.\nUsing a band, towel, or your hand if you can reach, pull the toes toward you. Hold for 10 to 20 seconds, then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Calf_Stretch_Hands_Against_Wall",
+      "name": "Calf Stretch Hands Against Wall",
+      "description": "Stand facing a wall from several feet away. Stagger your stance, placing one foot forward.\nLean forward and rest your hands on the wall, keeping your heel, hip and head in a straight line.\nAttempt to keep your heel on the ground. Hold for 10-20 seconds and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Ankle_Circles",
+      "name": "Ankle Circles",
+      "description": "Use a sturdy object like a squat rack to hold yourself.\nLift the right leg in the air (just around 2 inches from the floor) and perform a circular motion with the big toe. Pretend that you are drawing a big circle with it. Tip: One circle equals 1 repetition. Breathe normally as you perform the movement.\nWhen you are done with the right foot, then repeat with the left leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Knee_Circles",
+      "name": "Knee Circles",
+      "description": "Stand with your legs together and hands by your waist.\nNow move your knees in a circular motion as you breathe normally.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Standing_Soleus_And_Achilles_Stretch",
+      "name": "Standing Soleus And Achilles Stretch",
+      "description": "Stand with your feet hip-distance apart, one foot slightly in front of the other.\nBend both knees, keeping your back heel on the floor. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Calf_Stretch_Elbows_Against_Wall",
+      "name": "Calf Stretch Elbows Against Wall",
+      "description": "Stand facing a wall from a couple feet away.\nLean against the wall, placing your weight on your forearms.\nAttempt to keep your heels on the ground. Hold for 10-20 seconds. You may move further or closer the wall, making it more or less difficult, respectively.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Gastrocnemius_Calf_Stretch",
+      "name": "Standing Gastrocnemius Calf Stretch",
+      "description": "Place your right heel on a step with your knee extended and lean forward to grab your right toe with your right hand. Your left knee should be slightly bent and your back should be straight.\nSupport your weight on your left leg and place your left hand on your left thigh.\nPull your right toes toward your knee until you feel a stretch in your calf.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    }
+  ]
+}

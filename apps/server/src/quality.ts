@@ -32,7 +32,7 @@ export type QualityContext = {
   limits: Limits;
 };
 
-type Criterion = {
+export type Criterion = {
   id: string;
   // Source ids from eval/REFERENCES.md. Never empty: a criterion nobody can
   // credit is not one the app should enforce.
@@ -47,16 +47,18 @@ type Criterion = {
   ask: string;
 };
 
-const allows = (limits: Limits, category: Category) => limits.categories.includes(category);
+// Exported for the eval's provisional criteria (eval/graders.ts), so both
+// read the tags the same way.
+export const allows = (limits: Limits, category: Category) => limits.categories.includes(category);
 
-const targets = (exercise: Tagged, muscles: string[]) =>
+export const targets = (exercise: Tagged, muscles: string[]) =>
   exercise.primaryMuscles.some((muscle) => muscles.includes(muscle));
 
 // Met by any one exercise that passes `test`.
-const any = (test: (exercise: Tagged) => boolean) => (exercises: Tagged[]) => exercises.some(test);
+export const any = (test: (exercise: Tagged) => boolean) => (exercises: Tagged[]) => exercises.some(test);
 
-const isStretch = (exercise: Tagged) => exercise.category === "stretching";
-const isStrength = (exercise: Tagged) => exercise.category === "strength";
+export const isStretch = (exercise: Tagged) => exercise.category === "stretching";
+export const isStrength = (exercise: Tagged) => exercise.category === "strength";
 
 const AAOS_ALL: [string, ...string[]] = [
   "AAOS-KNEE",
@@ -157,15 +159,25 @@ export type QualityResult = {
   unsatisfiable: string[];
 };
 
-/** Checks a plan against every criterion. `plan` is what was picked from `candidates`. */
+/** Checks a plan against every live criterion. `plan` is what was picked from `candidates`. */
 export function checkQuality(
+  plan: Tagged[],
+  candidates: Tagged[],
+  context: QualityContext
+): QualityResult {
+  return checkCriteria(CRITERIA, plan, candidates, context);
+}
+
+/** The same check against any list of criteria; the eval runs it on ones the app never enforces. */
+export function checkCriteria(
+  criteria: Pick<Criterion, "id" | "appliesTo" | "meets">[],
   plan: Tagged[],
   candidates: Tagged[],
   context: QualityContext
 ): QualityResult {
   const result: QualityResult = { met: [], missed: [], notApplicable: [], unsatisfiable: [] };
 
-  for (const criterion of CRITERIA) {
+  for (const criterion of criteria) {
     if (!criterion.appliesTo(context)) {
       result.notApplicable.push(criterion.id);
     } else if (!criterion.meets(candidates)) {

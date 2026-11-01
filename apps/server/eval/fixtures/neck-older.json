@@ -1,0 +1,106 @@
+{
+  "about": "Neck, 50+, low pain, bands.",
+  "answers": {
+    "goal": "return_to_movement",
+    "region": "neck",
+    "onset": "subacute",
+    "painNow": 2,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "50_plus",
+    "conditions": [],
+    "equipment": [
+      "bands"
+    ],
+    "activityLevel": "recreational",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.567Z",
+  "candidates": [
+    {
+      "id": "Isometric_Neck_Exercise_-_Front_And_Back",
+      "name": "Isometric Neck Exercise - Front And Back",
+      "description": "With your head and neck in a neutral position (normal position with head erect facing forward), place both of your hands on the front side of your head.\nNow gently push forward as you contract the neck muscles but resisting any movement of your head. Start with slow tension and increase slowly. Keep breathing normally as you execute this contraction.\nHold for the recommended number of seconds.\nNow release the tension slowly.\nRest for the recommended amount of time and repeat with your hands placed on the back side of your head.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "neck"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Scapular_Pull-Up",
+      "name": "Scapular Pull-Up",
+      "description": "Take a pronated grip on a pull-up bar.\nFrom a hanging position, raise yourself a few inches without using your arms. Do this by depressing your shoulder girdle in a reverse shrugging motion.\nPause at the completion of the movement, and then slowly return to the starting position before performing more repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Chin_To_Chest_Stretch",
+      "name": "Chin To Chest Stretch",
+      "description": "Get into a seated position on the floor.\nPlace both hands at the rear of your head, fingers interlocked, thumbs pointing down and elbows pointing straight ahead. Slowly pull your head down to your chest. Hold for 20-30 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "neck"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Isometric_Neck_Exercise_-_Sides",
+      "name": "Isometric Neck Exercise - Sides",
+      "description": "With your head and neck in a neutral position (normal position with head erect facing forward), place your left hand on the left side of your head.\nNow gently push towards the left as you contract the left neck muscles but resisting any movement of your head. Start with slow tension and increase slowly. Keep breathing normally as you execute this contraction.\nHold for the recommended number of seconds.\nNow release the tension slowly.\nRest for the recommended amount of time and repeat with your right hand placed on the right side of your head.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "neck"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Side_Neck_Stretch",
+      "name": "Side Neck Stretch",
+      "description": "Start with your shoulders relaxed, gently tilt your head towards your shoulder.\nAssist stretch with a gentle pull on the side of the head.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "neck"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Upright_Row_-_With_Bands",
+      "name": "Upright Row - With Bands",
+      "description": "To begin, stand on an exercise band so that tension begins at arm's length. Grasp the handles using a pronated (palms facing your thighs) grip that is slightly less than shoulder width. The handles should be resting on top of your thighs. Your arms should be extended with a slight bend at the elbows and your back should be straight. This will be your starting position.\nUse your side shoulders to lift the handles as you exhale. The handles should be close to the body as you move them up. Continue to lift the handles until they nearly touches your chin. Tip: Your elbows should drive the motion. As you lift the handles, your elbows should always be higher than your forearms. Also, keep your torso stationary and pause for a second at the top of the movement.\nLower the handles back down slowly to the starting position. Inhale as you perform this portion of the movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": "pull",
+      "mechanic": "compound"
+    }
+  ]
+}

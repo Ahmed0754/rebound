@@ -1,0 +1,218 @@
+{
+  "about": "A fresh hip flare-up: stretching only, so HIP-1 does not apply.",
+  "answers": {
+    "goal": "return_to_movement",
+    "region": "hip",
+    "onset": "acute",
+    "painNow": 5,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "30_49",
+    "conditions": [],
+    "equipment": [
+      "bands"
+    ],
+    "activityLevel": "recreational",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-26T19:41:04.277Z",
+  "candidates": [
+    {
+      "id": "Rear_Leg_Raises",
+      "name": "Rear Leg Raises",
+      "description": "Place yourself on your hands knees on an exercise mat. Your head should be looking forward and the bend of the knees should create a 90-degree angle between the hamstrings and the calves. This will be your starting position.\nExtend one leg up and behind you. The knee and hip should both extend. Repeat for 5-10 repetitions, and then switch sides.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": null
+    },
+    {
+      "id": "Kneeling_Hip_Flexor",
+      "name": "Kneeling Hip Flexor",
+      "description": "Kneel on a mat and bring your right knee up so the bottom of your foot is on the floor and extend your left leg out behind you so the top of your foot is on the floor.\nShift your weight forward until you feel a stretch in your hip. Hold for 15 seconds, then repeat for your other side.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Ankle_On_The_Knee",
+      "name": "Ankle On The Knee",
+      "description": "From a lying position, bend your knees and keep your feet on the floor.\nPlace your ankle of one foot on your opposite knee.\nGrasp the thigh or knee of the bottom leg and pull both of your legs into the chest. Relax your neck and shoulders. Hold for 10-20 seconds and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Standing_Hip_Circles",
+      "name": "Standing Hip Circles",
+      "description": "Begin standing on one leg, holding to a vertical support.\nRaise the unsupported knee to 90 degrees. This will be your starting position.\nOpen the hip as far as possible, attempting to make a big circle with your knee.\nPerform this movement slowly for a number of repetitions, and repeat on the other side.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abductors"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "One_Half_Locust",
+      "name": "One Half Locust",
+      "description": "Lie facedown on the floor.\nPut your left hand under your left hipbone to pad your hip and pubic bone.\nBend your right knee so you can hold the foot in your right hand.\nLift the foot in the air and simultaneously lift your shoulders off the floor. This also stretches the right hip flexor and the chest and shoulders. Switch sides. If it doesn't bother your back, you can try it with both arms and legs at the same time.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Side_Leg_Raises",
+      "name": "Side Leg Raises",
+      "description": "Stand next to a chair, which you may hold onto as a support. Stand on one leg. This will be your starting position.\nKeeping your leg straight, raise it as far out to the side as possible, and swing it back down, allowing it to cross the opposite leg.\nRepeat this swinging motion 5-10 times, increasing the range of motion as you do so.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "adductors"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "One_Knee_To_Chest",
+      "name": "One Knee To Chest",
+      "description": "Start off by lying on the floor.\nExtend one leg straight and pull the other knee to your chest. Hold under the knee joint to protect the kneecap.\nGently tug that knee toward your nose.\nSwitch sides. This stretches the buttocks and lower back of the bent leg and the hip flexor of the straight leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Sit_Squats",
+      "name": "Sit Squats",
+      "description": "Stand with your feet shoulder width apart. This will be your starting position.\nBegin the movement by flexing your knees and hips, sitting back with your hips.\nContinue until you have squatted a portion of the way down, but are above parallel, and quickly reverse the motion until you return to the starting position. Repeat for 5-10 repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "push",
+      "mechanic": null
+    },
+    {
+      "id": "Knee_Across_The_Body",
+      "name": "Knee Across The Body",
+      "description": "Lie down on the floor with your right leg straight. Bend your left leg and lower it across your body, holding the knee down toward the floor with your right hand. (The knee doesn't need to touch the floor if you're tight.)\nPlace your left arm comfortably beside you and turn your head to the left. Imagine you have a weight tied to your tailbone. let your tailbone fall back toward the floor as your chest reaches in the opposite direction to stretch your lower back. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Looking_At_Ceiling",
+      "name": "Looking At Ceiling",
+      "description": "Kneel on the floor, holding your heels with both hands.\nLift your buttocks up and forward while bringing your head back to look up at the ceiling, to give an arch in your back.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Hip_Circles_prone",
+      "name": "Hip Circles (prone)",
+      "description": "Position yourself on your hands and knees on the ground. Maintaining good posture, raise one bent knee off of the ground. This will be your starting position.\nKeeping the knee in a bent position, rotate the femur in an arc, attempting to make a big circle with your knee.\nPerform this slowly for a number of repetitions, and repeat on the other side.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abductors"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Hip_Flexors",
+      "name": "Standing Hip Flexors",
+      "description": "Stand up straight with the spine vertical, the left foot slightly in front of the right.\nBend both knees and lift the back heel off the floor as you press the right hip forward. You can't get a thorough, deep stretch in this position, however, because it's hard to relax the hip flexor and stand on it at the same time. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Side_Lying_Groin_Stretch",
+      "name": "Side Lying Groin Stretch",
+      "description": "Start off by lying on your right side and bend your right knee in front of you to stabilize the torso.\nRest your head on your right hand or shoulder. Lift your left leg upward and hold it by the back of the knee (easier) or the foot (harder).\nPull your left knee in toward your left shoulder and simultaneously press your foot or knee down to the floor. To intensify this stretch, straighten your left leg. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "adductors"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "On_Your_Side_Quad_Stretch",
+      "name": "On Your Side Quad Stretch",
+      "description": "Start off by lying on your right side, with your right knee bent at a 90-degree angle resting on the floor in front of you (this stabilizes the torso).\nBend your left knee behind you and hold your left foot with your left hand. To stretch your hip flexor, press your left hip forward as you push your left foot back into your hand. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    }
+  ]
+}
