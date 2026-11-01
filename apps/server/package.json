@@ -15,6 +15,7 @@
     "eval": "dotenv -e ../../.env -- tsx eval/run.ts",
     "eval:freeze": "dotenv -e ../../.env -- tsx eval/freeze.ts",
     "eval:judge": "dotenv -e ../../.env -- tsx eval/judge-report.ts",
+    "eval:screen": "dotenv -e ../../.env -- tsx eval/screen.ts",
     "db:setup": "pnpm run db:migrate && pnpm run db:seed"
   },
   "dependencies": {
