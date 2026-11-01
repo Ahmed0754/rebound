@@ -41,6 +41,8 @@ export type Stamp = {
   runs?: number;
   // The candidate pool (pools.ts), when not the default 20.
   pool?: string;
+  // How many plans were made at once. Absent or 1: one at a time.
+  concurrency?: number;
   makers: string[];
 };
 
@@ -199,6 +201,12 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
     `Commit \`${stamp.commit}\` · model \`${stamp.model}\` · rubric ${stamp.rubric} · ${stamp.fixtures} fixtures${runs > 1 ? ` · ${runs} runs each` : ""} · candidates: ${stamp.pool === undefined ? "the default 20" : `pool \`${stamp.pool}\``}`,
     "",
     "A failed generation is graded as an empty plan, so it counts against every rate below.",
+    ...((stamp.concurrency ?? 1) > 1
+      ? [
+          "",
+          `Plans were made ${stamp.concurrency} at a time, so seconds per plan include waiting alongside other calls and aren't comparable with a one-at-a-time run.`,
+        ]
+      : []),
     ...(runs > 1
       ? ["", `Every rate is over all ${runs} runs together. How far each one moves between runs is under Consistency.`]
       : []),

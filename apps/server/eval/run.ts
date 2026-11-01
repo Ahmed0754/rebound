@@ -19,6 +19,7 @@ import { generate, type Quality } from "../src/models/regimes.js";
 import type { RegimeItem } from "../src/types/index.js";
 import { heuristicPlan, randomPlan } from "./baselines.js";
 import { FIXTURES, loadFixtures, type Fixture } from "./fixture.js";
+import { concurrencyWanted, mapLimit } from "./parallel.js";
 import { POOLS } from "./pools.js";
 import { grade, rubric } from "./graders.js";
 import { REPORTS, toMarkdown, type Graded, type Stamp } from "./report.js";
@@ -115,21 +116,22 @@ async function main() {
     return;
   }
 
-  const results: Graded[] = [];
+  // One at a time by default: the Gemini makers share one API key's rate
+  // limit, and the time each plan takes is part of what is measured.
+  // `--concurrency N` runs N at once, which is far quicker; the report then
+  // says the seconds per plan were measured alongside other calls.
+  const concurrency = concurrencyWanted(1);
+  const jobs = Array.from({ length: runs }, (_, repeat) =>
+    fixtures.flatMap((fixture) => MAKERS.map((maker) => ({ repeat, fixture, maker })))
+  ).flat();
 
-  // One at a time: the Gemini makers share one API key's rate limit, and the
-  // time each plan takes is part of what is measured.
-  for (let repeat = 0; repeat < runs; repeat++) {
-    for (const fixture of fixtures) {
-      for (const maker of MAKERS) {
-        const result = await run(maker, fixture, repeat);
-        results.push(result);
-        console.log(
-          `run ${repeat + 1}/${runs} · ${fixture.id} · ${maker.id} · ${result.error === null ? `${result.items!.length} exercises` : `failed: ${result.error}`} · ${result.ms} ms`
-        );
-      }
-    }
-  }
+  const results: Graded[] = await mapLimit(jobs, concurrency, async ({ repeat, fixture, maker }) => {
+    const result = await run(maker, fixture, repeat);
+    console.log(
+      `run ${repeat + 1}/${runs} · ${fixture.id} · ${maker.id} · ${result.error === null ? `${result.items!.length} exercises` : `failed: ${result.error}`} · ${result.ms} ms`
+    );
+    return result;
+  });
 
   const stamp: Stamp = {
     ranAt: new Date().toISOString(),
@@ -139,6 +141,7 @@ async function main() {
     rubric: rubric().version,
     fixtures: fixtures.length,
     runs,
+    concurrency,
     ...(pool === undefined ? {} : { pool }),
     makers: MAKERS.map((maker) => maker.id),
   };

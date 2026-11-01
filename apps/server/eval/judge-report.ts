@@ -14,6 +14,7 @@ import { getLimits } from "../src/clinical.js";
 import { loadFixtures } from "./fixture.js";
 import { grade, PROVISIONAL, RUBRIC_VERSION } from "./graders.js";
 import { judgePlan, judgeRationales, JUDGE_MODEL, JUDGE_VERSION, type JudgeCase } from "./judge.js";
+import { concurrencyWanted, mapLimit } from "./parallel.js";
 import { REPORTS, toJudgedMarkdown, type Graded, type Judged, type JudgeStamp } from "./report.js";
 
 async function latestReport(): Promise<string> {
@@ -40,7 +41,7 @@ async function twice<T>(ask: () => Promise<T>, errors: string[]): Promise<T | nu
 }
 
 async function main() {
-  const file = process.argv[2] ?? (await latestReport());
+  const file = process.argv.slice(2).find((arg) => arg.endsWith(".json")) ?? (await latestReport());
   const report = JSON.parse(await readFile(file, "utf8")) as {
     commit: string;
     model: string;
@@ -48,12 +49,13 @@ async function main() {
     results: Graded[];
   };
   const fixtures = new Map((await loadFixtures()).map((fixture) => [fixture.id, fixture]));
-  const graded: Graded[] = [];
-  const judged: Judged[] = [];
+  const concurrency = concurrencyWanted(8);
 
-  // One at a time, for the same rate limit the eval itself keeps to. A report
-  // from before repeats has no run numbers; all of it is run 0.
-  for (const result of report.results.map((r) => ({ ...r, run: r.run ?? 0 }))) {
+  // A few plans at a time (`--concurrency`, 8 unless set): each judgement
+  // stands alone, and one at a time took over an hour and a half. Results
+  // keep the report's order. A report from before repeats has no run
+  // numbers; all of it is run 0.
+  const both = await mapLimit(report.results.map((r) => ({ ...r, run: r.run ?? 0 })), concurrency, async (result) => {
     const fixture = fixtures.get(result.fixture);
 
     if (fixture === undefined) {
@@ -63,7 +65,6 @@ async function main() {
     const limits = getLimits(fixture.answers);
     const context = { region: fixture.answers.region, answers: fixture.answers, limits };
     const regraded = { ...result, grade: grade(result.items, fixture.candidates, context) };
-    graded.push(regraded);
 
     // A criterion the code knows no candidate could meet is not held against
     // the plan, by the judge any more than by the code.
@@ -97,11 +98,14 @@ async function main() {
       ...(plan === null ? (["plan"] as const) : []),
       ...(hasRationales && rationales === null ? (["rationales"] as const) : []),
     ];
-    judged.push({ fixture: result.fixture, maker: result.maker, run: result.run, plan, rationales, failed, errors });
     console.log(
       `${result.fixture} · ${result.maker} · run ${result.run + 1} ·${plan === null ? "judge failed" : `${plan.picks.filter((p) => p.verdict !== "suits").length} picks flagged`}${errors.length > 0 ? ` · ${errors.length} errors` : ""}`
     );
-  }
+    const judgement: Judged = { fixture: result.fixture, maker: result.maker, run: result.run, plan, rationales, failed, errors };
+    return { regraded, judgement };
+  });
+  const graded: Graded[] = both.map((b) => b.regraded);
+  const judged: Judged[] = both.map((b) => b.judgement);
 
   const stamp: JudgeStamp = {
     judgedAt: new Date().toISOString(),
