@@ -19,9 +19,8 @@ import { generate, type Quality } from "../src/models/regimes.js";
 import type { RegimeItem } from "../src/types/index.js";
 import { heuristicPlan, randomPlan } from "./baselines.js";
 import { FIXTURES, loadFixtures, type Fixture } from "./fixture.js";
-import { concurrencyWanted, mapLimit } from "./parallel.js";
-import { POOLS } from "./pools.js";
 import { grade, rubric } from "./graders.js";
+import { mapLimit, wholeNumberArg } from "./parallel.js";
 import { REPORTS, toMarkdown, type Graded, type Stamp } from "./report.js";
 
 type Plan = { items: RegimeItem[]; quality: Quality | null };
@@ -52,23 +51,9 @@ const MAKERS: Maker[] = [
   { id: "gemini-no-quality", make: gemini(false) },
   // No model at all: what Gemini adds over a few rules, and over chance. The
   // heuristic is deterministic, so its repeats are identical by design.
-  { id: "heuristic", make: (fixture, limits) => heuristicPlan(fixture, limits) },
+  { id: "heuristic", make: heuristicPlan },
   { id: "random", make: randomPlan },
 ];
-
-// `--runs 5` repeats every maker on every fixture (piece E): one run is within
-// noise of the next, so a difference between makers means little without the
-// spread beside it.
-function runsWanted(): number {
-  const at = process.argv.indexOf("--runs");
-  const runs = at === -1 ? 1 : Number(process.argv[at + 1]);
-
-  if (!Number.isInteger(runs) || runs < 1) {
-    throw new Error(`--runs needs a whole number of at least 1, not ${process.argv[at + 1]}`);
-  }
-
-  return runs;
-}
 
 // What one maker made of one fixture, graded. A failure is kept, never
 // dropped: it is graded as an empty plan.
@@ -103,16 +88,14 @@ async function run(maker: Maker, fixture: Fixture, repeat: number): Promise<Grad
 }
 
 async function main() {
-  const runs = runsWanted();
-  // `--pool <name>` runs on one of piece E's other candidate pools (pools.ts)
-  // instead of the 20 `create` would draw.
-  const at = process.argv.indexOf("--pool");
-  const pool = at === -1 ? undefined : process.argv[at + 1];
-  const dir = pool === undefined ? FIXTURES : join(POOLS, pool);
-  const fixtures = await loadFixtures(dir);
+  // `--runs 5` repeats every maker on every fixture (piece E): one run is
+  // within noise of the next, so a difference between makers means little
+  // without the spread beside it.
+  const runs = wholeNumberArg("--runs", 1);
+  const fixtures = await loadFixtures();
 
   if (fixtures.length === 0) {
-    console.log(`No fixtures in ${dir} yet, so nothing to run.`);
+    console.log(`No fixtures in ${FIXTURES} yet, so nothing to run.`);
     return;
   }
 
@@ -120,7 +103,7 @@ async function main() {
   // limit, and the time each plan takes is part of what is measured.
   // `--concurrency N` runs N at once, which is far quicker; the report then
   // says the seconds per plan were measured alongside other calls.
-  const concurrency = concurrencyWanted(1);
+  const concurrency = wholeNumberArg("--concurrency", 1);
   const jobs = Array.from({ length: runs }, (_, repeat) =>
     fixtures.flatMap((fixture) => MAKERS.map((maker) => ({ repeat, fixture, maker })))
   ).flat();
@@ -142,7 +125,6 @@ async function main() {
     fixtures: fixtures.length,
     runs,
     concurrency,
-    ...(pool === undefined ? {} : { pool }),
     makers: MAKERS.map((maker) => maker.id),
   };
   const report = {

@@ -19,13 +19,13 @@ export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) =>
   return results;
 }
 
-/** `--concurrency N` from the command line, or `fallback`. */
-export function concurrencyWanted(fallback: number): number {
-  const at = process.argv.indexOf("--concurrency");
+/** A whole-number option such as `--runs 5` or `--concurrency 8`, or `fallback` when absent. */
+export function wholeNumberArg(name: string, fallback: number): number {
+  const at = process.argv.indexOf(name);
   const value = at === -1 ? fallback : Number(process.argv[at + 1]);
 
   if (!Number.isInteger(value) || value < 1) {
-    throw new Error(`--concurrency needs a whole number of at least 1, not ${process.argv[at + 1]}`);
+    throw new Error(`${name} needs a whole number of at least 1, not ${process.argv[at + 1]}`);
   }
 
   return value;

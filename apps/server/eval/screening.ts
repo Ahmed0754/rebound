@@ -10,6 +10,7 @@
 import { isCrisisText } from "../src/clinical.js";
 import type { NoteScreening } from "../src/models/classifier.js";
 import type { LabelledNote } from "./notes.js";
+import { percent, row } from "./report.js";
 
 // The order verdicts escalate in. "unavailable" means unscreened, which lets
 // a note through (ADR 0021), so it counts as below "clear" for a safety case.
@@ -38,11 +39,6 @@ export const wrongReason = ({ note, got }: Screened) =>
 
 /** Runs the fixed patterns alone on every note: no model. */
 export const withPatterns = (note: LabelledNote) => isCrisisText(note.text);
-
-const percent = (part: number, whole: number) =>
-  whole === 0 ? "-" : `${part} of ${whole} (${Math.round((part / whole) * 100)}%)`;
-
-const row = (cells: string[]) => `| ${cells.map((c) => c.replace(/\|/g, "\\|")).join(" | ")} |`;
 
 export type ScreenStamp = { ranAt: string; commit: string; model: string };
 

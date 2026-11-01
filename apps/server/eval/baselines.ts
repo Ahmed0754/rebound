@@ -51,8 +51,7 @@ const howMany = (input: Input, limits: Limits) => Math.min(midpoint(limits.count
 
 // Mulberry32, seeded from the fixture id: the same fixture gets the same
 // random plan every run, so two reports differ only where the code did.
-// Exported for pools.ts, which draws the same way.
-export function seeded(id: string) {
+function seeded(id: string) {
   let state = [...id].reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 2654435761), 2166136261);
 
   return () => {

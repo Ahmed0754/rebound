@@ -39,15 +39,21 @@ export type Stamp = {
   fixtures: number;
   // How many times each maker ran on each fixture. Absent before piece E.
   runs?: number;
-  // The candidate pool (pools.ts), when not the default 20.
-  pool?: string;
   // How many plans were made at once. Absent or 1: one at a time.
   concurrency?: number;
   makers: string[];
 };
 
-const percent = (part: number, whole: number) =>
+// Shared with screening.ts.
+export const percent = (part: number, whole: number) =>
   whole === 0 ? "-" : `${part} of ${whole} (${Math.round((part / whole) * 100)}%)`;
+
+// The lowest and highest of some rates (0-1), skipping those with nothing to
+// count: how far a measure moved between runs.
+function range(rates: (number | null)[]): string {
+  const shown = rates.filter((r): r is number => r !== null).map((r) => Math.round(r * 100));
+  return shown.length === 0 ? "-" : `${Math.min(...shown)}–${Math.max(...shown)}%`;
+}
 
 // For a number a failed generation has no value for.
 function unlessFailed(results: Graded[], print: (generated: Graded[]) => string): string {
@@ -55,12 +61,17 @@ function unlessFailed(results: Graded[], print: (generated: Graded[]) => string)
   return failed > 0 ? `not printed: ${failed} failed` : print(results);
 }
 
-// How many criteria were met of those that could count, and how many plans
-// met every one, for the live criteria or the provisional ones.
-function criteriaMet(results: Graded[], of: (grade: Grade) => QualityResult): [string, string] {
+// How many criteria were met, of those that could count.
+function tally(results: Graded[], of: (grade: Grade) => QualityResult) {
   const counted = (result: Graded) => of(result.grade).met.length + of(result.grade).missed.length;
   const met = results.reduce((sum, result) => sum + of(result.grade).met.length, 0);
-  const asked = results.reduce((sum, result) => sum + counted(result), 0);
+  return { met, asked: results.reduce((sum, result) => sum + counted(result), 0), counted };
+}
+
+// That as a sentence, and how many plans met every one, for the live
+// criteria or the provisional ones.
+function criteriaMet(results: Graded[], of: (grade: Grade) => QualityResult): [string, string] {
+  const { met, asked, counted } = tally(results, of);
   // A fixture where no criterion could count says nothing about quality.
   const graded = results.filter((result) => counted(result) > 0);
 
@@ -83,16 +94,12 @@ function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
 
 // The share met, as a number, or null when nothing could count.
 function share(results: Graded[], of: (grade: Grade) => QualityResult): number | null {
-  const met = results.reduce((sum, r) => sum + of(r.grade).met.length, 0);
-  const asked = results.reduce((sum, r) => sum + of(r.grade).met.length + of(r.grade).missed.length, 0);
+  const { met, asked } = tally(results, of);
   return asked === 0 ? null : met / asked;
 }
 
 // The lowest and highest a rate came out across the runs.
-function spread(byRun: Graded[][], rate: (results: Graded[]) => number | null): string {
-  const rates = byRun.map(rate).filter((r): r is number => r !== null).map((r) => Math.round(r * 100));
-  return rates.length === 0 ? "-" : `${Math.min(...rates)}–${Math.max(...rates)}%`;
-}
+const spread = (byRun: Graded[][], rate: (results: Graded[]) => number | null) => range(byRun.map(rate));
 
 // How much two runs' picks for one fixture have in common: shared over all.
 // A failed run picked nothing, so two failed runs agree and a failed run
@@ -179,8 +186,9 @@ function benchmarkCounts(results: Graded[]): string {
   return `${listed || "none"} (across ${items} exercises)`;
 }
 
-// A pipe in an exercise name or an error would split the cell.
-function row(cells: (string | number)[]): string {
+// A pipe in an exercise name or an error would split the cell. Shared with
+// screening.ts.
+export function row(cells: (string | number)[]): string {
   return `| ${cells.map((cell) => String(cell).replace(/\|/g, "\\|")).join(" | ")} |`;
 }
 
@@ -198,7 +206,7 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
   const lines: string[] = [
     `# Eval report · ${stamp.ranAt}`,
     "",
-    `Commit \`${stamp.commit}\` · model \`${stamp.model}\` · rubric ${stamp.rubric} · ${stamp.fixtures} fixtures${runs > 1 ? ` · ${runs} runs each` : ""} · candidates: ${stamp.pool === undefined ? "the default 20" : `pool \`${stamp.pool}\``}`,
+    `Commit \`${stamp.commit}\` · model \`${stamp.model}\` · rubric ${stamp.rubric} · ${stamp.fixtures} fixtures${runs > 1 ? ` · ${runs} runs each` : ""}`,
     "",
     "A failed generation is graded as an empty plan, so it counts against every rate below.",
     ...((stamp.concurrency ?? 1) > 1
@@ -343,6 +351,9 @@ export type JudgeStamp = {
   judgeModel: string;
   judgeVersion: string;
   rubric: string;
+  // Plans whose blind request matched one already asked, so the judgement was
+  // reused rather than paid for again.
+  reused: number;
 };
 
 const unsuitableShare = (judged: Judged[]) => {
@@ -350,22 +361,19 @@ const unsuitableShare = (judged: Judged[]) => {
   return picks.length === 0 ? null : picks.filter((p) => p.verdict === "unsuitable").length / picks.length;
 };
 
-function judgeSummary(graded: Graded[], judged: Judged[]): [string, string][] {
+function judgeSummary(judged: Judged[]): [string, string][] {
   const criteria = judged.flatMap((j) => j.plan?.criteria ?? []);
   const picks = judged.flatMap((j) => j.plan?.picks ?? []);
   const withRationales = judged.filter((j) => j.rationales !== null);
   const broken = withRationales.flatMap((j) => j.rationales!.safety.filter((s) => s.verdict === "missed"));
-  const { agree, compared } = agreement(graded, judged);
   const runs = Math.max(0, ...judged.map((j) => j.run)) + 1;
   const byRun = Array.from({ length: runs }, (_, run) => judged.filter((j) => j.run === run));
-  const rates = byRun.map(unsuitableShare).filter((r): r is number => r !== null).map((r) => Math.round(r * 100));
 
   return [
-    ["Provisional criteria met, judge", percent(criteria.filter((c) => c.verdict === "met").length, criteria.length)],
-    ["Agrees with the code grade", percent(agree, compared)],
+    ["Judge-only criteria met", percent(criteria.filter((c) => c.verdict === "met").length, criteria.length)],
     ["Picks rated unsuitable", percent(picks.filter((p) => p.verdict === "unsuitable").length, picks.length)],
     ...(runs > 1
-      ? [["Picks rated unsuitable, lowest–highest run", rates.length === 0 ? "-" : `${Math.min(...rates)}–${Math.max(...rates)}%`] as [string, string]]
+      ? [["Picks rated unsuitable, lowest–highest run", range(byRun.map(unsuitableShare))] as [string, string]]
       : []),
     ["Picks rated questionable", percent(picks.filter((p) => p.verdict === "questionable").length, picks.length)],
     [
@@ -377,57 +385,6 @@ function judgeSummary(graded: Graded[], judged: Judged[]): [string, string][] {
 }
 
 const sameResult = (g: Graded, j: Judged) => g.fixture === j.fixture && g.maker === j.maker && g.run === j.run;
-
-// Where the code and the judge both graded a criterion on the same plan.
-function comparisons(graded: Graded[], judged: Judged[]) {
-  return judged.flatMap((j) => {
-    const code = graded.find((g) => sameResult(g, j))?.grade.provisional;
-
-    return (j.plan?.criteria ?? []).flatMap((c) => {
-      const byCode = code?.met.includes(c.id) ? "met" : code?.missed.includes(c.id) ? "missed" : null;
-      return byCode === null ? [] : [{ judged: j, criterion: c, byCode }];
-    });
-  });
-}
-
-function agreement(graded: Graded[], judged: Judged[]) {
-  const all = comparisons(graded, judged);
-  return { agree: all.filter((c) => c.byCode === c.criterion.verdict).length, compared: all.length };
-}
-
-// The same picks for the same fixture make the same blind request, whichever
-// maker or run they came from. Each verdict - per criterion and per pick - is
-// counted once per group, as the same every time or not.
-function judgeConsistency(graded: Graded[], judged: Judged[]) {
-  const groups = groupBy(
-    judged.filter((j) => j.plan !== null && j.plan.picks.length > 0),
-    (j) => {
-      const ids = (graded.find((g) => sameResult(g, j))?.items ?? []).map((item) => item.id).sort();
-      return `${j.fixture}|${ids.join(",")}`;
-    }
-  );
-  let same = 0;
-  let asked = 0;
-
-  for (const group of groups.values()) {
-    if (group.length < 2) {
-      continue;
-    }
-
-    const verdicts = new Map<string, Set<string>>();
-
-    for (const j of group) {
-      for (const v of [...j.plan!.criteria, ...j.plan!.picks]) {
-        verdicts.set(v.id, (verdicts.get(v.id) ?? new Set()).add(v.verdict));
-      }
-    }
-
-    asked += verdicts.size;
-    same += [...verdicts.values()].filter((seen) => seen.size === 1).length;
-  }
-
-  return { same, asked };
-}
 
 /** The judge's report on a run's plans. Every score in it is provisional. */
 export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Graded[], judged: Judged[]): string {
@@ -447,29 +404,17 @@ export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Gr
 
   lines.push(
     "",
-    "The judge saw each plan's exercises and the person's answers, in the same prompt and the same order for every maker, without rationales, doses or the maker's name. How many exercises a plan has can still differ by maker. It graded only the provisional criteria, never the live ones, and none that no candidate could meet. A failed generation counts as an empty plan, missing every criterion.",
+    "The judge saw each plan's exercises and the person's answers, in the same prompt and the same order for every maker, without rationales, doses or the maker's name. How many exercises a plan has can still differ by maker. It graded only what code can't - each pick's fit, the criteria no catalogue tag can answer, and the rationales - never the live criteria. A failed generation counts as an empty plan, missing every criterion.",
+    "",
+    `Plans with the same picks for the same person make the same blind request, so ${stamp.reused} of them reused a judgement already made instead of asking again.`,
     "",
     "## Summary",
     "",
     ...table(
       makers,
-      makers.map((maker) =>
-        judgeSummary(
-          graded.filter((g) => g.maker === maker),
-          judged.filter((j) => j.maker === maker)
-        )
-      )
+      makers.map((maker) => judgeSummary(judged.filter((j) => j.maker === maker)))
     )
   );
-
-  const repeat = judgeConsistency(graded, judged);
-
-  if (repeat.asked > 0) {
-    lines.push(
-      "",
-      `**The judge's own consistency:** where it saw the same plan more than once - the heuristic's every run, or two makers picking alike - ${percent(repeat.same, repeat.asked)} of its verdicts were the same every time. Its request is identical each time, so any difference is the model's own noise.`
-    );
-  }
 
   const flagged = judged.flatMap((j) =>
     (j.plan?.picks ?? []).filter((p) => p.verdict === "unsuitable").map((p) => ({ j, p }))
@@ -481,19 +426,6 @@ export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Gr
     ...(flagged.length === 0
       ? ["None."]
       : flagged.map(({ j, p }) => `- **${j.fixture} · ${j.maker} · ${name(j, p.id)}:** ${p.reason}`))
-  );
-
-  const disagreements = comparisons(graded, judged).filter((c) => c.byCode !== c.criterion.verdict);
-  lines.push(
-    "",
-    "## Where the judge and the code disagree",
-    "",
-    ...(disagreements.length === 0
-      ? ["Nowhere."]
-      : disagreements.map(
-          ({ judged: j, criterion: c, byCode }) =>
-            `- **${j.fixture} · ${j.maker} · ${c.id}:** code says ${byCode}, judge says ${c.verdict}. ${c.reason}`
-        ))
   );
 
   const broken = judged.flatMap((j) =>

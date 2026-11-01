@@ -40,8 +40,9 @@ const stamp: JudgeStamp = {
   commit: "abc",
   model: "gemini-x",
   judgeModel: "gemini-x",
-  judgeVersion: "D.1",
+  judgeVersion: "D.2",
   rubric: "A.2",
+  reused: 3,
 };
 
 const safety = (verdict: "met" | "missed") =>
@@ -53,7 +54,7 @@ const JUDGED: Judged[] = [
     maker: "gemini",
     run: 0,
     plan: {
-      criteria: [{ id: "NECK-2", verdict: "missed", reason: "Nothing for the shoulder girdle." }],
+      criteria: [{ id: "HIP-2", verdict: "met", reason: "A stretch and a bridge." }],
       picks: [{ id: "Upright_Row", verdict: "suits", reason: "Fine." }],
     },
     rationales: { safety: safety("met") },
@@ -65,7 +66,7 @@ const JUDGED: Judged[] = [
     maker: "heuristic",
     run: 0,
     plan: {
-      criteria: [{ id: "NECK-2", verdict: "missed", reason: "The row is not girdle endurance work." }],
+      criteria: [{ id: "HIP-2", verdict: "missed", reason: "No mobility work." }],
       picks: [{ id: "Upright_Row", verdict: "unsuitable", reason: "Upright rows load an irritable neck." }],
     },
     rationales: null,
@@ -75,7 +76,7 @@ const JUDGED: Judged[] = [
 ];
 
 const markdown = (judged = JUDGED) =>
-  toJudgedMarkdown(stamp, ["gemini", "heuristic"], [graded("gemini", { missed: ["NECK-2"] }), graded("heuristic", { met: ["NECK-2"] })], judged);
+  toJudgedMarkdown(stamp, ["gemini", "heuristic"], [graded("gemini", {}), graded("heuristic", {})], judged);
 
 describe("toJudgedMarkdown", () => {
   it("labels every score provisional, and warns when the judge wrote the plans", () => {
@@ -84,16 +85,14 @@ describe("toJudgedMarkdown", () => {
     expect(toJudgedMarkdown({ ...stamp, judgeModel: "other" }, ["gemini"], [], [])).not.toContain("same model");
   });
 
-  it("counts agreement with the code only where both graded, and lists the disagreements", () => {
-    expect(markdown()).toContain("| Agrees with the code grade | 1 of 1 (100%) | 0 of 1 (0%) |");
-    expect(markdown()).toContain(
-      "- **neck-desk · heuristic · NECK-2:** code says met, judge says missed. The row is not girdle endurance work."
-    );
-  });
-
   it("names unsuitable picks, and says a maker without rationales has none to judge", () => {
     expect(markdown()).toContain("- **neck-desk · heuristic · Upright Row:** Upright rows load an irritable neck.");
     expect(markdown()).toContain("| Safety statements broken | 0 of 3 (0%) | no rationales |");
+  });
+
+  it("counts the judge-only criteria, and says how many judgements were reused", () => {
+    expect(markdown()).toContain("| Judge-only criteria met | 1 of 1 (100%) | 0 of 1 (0%) |");
+    expect(markdown()).toContain("so 3 of them reused a judgement already made");
   });
 
   it("counts a judge failure rather than dropping it", () => {
@@ -118,20 +117,6 @@ describe("toJudgedMarkdown", () => {
     const md = toJudgedMarkdown(stamp, ["heuristic"], [graded("heuristic", {}), graded("heuristic", {}, { run: 1 })], runs);
 
     expect(md).toContain("| Picks rated unsuitable, lowest–highest run | 0–100% |");
-  });
-});
-
-describe("the judge's own consistency", () => {
-  it("counts each verdict on a plan it saw twice as the same every time or not", () => {
-    // Both makers picked the same one exercise for the same fixture, so the
-    // judge got the same request twice: NECK-2 alike, the pick not.
-    expect(markdown()).toContain("1 of 2 (50%) of its verdicts were the same every time");
-  });
-
-  it("says nothing when it never saw a plan twice", () => {
-    const one = toJudgedMarkdown(stamp, ["gemini"], [graded("gemini", {})], [JUDGED[0]]);
-
-    expect(one).not.toContain("own consistency");
   });
 });
 

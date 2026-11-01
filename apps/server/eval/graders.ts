@@ -37,7 +37,8 @@ import type { RegimeItem } from "../src/types/index.js";
 export const RUBRIC_VERSION = "A.2";
 
 type Provisional = Pick<Criterion, "id" | "sources" | "appliesTo"> & {
-  // The criterion as REFERENCES.md §3 words it, for the judge (piece D).
+  // The criterion as REFERENCES.md §3 words it. The judge (piece D) is sent
+  // it for the criteria with no code check.
   says: string;
   // The code check, where the tags can answer it. Absent where only the
   // judge can.
