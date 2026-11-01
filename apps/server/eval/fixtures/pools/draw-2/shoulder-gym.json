@@ -1,0 +1,304 @@
+{
+  "about": "Chronic, low pain, competitive, full gym: the widest shoulder pool.",
+  "answers": {
+    "goal": "prevent_recurrence",
+    "region": "shoulder",
+    "onset": "chronic",
+    "painNow": 2,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "under_30",
+    "conditions": [],
+    "equipment": [
+      "full_gym"
+    ],
+    "activityLevel": "competitive",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-28T18:55:41.039Z",
+  "pool": "draw-2",
+  "candidates": [
+    {
+      "id": "Kettlebell_Halo_With_Overhead_Extension",
+      "name": "Kettlebell Halo with Overhead Extension",
+      "description": "Stand tall with your feet hip-width apart. Hold a kettlebell upside down by the horns, with the bell above your hands and close to your chest. Brace your abdominals and squeeze your glutes so your ribcage stays down. This is your starting position.\nKeeping your elbows close to your head, move the kettlebell up past one ear and around until it sits behind your head. Pause here.\nFrom this position, extend your elbows to press the kettlebell up and overhead until your arms are straight, keeping your upper arms alongside your head.\nBend your elbows to lower the kettlebell back to the pause position behind your head, under control.\nContinue the circle past the opposite ear and back down to the starting position in front of your chest to complete one repetition.\nAlternate the direction of the circle on each repetition. Keep your head, hips and lower back still throughout; if your lower back arches or you cannot reach the overhead position without leaning back, use a lighter weight or perform the halo and the extension as separate exercises.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Face_Pull",
+      "name": "Face Pull",
+      "description": "Facing a high pulley with a rope or dual handles attached, pull the weight directly towards your face, separating your hands as you do so. Keep your upper arms parallel to the ground.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "cable",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Upward_Stretch",
+      "name": "Upward Stretch",
+      "description": "Extend both hands straight above your head, palms touching.\nSlowly push your hands up and back, keeping your back straight.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Upright_Barbell_Row",
+      "name": "Upright Barbell Row",
+      "description": "Grasp a barbell with an overhand grip that is slightly less than shoulder width. The bar should be resting on the top of your thighs with your arms extended and a slight bend in your elbows. Your back should also be straight. This will be your starting position.\nNow exhale and use the sides of your shoulders to lift the bar, raising your elbows up and to the side. Keep the bar close to your body as you raise it. Continue to lift the bar until it nearly touches your chin. Tip: Your elbows should drive the motion, and should always be higher than your forearms. Remember to keep your torso stationary and pause for a second at the top of the movement.\nLower the bar back down slowly to the starting position. Inhale as you perform this portion of the movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Smith_Incline_Shoulder_Raise",
+      "name": "Smith Incline Shoulder Raise",
+      "description": "Place an incline bench underneath the smith machine. Place the barbell at a height that you can reach when lying down and your arms are almost fully extended. Once the weight you need is selected, lie down on the incline bench and make sure your shoulders are aligned right under the barbell.\nUsing a shoulder width pronated (palms forward) grip, lift the bar from the rack and hold it straight over you with a slight bend at the elbows. This will be your starting position.\nAs you breathe out, lift the bar up until your arms are fully extended. Note: The contraction should be felt around the shoulders.\nAfter a second pause, bring the bar back down to the starting position as you breathe in.\nRepeat the movement for the prescribed amount of repetitions.\nWhen you are done, place the bar back in the rack.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "barbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Side_Lateral_Raise",
+      "name": "Seated Side Lateral Raise",
+      "description": "Pick a couple of dumbbells and sit at the end of a flat bench with your feet firmly on the floor. Hold the dumbbells with your palms facing in and your arms straight down at your sides at arms' length. This will be your starting position.\nWhile maintaining the torso stationary (no swinging), lift the dumbbells to your side with a slight bend on the elbow and the hands slightly tilted forward as if pouring water in a glass. Continue to go up until you arms are parallel to the floor. Exhale as you execute this movement and pause for a second at the top.\nLower the dumbbells back down slowly to the starting position as you inhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Machine_Shoulder_Military_Press",
+      "name": "Machine Shoulder (Military) Press",
+      "description": "Sit down on the Shoulder Press Machine and select the weight.\nGrab the handles to your sides as you keep the elbows bent and in line with your torso. This will be your starting position.\nNow lift the handles as you exhale and you extend the arms fully. At the top of the position make sure that you hold the contraction for a second.\nLower the handles slowly back to the starting position as you inhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Smith_Machine_Overhead_Shoulder_Press",
+      "name": "Smith Machine Overhead Shoulder Press",
+      "description": "To begin, place a flat bench (or preferably one with back support) underneath a smith machine. Position the barbell at a height so that when seated on the flat bench, the arms must be almost fully extended to reach the barbell.\nOnce you have the correct height, sit slightly in behind the barbell so that there is an imaginary straight line from the tip of your nose to the barbell. Your feet should be stationary. Grab the barbell with the palms facing forward, unlock it and lift it up so that your arms are fully extended. This is the starting position.\nSlowly begin to lower the barbell until it is level with your chin while inhaling.\nThen lift the barbell back to the starting position using your shoulders while exhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Kettlebell_Turkish_Get-Up_Squat_style",
+      "name": "Kettlebell Turkish Get-Up (Squat style)",
+      "description": "Lie on your back on the floor and press a kettlebell to the top position by extending the elbow. Bend the knee on the same side as the kettlebell.\nKeeping the kettlebell locked out at all times, pivot to the opposite side and use your non- working arm to assist you in driving forward to the lunge position.\nUsing your free hand, push yourself to a seated position, then progressing to your feet. While looking up at the kettlebell, slowly stand up. Reverse the motion back to the starting position and repeat.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Arm_Circles",
+      "name": "Arm Circles",
+      "description": "Stand up and extend your arms straight out by the sides. The arms should be parallel to the floor and perpendicular (90-degree angle) to your torso. This will be your starting position.\nSlowly start to make circles of about 1 foot in diameter with each outstretched arm. Breathe normally as you perform the movement.\nContinue the circular motion of the outstretched arms for about ten seconds. Then reverse the movement, going the opposite direction.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Leverage_Shrug",
+      "name": "Leverage Shrug",
+      "description": "Load the pins to an appropriate weight. Position yourself directly between the handles.\nGrasp the top handles with a comfortable grip, and then lower your hips as you take a breath. Look forward with your head and keep your chest up.\nDrive through the floor with your heels, extending your hips and knees as you rise to a standing position. Keep your arms straight throughout the movement, finishing with your shoulders back. This will be your starting position.\nRaise the weight by shrugging the shoulders towards your ears, moving straight up and down.\nPause at the top of the motion, and then return the weight to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Shrug",
+      "name": "Dumbbell Shrug",
+      "description": "Stand erect with a dumbbell on each hand (palms facing your torso), arms extended on the sides.\nLift the dumbbells by elevating the shoulders as high as possible while you exhale. Hold the contraction at the top for a second. Tip: The arms should remain extended at all times. Refrain from using the biceps to help lift the dumbbells. Only the shoulders should be moving up and down.\nLower the dumbbells back to the original position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Front_Deltoid",
+      "name": "Seated Front Deltoid",
+      "description": "Sit upright on the floor with your legs bent, your partner standing behind you. Stick your arms straight out to your sides, with your palms facing the ground. Attempt to move them as far behind you as possible, as your assistant holds your wrists. This will be your starting position.\nKeeping your elbows straight, attempt to move your arms to the front, with your partner gently restraining you to prevent any actual movement for 10-20 seconds.\nNow, relax your muscles and allow your partner to gently increase the stretch on the shoulders and chest. Hold for 10 to 20 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "stretching",
+      "level": "expert",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Front_Incline_Dumbbell_Raise",
+      "name": "Front Incline Dumbbell Raise",
+      "description": "Sit down on an incline bench with the incline set anywhere between 30 to 60 degrees while holding a dumbbell on each hand. Tip: You can change the angle to hit the muscle a little differently each time.\nExtend your arms straight in front of you and have your palms facing down with the dumbbells raised about 1 inch above your thighs. This will be your starting position.\nSlowly raise the dumbbells straight up until they are slightly above your shoulders, while keeping your elbows locked. Squeeze at the top for a second and make sure you breathe out during this portion of the movement. Tip: Keep your head resting down against the bench and your legs on the floor at all times.\nLower the arms back to the starting position as you inhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "One-Arm_Kettlebell_Jerk",
+      "name": "One-Arm Kettlebell Jerk",
+      "description": "Hold a kettlebell by the handle. Clean the kettlebell to your shoulder by extending through the legs and hips as you pull the kettlebell towards your shoulder. Rotate your wrist as you do so, so that the palm faces forward. This will be your starting position.\nDip your body by bending the knees, keeping your torso upright.\nImmediately reverse direction, driving through the heels, in essence jumping to create momentum. As you do so, press the kettlebell overhead to lockout by extending the arms, using your body's momentum to move the weight. Receive the weight overhead by returning to a squat position underneath the weight. Keeping the weight overhead, return to a standing position.\nLower the weight to perform the next repetition.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Internal_Rotation_with_Band",
+      "name": "Internal Rotation with Band",
+      "description": "Choke the band around a post. The band should be at the same height as your elbow. Stand with your right side to the band a couple of feet away.\nGrasp the end of the band with your right hand, and keep your elbow pressed firmly to your side. We recommend you hold a pad or foam roll in place with your elbow to keep it firmly in position.\nWith your upper arm in position, your elbow should be flexed to 90 degrees with your hand reaching away from your torso. This will be your starting position.\nExecute the movement by rotating your arm in a forehand motion, keeping your elbow in place.\nContinue as far as you are able, pause, and then return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": null,
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Barbell_Shoulder_Press",
+      "name": "Barbell Shoulder Press",
+      "description": "Sit on a bench with back support in a squat rack. Position a barbell at a height that is just above your head. Grab the barbell with a pronated grip (palms facing forward).\nOnce you pick up the barbell with the correct grip width, lift the bar up over your head by locking your arms. Hold at about shoulder level and slightly in front of your head. This is your starting position.\nLower the bar down to the shoulders slowly as you inhale.\nLift the bar back up to the starting position as you exhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "barbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Battling_Ropes",
+      "name": "Battling Ropes",
+      "description": "For this exercise you will need a heavy rope anchored at its center 15-20 feet away. Standing in front of the rope, take an end in each hand with your arms extended at your side. This will be your starting position.\nInitiate the movement by rapidly raising one arm to shoulder level as quickly as you can.\nAs you let that arm drop to the starting position, raise the opposite side.\nContinue alternating your left and right arms, whipping the ropes up and down as fast as you can.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Arnold_Dumbbell_Press",
+      "name": "Arnold Dumbbell Press",
+      "description": "Sit on an exercise bench with back support and hold two dumbbells in front of you at about upper chest level with your palms facing your body and your elbows bent. Tip: Your arms should be next to your torso. The starting position should look like the contracted portion of a dumbbell curl.\nNow to perform the movement, raise the dumbbells as you rotate the palms of your hands until they are facing forward.\nContinue lifting the dumbbells until your arms are extended above you in straight arm position. Breathe out as you perform this portion of the movement.\nAfter a second pause at the top, begin to lower the dumbbells to the original position by rotating the palms of your hands towards you. Tip: The left arm will be rotated in a counter clockwise manner while the right one will be rotated clockwise. Breathe in as you perform this portion of the movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Smith_Machine_Behind_the_Back_Shrug",
+      "name": "Smith Machine Behind the Back Shrug",
+      "description": "With the bar at thigh level, load an appropriate weight.\nStand with the bar behind you, taking a shoulder-width, pronated grip on the bar and unhook the weight. You should be standing up straight with your head and chest up and your arms extended. This will be your starting position.\nInitiate the movement by shrugging your shoulders straight up. Do not flex the arms or wrist during the movement.\nAfter a brief pause return the weight to the starting position.\nRepeat for the desired number of repetitions before engaging the hooks to rack the weight.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "traps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "isolation"
+    }
+  ]
+}

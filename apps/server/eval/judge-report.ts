@@ -51,8 +51,9 @@ async function main() {
   const graded: Graded[] = [];
   const judged: Judged[] = [];
 
-  // One at a time, for the same rate limit the eval itself keeps to.
-  for (const result of report.results) {
+  // One at a time, for the same rate limit the eval itself keeps to. A report
+  // from before repeats has no run numbers; all of it is run 0.
+  for (const result of report.results.map((r) => ({ ...r, run: r.run ?? 0 }))) {
     const fixture = fixtures.get(result.fixture);
 
     if (fixture === undefined) {
@@ -91,9 +92,14 @@ async function main() {
       ? await twice(() => judgeRationales(input), errors)
       : null;
 
-    judged.push({ fixture: result.fixture, maker: result.maker, plan, rationales, errors });
+    const hasRationales = (result.items ?? []).some((item) => item.rationale);
+    const failed = [
+      ...(plan === null ? (["plan"] as const) : []),
+      ...(hasRationales && rationales === null ? (["rationales"] as const) : []),
+    ];
+    judged.push({ fixture: result.fixture, maker: result.maker, run: result.run, plan, rationales, failed, errors });
     console.log(
-      `${result.fixture} · ${result.maker} · ${plan === null ? "judge failed" : `${plan.picks.filter((p) => p.verdict !== "suits").length} picks flagged`}${errors.length > 0 ? ` · ${errors.length} errors` : ""}`
+      `${result.fixture} · ${result.maker} · run ${result.run + 1} ·${plan === null ? "judge failed" : `${plan.picks.filter((p) => p.verdict !== "suits").length} picks flagged`}${errors.length > 0 ? ` · ${errors.length} errors` : ""}`
     );
   }
 

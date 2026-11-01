@@ -1,0 +1,586 @@
+{
+  "about": "Trains in a full gym, low pain, but loaded bending and sitting both aggravate it.",
+  "answers": {
+    "goal": "prevent_recurrence",
+    "region": "lower back",
+    "onset": "chronic",
+    "painNow": 2,
+    "aggravators": [
+      "loaded_flexion",
+      "sitting"
+    ],
+    "redFlags": [],
+    "ageBand": "under_30",
+    "conditions": [],
+    "equipment": [
+      "full_gym"
+    ],
+    "activityLevel": "trains_regularly",
+    "sessionMinutes": 20
+  },
+  "freeText": "Deadlifts used to set it off, so I stopped them.",
+  "frozenAt": "2026-10-28T18:55:43.285Z",
+  "pool": "40",
+  "candidates": [
+    {
+      "id": "Physioball_Hip_Bridge",
+      "name": "Physioball Hip Bridge",
+      "description": "Lay on a ball so that your upper back is on the ball with your hips unsupported. Both feet should be flat on the floor, hip width apart or wider. This will be your starting position.\nBegin by extending the hips using your glutes and hamstrings, raising your hips upward as you bridge.\nPause at the top of the motion and return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "exercise ball",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Leg_Lift",
+      "name": "Leg Lift",
+      "description": "While standing up straight with both feet next to each other at around shoulder width, grab a sturdy surface such as the sides of a squat rack or the top of a chair to brace yourself and keep balance.\nWith or without an ankle weight, lift one leg behind you as if performing a leg curl but standing up while keeping the other leg straight. Breathe out as you perform this movement.\nSlowly bring the raised leg back to the floor as you breathe in.\nRepeat for the recommended amount of repetitions.\nRepeat the movement with the opposite leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Pallof_Press",
+      "name": "Pallof Press",
+      "description": "Connect a standard handle to a tower, and—if possible—position the cable to shoulder height. If not, a low pulley will suffice.\nWith your side to the cable, grab the handle with both hands and step away from the tower. You should be approximately arm's length away from the pulley, with the tension of the weight on the cable.\nWith your feet positioned hip-width apart and knees slightly bent, hold the cable to the middle of your chest. This will be your starting position.\nPress the cable away from your chest, fully extending both arms. You core should be tight and engaged.\nHold the repetition for several seconds before returning to the starting position.\nAt the conclusion of the set, repeat facing the other direction.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "cable",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Knee_Across_The_Body",
+      "name": "Knee Across The Body",
+      "description": "Lie down on the floor with your right leg straight. Bend your left leg and lower it across your body, holding the knee down toward the floor with your right hand. (The knee doesn't need to touch the floor if you're tight.)\nPlace your left arm comfortably beside you and turn your head to the left. Imagine you have a weight tied to your tailbone. let your tailbone fall back toward the floor as your chest reaches in the opposite direction to stretch your lower back. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Cat_Stretch",
+      "name": "Cat Stretch",
+      "description": "Position yourself on the floor on your hands and knees.\nPull your belly in and round your spine, lower back, shoulders, and neck, letting your head drop.\nHold for 15 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Scissor_Kick",
+      "name": "Scissor Kick",
+      "description": "To begin, lie down with your back pressed against the floor or on an exercise mat (optional). Your arms should be fully extended to the sides with your palms facing down. Note: The arms should be stationary the entire time.\nWith a slight bend at the knees, lift your legs up so that your heels are about 6 inches off the ground. This is the starting position.\nNow lift your left leg up to about a 45 degree angle while your right leg is lowered until the heel is about 2-3 inches from the ground.\nSwitch movements by raising your right leg up and lowering your left leg. Remember to breathe while performing this exercise.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Russian_Twist",
+      "name": "Russian Twist",
+      "description": "Lie down on the floor placing your feet either under something that will not move or by having a partner hold them. Your legs should be bent at the knees.\nElevate your upper body so that it creates an imaginary V-shape with your thighs. Your arms should be fully extended in front of you perpendicular to your torso and with the hands clasped. This is the starting position.\nTwist your torso to the right side until your arms are parallel with the floor while breathing out.\nHold the contraction for a second and move back to the starting position while breathing out. Now move to the opposite side performing the same techniques you applied to the right side.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Piriformis-SMR",
+      "name": "Piriformis-SMR",
+      "description": "Sit with your buttocks on top of a foam roll. Bend your knees, and then cross one leg so that the ankle is over the knee. This will be your starting position.\nShift your weight to the side of the crossed leg, rolling over the buttocks until you feel tension in your upper glute. You may assist the stretch by using one hand to pull the bent knee towards your chest. Hold this position for 10-30 seconds, and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": "foam roll",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Hug_Knees_To_Chest",
+      "name": "Hug Knees To Chest",
+      "description": "Lie down on your back and pull both knees up to your chest.\nHold your arms under the knees, not over (that would put to much pressure on your knee joints).\nSlowly pull the knees toward your shoulders. This also stretches your buttocks muscles.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Barbell_Ab_Rollout",
+      "name": "Barbell Ab Rollout",
+      "description": "For this exercise you will need to get into a pushup position, but instead of having your hands of the floor, you will be grabbing on to an Olympic barbell (loaded with 5-10 lbs on each side) instead. This will be your starting position.\nWhile keeping a slight arch on your back, lift your hips and roll the barbell towards your feet as you exhale. Tip: As you perform the movement, your glutes should be coming up, you should be keeping the abs tight and should maintain your back posture at all times. Also your arms should be staying perpendicular to the floor throughout the movement. If you don't, you will work out your shoulders and back more than the abs.\nAfter a second contraction at the top, start to roll the barbell back forward to the starting position slowly as you inhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Suspended_Reverse_Crunch",
+      "name": "Suspended Reverse Crunch",
+      "description": "Secure a set of suspension straps with the handles hanging about a foot off of the ground. Move yourself into a pushup plank position facing away from the rack.\nPlace your feet into the handles. You should maintain a straight posture, not allowing the hips to sag. This will be your starting position.\nBegin the movement by flexing the knees and hips, drawing the knees to your torso. As you do so, anteriorly tilt your pelvis, allowing your spine to flex.\nAt the top of the controlled motion, return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Side_Bend",
+      "name": "Dumbbell Side Bend",
+      "description": "Stand up straight while holding a dumbbell on the left hand (palms facing the torso) as you have the right hand holding your waist. Your feet should be placed at shoulder width. This will be your starting position.\nWhile keeping your back straight and your head up, bend only at the waist to the right as far as possible. Breathe in as you bend to the side. Then hold for a second and come back up to the starting position as you exhale. Tip: Keep the rest of the body stationary.\nNow repeat the movement but bending to the left instead. Hold for a second and come back to the starting position.\nRepeat for the recommended amount of repetitions and then change hands.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dancers_Stretch",
+      "name": "Dancer's Stretch",
+      "description": "Sit up on the floor.\nCross your right leg over your left, keeping the knee bent. Your left leg is straight and down on the floor.\nPlace your left arm on your right leg and your right hand on the floor.\nRotate your upper body to the right, and hold for 10-20 seconds. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Seated_Barbell_Twist",
+      "name": "Seated Barbell Twist",
+      "description": "Start out by sitting at the end of a flat bench with a barbell placed on top of your thighs. Your feet should be shoulder width apart from each other.\nGrip the bar with your palms facing down and make sure your hands are wider than shoulder width apart from each other. Begin to lift the barbell up over your head until your arms are fully extended.\nNow lower the barbell behind your head until it is resting along the base of your neck. This is the starting position.\nWhile keeping your feet and head stationary, move your waist from side to side so that your oblique muscles feel the contraction. Only move from side to side as far as your waist will allow you to go. Stretching or moving too far can cause an injury to occur. Tip: Use a slow and controlled motion.\nRemember to breathe out while twisting your body to the side and in when moving back to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Decline_Oblique_Crunch",
+      "name": "Decline Oblique Crunch",
+      "description": "Secure your legs at the end of the decline bench and slowly lay down on the bench.\nRaise your upper body off the bench until your torso is about 35-45 degrees if measured from the floor.\nPut one hand beside your head and the other on your thigh. This will be your starting position.\nRaise your upper body slowly from the starting position while turning your torso to the left. Continue crunching up as you exhale until your right elbow touches your left knee. Hold this contracted position for a second. Tip: Focus on keeping your abs tight and keeping the movement slow and controlled.\nLower your body back down slowly to the starting position as you inhale.\nAfter completing one set on the right for the recommended amount of repetitions, switch to your left side. Tip: Focus on really twisting your torso and feeling the contraction when you are in the up position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Spider_Crawl",
+      "name": "Spider Crawl",
+      "description": "Begin in a prone position on the floor. Support your weight on your hands and toes, with your feet together and your body straight. Your arms should be bent to 90 degrees. This will be your starting position.\nInitiate the movement by raising one foot off of the ground. Externally rotate the leg and bring the knee toward your elbow, as far forward as possible.\nReturn this leg to the starting position and repeat on the opposite side.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Kettlebell_Figure_8",
+      "name": "Kettlebell Figure 8",
+      "description": "Place one kettlebell between your legs and take a wider than shoulder width stance. Bend over by pushing your butt out and keeping your back flat.\nPick up a kettlebell and pass it to your other hand between your legs. The receiving hand should reach from behind the legs. Go back and forth for several repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Tuck_Crunch",
+      "name": "Tuck Crunch",
+      "description": "To begin, lie down on the floor or an exercise mat with your back pressed against the floor. Your arms should be lying across your sides with the palms facing down.\nYour legs should be crossed by wrapping one ankle around the other. Slowly elevate your legs up in the air until your thighs are perpendicular to the floor with a slight bend at the knees. Note: Your knees and toes should be parallel to the floor as opposed to the thighs.\nMove your arms from the floor and cross them so they are resting on your chest. This is the starting position.\nWhile keeping your lower back pressed against the floor, slowly lift your torso. Remember to exhale while perform this part of the exercise.\nSlowly begin to lower your torso back down to the starting position while inhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Landmine_180s",
+      "name": "Landmine 180's",
+      "description": "Position a bar into a landmine or securely anchor it in a corner. Load the bar to an appropriate weight.\nRaise the bar from the floor, taking it to shoulder height with both hands with your arms extended in front of you. Adopt a wide stance. This will be your starting position.\nPerform the movement by rotating the trunk and hips as you swing the weight all the way down to one side. Keep your arms extended throughout the exercise.\nReverse the motion to swing the weight all the way to the opposite side.\nContinue alternating the movement until the set is complete.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Childs_Pose",
+      "name": "Child's Pose",
+      "description": "Get on your hands and knees, walk your hands in front of you.\nLower your buttocks down to sit on your heels. Let your arms drag along the floor as you sit back to stretch your entire spine.\nOnce you settle onto your heels, bring your hands next to your feet and relax. \"breathe\" into your back. Rest your forehead on the floor. Avoid this position if you have knee problems.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Sit-Up",
+      "name": "Sit-Up",
+      "description": "Lie down on the floor placing your feet either under something that will not move or by having a partner hold them. Your legs should be bent at the knees.\nPlace your hands behind your head and lock them together by clasping your fingers. This is the starting position.\nElevate your upper body so that it creates an imaginary V-shape with your thighs. Breathe out when performing this part of the exercise.\nOnce you feel the contraction for a second, lower your upper body back down to the starting position while inhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Reverse_Crunch",
+      "name": "Reverse Crunch",
+      "description": "Lie down on the floor with your legs fully extended and arms to the side of your torso with the palms on the floor. Your arms should be stationary for the entire exercise.\nMove your legs up so that your thighs are perpendicular to the floor and feet are together and parallel to the floor. This is the starting position.\nWhile inhaling, move your legs towards the torso as you roll your pelvis backwards and you raise your hips off the floor. At the end of this movement your knees will be touching your chest.\nHold the contraction for a second and move your legs back to the starting position while exhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Lower_Back_Curl",
+      "name": "Lower Back Curl",
+      "description": "Lie on your stomach with your arms out to your sides. This will be your starting position.\nUsing your lower back muscles, extend your spine lifting your chest off of the ground. Do not use your arms to push yourself up. Keep your head up during the movement. Repeat for 10-20 repetitions.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Glute_Kickback",
+      "name": "Glute Kickback",
+      "description": "Kneel on the floor or an exercise mat and bend at the waist with your arms extended in front of you (perpendicular to the torso) in order to get into a kneeling push-up position but with the arms spaced at shoulder width. Your head should be looking forward and the bend of the knees should create a 90-degree angle between the hamstrings and the calves. This will be your starting position.\nAs you exhale, lift up your right leg until the hamstrings are in line with the back while maintaining the 90-degree angle bend. Contract the glutes throughout this movement and hold the contraction at the top for a second. Tip: At the end of the movement the upper leg should be parallel to the floor while the calf should be perpendicular to it.\nGo back to the initial position as you inhale and now repeat with the left leg.\nContinue to alternate legs until all of the recommended repetitions have been performed.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Smith_Machine_Hip_Raise",
+      "name": "Smith Machine Hip Raise",
+      "description": "Position a bench in the rack and load the bar to an appropriate weight. Lie down on the bench, placing the bottom of your feet against the bar. Unlock the bar and extend your legs. You may need to use your hands to assist you. For added stability grasp the sides of the Smith Machine. This will be your starting position.\nInitiate the movement by rotating your pelvis, flexing your spine to raise your hips off of the bench. Maintain a slight bend in the knees throughout the motion.\nAfter a brief pause, return the hips to the bench.\nRepeat for the desired number of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Weighted_Ball_Side_Bend",
+      "name": "Weighted Ball Side Bend",
+      "description": "To begin, lie down on an exercise ball with your left side of the torso (waist, hips and shoulder) pressed against the ball.\nYour feet should be on the floor while your legs are crossed and hanging from the ball. Hold a weighted plate with your right hand directly to the right side of your head. Tip: Make sure the smooth side of the plate is resting against your head.\nPlace your left arm across your torso so that your palm is on your obliques. There should be a right angle between your left forearm and upper arm. This is the starting position.\nRaise the side of your torso up by laterally flexing at the waist while exhaling.\nHold the contraction for a second and slowly lower yourself back down to the starting position while inhaling.\nRepeat for the recommended amount of repetitions.\nSwitch sides and repeat the exercise.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "exercise ball",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Flat_Bench_Lying_Leg_Raise",
+      "name": "Flat Bench Lying Leg Raise",
+      "description": "Lie with your back flat on a bench and your legs extended in front of you off the end.\nPlace your hands either under your glutes with your palms down or by the sides holding on to the bench. This will be your starting position.\nAs you keep your legs extended, straight as possible with your knees slightly bent but locked raise your legs until they make a 90-degree angle with the floor. Exhale as you perform this portion of the movement and hold the contraction at the top for a second.\nNow, as you inhale, slowly lower your legs back down to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Gorilla_Chin_Crunch",
+      "name": "Gorilla Chin/Crunch",
+      "description": "Hang from a chin-up bar using an underhand grip (palms facing you) that is slightly wider than shoulder width.\nNow bend your knees at a 90 degree angle so that the calves are parallel to the floor while the thighs remain perpendicular to it. This will be your starting position.\nAs you exhale, pull yourself up while crunching your knees up at the same time until your knees are at chest level. You will stop going up as soon as your nose is at the same level as the bar. Tip: When you get to this point you should also be finishing the crunch at the same time.\nSlowly start to inhale as you return to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Plate_Twist",
+      "name": "Plate Twist",
+      "description": "Lie down on the floor or an exercise mat with your legs fully extended and your upper body upright. Grab the plate by its sides with both hands out in front of your abdominals with your arms slightly bent.\nSlowly cross your legs near your ankles and lift them up off the ground. Your knees should also be bent slightly. Note: Move your upper body back slightly to help keep you balanced turning this exercise. This is the starting position.\nMove the plate to the left side and touch the floor with it. Breathe out as you perform that movement.\nCome back to the starting position as you breathe in and then repeat the movement but this time to the right side of the body. Tip: Use a slow controlled movement at all times. Jerking motions can injure the back.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "other",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Ab_Roller",
+      "name": "Ab Roller",
+      "description": "Hold the Ab Roller with both hands and kneel on the floor.\nNow place the ab roller on the floor in front of you so that you are on all your hands and knees (as in a kneeling push up position). This will be your starting position.\nSlowly roll the ab roller straight forward, stretching your body into a straight position. Tip: Go down as far as you can without touching the floor with your body. Breathe in during this portion of the movement.\nAfter a pause at the stretched position, start pulling yourself back to the starting position as you breathe out. Tip: Go slowly and keep your abs tight at all times.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "other",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Crossover_Reverse_Lunge",
+      "name": "Crossover Reverse Lunge",
+      "description": "Stand with your feet shoulder width apart. This will be your starting position.\nPerform a rear lunge by stepping back with one foot and flexing the hips and front knee. As you do so, rotate your torso across the front leg.\nAfter a brief pause, return to the starting position and repeat on the other side, continuing in an alternating fashion.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Air_Bike",
+      "name": "Air Bike",
+      "description": "Lie flat on the floor with your lower back pressed to the ground. For this exercise, you will need to put your hands beside your head. Be careful however to not strain with the neck as you perform it. Now lift your shoulders into the crunch position.\nBring knees up to where they are perpendicular to the floor, with your lower legs parallel to the floor. This will be your starting position.\nNow simultaneously, slowly go through a cycle pedal motion kicking forward with the right leg and bringing in the knee of the left leg. Bring your right elbow close to your left knee by crunching to the side, as you breathe out.\nGo back to the initial position as you breathe in.\nCrunch to the opposite side as you cycle your legs and bring closer your left elbow to your right knee and exhale.\nContinue alternating in this manner until all of the recommended repetitions for each side have been completed.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Overhead_Stretch",
+      "name": "Seated Overhead Stretch",
+      "description": "Sit up straight on an exercise mat.\nTouch the soles of your feet together with your feet six to eight inches in front of your hips.\nPlace one hand on the floor beside you and your other hand behind your head.\nLift your elbow to the ceiling as you incline your torso to the other side. Hold for 10 to 20 seconds, then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Crunch_-_Legs_On_Exercise_Ball",
+      "name": "Crunch - Legs On Exercise Ball",
+      "description": "Lie flat on your back with your feet resting on an exercise ball and your knees bent at a 90 degree angle.\nPlace your feet three to four inches apart and point your toes inward so they touch.\nPlace your hands lightly on either side of your head keeping your elbows in. Tip: Don't lock your fingers behind your head.\nPush the small of your back down in the floor in order to better isolate your abdominal muscles. This will be your starting position.\nBegin to roll your shoulders off the floor and continue to push down as hard as you can with your lower back. Your shoulders should come up off the floor only about four inches, and your lower back should remain on the floor. Breathe out as you execute this portion of the movement. Squeeze your abdominals hard at the top of the contraction and hold for a second. Tip: Focus on a slow, controlled movement. Refrain from using momentum at any time.\nSlowly go back down to the starting position as you inhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Pelvic_Tilt_Into_Bridge",
+      "name": "Pelvic Tilt Into Bridge",
+      "description": "Lie down with your feet on the floor, heels directly under your knees.\nLift only your tailbone to the ceiling to stretch your lower back. (Don't lift the entire spine yet.) Pull in your stomach.\nTo go into a bridge, lift the entire spine except the neck.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Bottoms_Up",
+      "name": "Bottoms Up",
+      "description": "Begin by lying on your back on the ground. Your legs should be straight and your arms at your side. This will be your starting position.\nTo perform the movement, tuck the knees toward your chest by flexing the hips and knees. Following this, extend your legs directly above you so that they are perpendicular to the ground. Rotate and elevate your pelvis to raise your glutes from the floor.\nAfter a brief pause, return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One_Knee_To_Chest",
+      "name": "One Knee To Chest",
+      "description": "Start off by lying on the floor.\nExtend one leg straight and pull the other knee to your chest. Hold under the knee joint to protect the kneecap.\nGently tug that knee toward your nose.\nSwitch sides. This stretches the buttocks and lower back of the bent leg and the hip flexor of the straight leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Frog_Sit-Ups",
+      "name": "Frog Sit-Ups",
+      "description": "Lie with your back flat on the floor (or exercise mat) and your legs extended in front of you.\nNow bend at the knees and place your outer thighs by the floor (or mat) as you make the soles of your feet touch each other.\nNow try pushing both soles and bringing them up as near you as possible while you keep the outer thighs on the floor (or at least almost touching it). Tip: In this position your legs should create a diamond shape.\nNow, cross your arms in front of you by touching the opposite shoulders. This will be your starting position.\nAs you exhale flatten your lower back to the floor while curling the torso upwards. Tip: This will be like performing the first 1/4 movement of a sit up. Hold at the top position for a second.\nAs you inhale, slowly lower back to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Hug_A_Ball",
+      "name": "Hug A Ball",
+      "description": "Seat yourself on the floor.\nStraddle an exercise ball between both legs and lower your hips down toward the floor.\nHug your arms around the ball to support your body. Adjust your legs so that your feet are flat on the floor and your knees line up over your ankles. Keep a good grip on the ball so it doesn't roll away from you and send you back onto your buttocks.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "exercise ball",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Kettlebell_Windmill",
+      "name": "Kettlebell Windmill",
+      "description": "Place a kettlebell in front of your lead foot and clean and press it overhead with your opposite arm. Clean the kettlebell to your shoulder by extending through the legs and hips as you pull the kettlebell towards your shoulders. Rotate your wrist as you do so, so that the palm faces forward. Press it overhead by extending the elbow.\nKeeping the kettlebell locked out at all times, push your butt out in the direction of the locked out kettlebell. Turn your feet out at a forty-five degree angle from the arm with the locked out kettlebell. Bending at the hip to one side, sticking your butt out, slowly lean until you can touch the floor with your free hand. Keep your eyes on the kettlebell that you hold over your head at all times.\nPause for a second after reaching the ground and reverse the motion back to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": "compound"
+    }
+  ]
+}

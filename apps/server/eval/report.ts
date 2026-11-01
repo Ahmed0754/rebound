@@ -21,6 +21,8 @@ export const REPORTS = join(import.meta.dirname, "reports");
 export type Graded = {
   fixture: string;
   maker: string;
+  // Which repeat, from 0 (piece E). Reports from before repeats are all run 0.
+  run: number;
   ms: number;
   // Null when a plan came back.
   error: string | null;
@@ -35,6 +37,10 @@ export type Stamp = {
   model: string;
   rubric: string;
   fixtures: number;
+  // How many times each maker ran on each fixture. Absent before piece E.
+  runs?: number;
+  // The candidate pool (pools.ts), when not the default 20.
+  pool?: string;
   makers: string[];
 };
 
@@ -59,6 +65,62 @@ function criteriaMet(results: Graded[], of: (grade: Grade) => QualityResult): [s
   return [
     percent(met, asked),
     `${percent(graded.filter((r) => of(r.grade).missed.length === 0).length, graded.length)} of the fixtures any applied to`,
+  ];
+}
+
+// Map.groupBy, which this project's TypeScript lib predates.
+function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+
+  for (const item of items) {
+    groups.set(key(item), [...(groups.get(key(item)) ?? []), item]);
+  }
+
+  return groups;
+}
+
+// The share met, as a number, or null when nothing could count.
+function share(results: Graded[], of: (grade: Grade) => QualityResult): number | null {
+  const met = results.reduce((sum, r) => sum + of(r.grade).met.length, 0);
+  const asked = results.reduce((sum, r) => sum + of(r.grade).met.length + of(r.grade).missed.length, 0);
+  return asked === 0 ? null : met / asked;
+}
+
+// The lowest and highest a rate came out across the runs.
+function spread(byRun: Graded[][], rate: (results: Graded[]) => number | null): string {
+  const rates = byRun.map(rate).filter((r): r is number => r !== null).map((r) => Math.round(r * 100));
+  return rates.length === 0 ? "-" : `${Math.min(...rates)}–${Math.max(...rates)}%`;
+}
+
+// How much two runs' picks for one fixture have in common: shared over all.
+// A failed run picked nothing, so two failed runs agree and a failed run
+// shares nothing with one that worked.
+function overlapOf(a: Graded, b: Graded): number {
+  const ids = (r: Graded) => new Set((r.items ?? []).map((item) => item.id));
+  const [x, y] = [ids(a), ids(b)];
+  const union = new Set([...x, ...y]);
+  return union.size === 0 ? 1 : [...x].filter((id) => y.has(id)).length / union.size;
+}
+
+/** Piece E: how much one maker's results move between repeats of the same run. */
+export function consistency(results: Graded[], runs: number): [string, string][] {
+  const byRun = Array.from({ length: runs }, (_, run) => results.filter((r) => r.run === run));
+  const byFixture = [...groupBy(results, (r) => r.fixture).values()];
+  const pairs = byFixture.flatMap((rs) => rs.flatMap((a, i) => rs.slice(i + 1).map((b) => overlapOf(a, b))));
+  const same = byFixture.filter((rs) => rs.every((r) => overlapOf(r, rs[0]) === 1));
+
+  return [
+    ["Live criteria met, lowest–highest run", spread(byRun, (rs) => share(rs, (g) => g.quality))],
+    ["Provisional criteria met (code), lowest–highest run", spread(byRun, (rs) => share(rs, (g) => g.provisional))],
+    [
+      "Repeats a movement pattern, lowest–highest run",
+      spread(byRun, (rs) => (rs.length === 0 ? null : rs.filter((r) => r.grade.overlap.length > 0).length / rs.length)),
+    ],
+    [
+      "Picks two runs share, mean",
+      pairs.length === 0 ? "-" : `${Math.round((pairs.reduce((a, b) => a + b, 0) / pairs.length) * 100)}%`,
+    ],
+    ["Fixtures with the same picks every run", percent(same.length, byFixture.length)],
   ];
 }
 
@@ -120,24 +182,47 @@ function row(cells: (string | number)[]): string {
   return `| ${cells.map((cell) => String(cell).replace(/\|/g, "\\|")).join(" | ")} |`;
 }
 
+// One row per measure, one column per maker.
+function table(makers: string[], byMaker: [string, string][][]): string[] {
+  return [
+    row(["", ...makers]),
+    row(["---", ...makers.map(() => "---")]),
+    ...byMaker[0].map(([label], i) => row([label, ...byMaker.map((rows) => rows[i][1])])),
+  ];
+}
+
 export function toMarkdown(stamp: Stamp, results: Graded[]): string {
+  const runs = stamp.runs ?? 1;
   const lines: string[] = [
     `# Eval report · ${stamp.ranAt}`,
     "",
-    `Commit \`${stamp.commit}\` · model \`${stamp.model}\` · rubric ${stamp.rubric} · ${stamp.fixtures} fixtures`,
+    `Commit \`${stamp.commit}\` · model \`${stamp.model}\` · rubric ${stamp.rubric} · ${stamp.fixtures} fixtures${runs > 1 ? ` · ${runs} runs each` : ""} · candidates: ${stamp.pool === undefined ? "the default 20" : `pool \`${stamp.pool}\``}`,
     "",
     "A failed generation is graded as an empty plan, so it counts against every rate below.",
+    ...(runs > 1
+      ? ["", `Every rate is over all ${runs} runs together. How far each one moves between runs is under Consistency.`]
+      : []),
     "",
     "## Summary",
     "",
-    row(["", ...stamp.makers]),
-    row(["---", ...stamp.makers.map(() => "---")]),
+    ...table(
+      stamp.makers,
+      stamp.makers.map((maker) => summary(results.filter((r) => r.maker === maker)))
+    ),
   ];
 
-  const byMaker = stamp.makers.map((maker) => summary(results.filter((r) => r.maker === maker)));
-
-  for (let i = 0; i < byMaker[0].length; i++) {
-    lines.push(row([byMaker[0][i][0], ...byMaker.map((rows) => rows[i][1])]));
+  if (runs > 1) {
+    lines.push(
+      "",
+      "## Consistency",
+      "",
+      "The same fixtures and candidates every run. The heuristic is deterministic, so it doesn't move; random draws again each run, which is what chance looks like.",
+      "",
+      ...table(
+        stamp.makers,
+        stamp.makers.map((maker) => consistency(results.filter((r) => r.maker === maker), runs))
+      )
+    );
   }
 
   lines.push(
@@ -152,7 +237,8 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
   // The same for every maker: it depends only on the frozen candidates.
   const unsatisfiable = (of: (grade: Grade) => QualityResult) =>
     results
-      .filter((r) => r.maker === stamp.makers[0] && of(r.grade).unsatisfiable.length > 0)
+      // One maker's first run is enough: the rest have the same candidates.
+      .filter((r) => r.maker === stamp.makers[0] && (r.run ?? 0) === 0 && of(r.grade).unsatisfiable.length > 0)
       .map((r) => `${r.fixture} (${of(r.grade).unsatisfiable.join(", ")})`)
       .join("; ") || "none";
 
@@ -183,8 +269,8 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
     "",
     "## By fixture",
     "",
-    row(["Fixture", "Maker", "Plan", "Attempts", "Met", "Missed", "Notes"]),
-    row(["---", "---", "---", "---", "---", "---", "---"])
+    row(["Fixture", "Maker", ...(runs > 1 ? ["Run"] : []), "Plan", "Attempts", "Met", "Missed", "Notes"]),
+    row(["---", "---", ...(runs > 1 ? ["---"] : []), "---", "---", "---", "---", "---"])
   );
 
   for (const r of results) {
@@ -200,6 +286,7 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
       row([
         r.fixture,
         r.maker,
+        ...(runs > 1 ? [r.run + 1] : []),
         r.error === null ? r.items!.map((item) => item.name).join(", ") : "**failed**",
         r.quality?.attempts ?? "-",
         r.grade.quality.met.join(", ") || "-",
@@ -212,7 +299,12 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
   const errors = results.filter((r) => r.error !== null);
 
   if (errors.length > 0) {
-    lines.push("", "## Errors", "", ...errors.map((r) => `- **${r.fixture} · ${r.maker}:** ${r.error}`));
+    lines.push(
+      "",
+      "## Errors",
+      "",
+      ...errors.map((r) => `- **${r.fixture} · ${r.maker}${runs > 1 ? ` · run ${r.run + 1}` : ""}:** ${r.error}`)
+    );
   }
 
   return `${lines.join("\n")}\n`;
@@ -222,11 +314,15 @@ export function toMarkdown(stamp: Stamp, results: Graded[]): string {
 export type Judged = {
   fixture: string;
   maker: string;
+  run: number;
   // Null only when the judge failed; a failed generation is judged as an
   // empty plan, missing every criterion, without asking the model.
   plan: PlanJudgement | null;
   // Null when the plan had no rationales, or the judge failed.
   rationales: RationaleJudgement | null;
+  // Which judgements never came back, after the retry. `errors` also holds
+  // attempts a retry recovered, so it is not the same thing.
+  failed: ("plan" | "rationales")[];
   errors: string[];
 };
 
@@ -241,30 +337,43 @@ export type JudgeStamp = {
   rubric: string;
 };
 
+const unsuitableShare = (judged: Judged[]) => {
+  const picks = judged.flatMap((j) => j.plan?.picks ?? []);
+  return picks.length === 0 ? null : picks.filter((p) => p.verdict === "unsuitable").length / picks.length;
+};
+
 function judgeSummary(graded: Graded[], judged: Judged[]): [string, string][] {
   const criteria = judged.flatMap((j) => j.plan?.criteria ?? []);
   const picks = judged.flatMap((j) => j.plan?.picks ?? []);
   const withRationales = judged.filter((j) => j.rationales !== null);
   const broken = withRationales.flatMap((j) => j.rationales!.safety.filter((s) => s.verdict === "missed"));
   const { agree, compared } = agreement(graded, judged);
+  const runs = Math.max(0, ...judged.map((j) => j.run)) + 1;
+  const byRun = Array.from({ length: runs }, (_, run) => judged.filter((j) => j.run === run));
+  const rates = byRun.map(unsuitableShare).filter((r): r is number => r !== null).map((r) => Math.round(r * 100));
 
   return [
     ["Provisional criteria met, judge", percent(criteria.filter((c) => c.verdict === "met").length, criteria.length)],
     ["Agrees with the code grade", percent(agree, compared)],
     ["Picks rated unsuitable", percent(picks.filter((p) => p.verdict === "unsuitable").length, picks.length)],
+    ...(runs > 1
+      ? [["Picks rated unsuitable, lowest–highest run", rates.length === 0 ? "-" : `${Math.min(...rates)}–${Math.max(...rates)}%`] as [string, string]]
+      : []),
     ["Picks rated questionable", percent(picks.filter((p) => p.verdict === "questionable").length, picks.length)],
     [
       "Safety statements broken",
       withRationales.length === 0 ? "no rationales" : percent(broken.length, withRationales.length * SAFETY.length),
     ],
-    ["Judge failures", String(judged.filter((j) => j.errors.length > 0).length)],
+    ["Judge failures", String(judged.filter((j) => j.failed.length > 0).length)],
   ];
 }
+
+const sameResult = (g: Graded, j: Judged) => g.fixture === j.fixture && g.maker === j.maker && g.run === j.run;
 
 // Where the code and the judge both graded a criterion on the same plan.
 function comparisons(graded: Graded[], judged: Judged[]) {
   return judged.flatMap((j) => {
-    const code = graded.find((g) => g.fixture === j.fixture && g.maker === j.maker)?.grade.provisional;
+    const code = graded.find((g) => sameResult(g, j))?.grade.provisional;
 
     return (j.plan?.criteria ?? []).flatMap((c) => {
       const byCode = code?.met.includes(c.id) ? "met" : code?.missed.includes(c.id) ? "missed" : null;
@@ -278,10 +387,44 @@ function agreement(graded: Graded[], judged: Judged[]) {
   return { agree: all.filter((c) => c.byCode === c.criterion.verdict).length, compared: all.length };
 }
 
+// The same picks for the same fixture make the same blind request, whichever
+// maker or run they came from. Each verdict - per criterion and per pick - is
+// counted once per group, as the same every time or not.
+function judgeConsistency(graded: Graded[], judged: Judged[]) {
+  const groups = groupBy(
+    judged.filter((j) => j.plan !== null && j.plan.picks.length > 0),
+    (j) => {
+      const ids = (graded.find((g) => sameResult(g, j))?.items ?? []).map((item) => item.id).sort();
+      return `${j.fixture}|${ids.join(",")}`;
+    }
+  );
+  let same = 0;
+  let asked = 0;
+
+  for (const group of groups.values()) {
+    if (group.length < 2) {
+      continue;
+    }
+
+    const verdicts = new Map<string, Set<string>>();
+
+    for (const j of group) {
+      for (const v of [...j.plan!.criteria, ...j.plan!.picks]) {
+        verdicts.set(v.id, (verdicts.get(v.id) ?? new Set()).add(v.verdict));
+      }
+    }
+
+    asked += verdicts.size;
+    same += [...verdicts.values()].filter((seen) => seen.size === 1).length;
+  }
+
+  return { same, asked };
+}
+
 /** The judge's report on a run's plans. Every score in it is provisional. */
 export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Graded[], judged: Judged[]): string {
   const name = (j: Judged, id: string) =>
-    graded.find((g) => g.fixture === j.fixture && g.maker === j.maker)?.items?.find((item) => item.id === id)?.name ?? id;
+    graded.find((g) => sameResult(g, j))?.items?.find((item) => item.id === id)?.name ?? id;
   const lines: string[] = [
     `# Judge report · ${stamp.judgedAt}`,
     "",
@@ -300,19 +443,24 @@ export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Gr
     "",
     "## Summary",
     "",
-    row(["", ...makers]),
-    row(["---", ...makers.map(() => "---")])
-  );
-
-  const byMaker = makers.map((maker) =>
-    judgeSummary(
-      graded.filter((g) => g.maker === maker),
-      judged.filter((j) => j.maker === maker)
+    ...table(
+      makers,
+      makers.map((maker) =>
+        judgeSummary(
+          graded.filter((g) => g.maker === maker),
+          judged.filter((j) => j.maker === maker)
+        )
+      )
     )
   );
 
-  for (let i = 0; i < byMaker[0].length; i++) {
-    lines.push(row([byMaker[0][i][0], ...byMaker.map((rows) => rows[i][1])]));
+  const repeat = judgeConsistency(graded, judged);
+
+  if (repeat.asked > 0) {
+    lines.push(
+      "",
+      `**The judge's own consistency:** where it saw the same plan more than once - the heuristic's every run, or two makers picking alike - ${percent(repeat.same, repeat.asked)} of its verdicts were the same every time. Its request is identical each time, so any difference is the model's own noise.`
+    );
   }
 
   const flagged = judged.flatMap((j) =>
@@ -351,8 +499,8 @@ export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Gr
     "",
     "## By fixture",
     "",
-    row(["Fixture", "Maker", "Criteria met", "Criteria missed", "Questionable", "Unsuitable"]),
-    row(["---", "---", "---", "---", "---", "---"])
+    row(["Fixture", "Maker", "Run", "Criteria met", "Criteria missed", "Questionable", "Unsuitable"]),
+    row(["---", "---", "---", "---", "---", "---", "---"])
   );
 
   for (const j of judged) {
@@ -362,14 +510,24 @@ export function toJudgedMarkdown(stamp: JudgeStamp, makers: string[], graded: Gr
       (j.plan?.picks ?? []).filter((p) => p.verdict === verdict).map((p) => name(j, p.id)).join(", ") || "-";
 
     lines.push(
-      row([j.fixture, j.maker, ids("met"), ids("missed"), picks("questionable"), picks("unsuitable")])
+      row([j.fixture, j.maker, j.run + 1, ids("met"), ids("missed"), picks("questionable"), picks("unsuitable")])
     );
   }
 
-  const failed = judged.filter((j) => j.errors.length > 0);
+  const errored = judged.filter((j) => j.errors.length > 0);
 
-  if (failed.length > 0) {
-    lines.push("", "## Judge errors", "", ...failed.map((j) => `- **${j.fixture} · ${j.maker}:** ${j.errors.join("; ")}`));
+  if (errored.length > 0) {
+    lines.push(
+      "",
+      "## Judge errors",
+      "",
+      "Every failed attempt, including those a retry recovered. Only a judgement that never came back counts as a failure above.",
+      "",
+      ...errored.map(
+        (j) =>
+          `- **${j.fixture} · ${j.maker} · run ${j.run + 1}:** ${j.failed.length > 0 ? `failed (${j.failed.join(", ")})` : "recovered"}. ${j.errors.join("; ")}`
+      )
+    );
   }
 
   return `${lines.join("\n")}\n`;

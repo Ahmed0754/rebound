@@ -51,7 +51,8 @@ const howMany = (input: Input, limits: Limits) => Math.min(midpoint(limits.count
 
 // Mulberry32, seeded from the fixture id: the same fixture gets the same
 // random plan every run, so two reports differ only where the code did.
-function seeded(id: string) {
+// Exported for pools.ts, which draws the same way.
+export function seeded(id: string) {
   let state = [...id].reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 2654435761), 2166136261);
 
   return () => {
@@ -62,9 +63,14 @@ function seeded(id: string) {
   };
 }
 
-/** Any `count` of the candidates, chosen at random: better than chance? */
-export async function randomPlan(input: Input, limits: Limits) {
-  const random = seeded(input.id);
+/**
+ * Any `count` of the candidates, chosen at random: better than chance?
+ *
+ * Each repeat of a run (piece E) draws again, so chance has a spread to
+ * compare with Gemini's. Run 0 keeps the seed earlier reports used.
+ */
+export async function randomPlan(input: Input, limits: Limits, run = 0) {
+  const random = seeded(run === 0 ? input.id : `${input.id}#${run}`);
   const pool = [...input.candidates];
 
   // Fisher-Yates, then the first few.

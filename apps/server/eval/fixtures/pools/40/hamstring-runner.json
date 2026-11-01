@@ -1,0 +1,585 @@
+{
+  "about": "A competitive runner whose hamstring hates impact, with a full gym.",
+  "answers": {
+    "goal": "prevent_recurrence",
+    "region": "hamstring",
+    "onset": "subacute",
+    "painNow": 2,
+    "aggravators": [
+      "impact"
+    ],
+    "redFlags": [],
+    "ageBand": "under_30",
+    "conditions": [],
+    "equipment": [
+      "full_gym"
+    ],
+    "activityLevel": "competitive",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-28T18:55:43.161Z",
+  "pool": "40",
+  "candidates": [
+    {
+      "id": "Alternating_Hang_Clean",
+      "name": "Alternating Hang Clean",
+      "description": "Place two kettlebells between your feet. To get in the starting position, push your butt back and look straight ahead.\nClean one kettlebell to your shoulder and hold on to the other kettlebell in a hanging position. Clean the kettlebell to your shoulder by extending through the legs and hips as you pull the kettlebell towards your shoulders. Rotate your wrist as you do so.\nLower the cleaned kettlebell to a hanging position and clean the alternate kettlebell. Repeat.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Pull_Through",
+      "name": "Pull Through",
+      "description": "Begin standing a few feet in front of a low pulley with a rope or handle attached. Face away from the machine, straddling the cable, with your feet set wide apart.\nBegin the movement by reaching through your legs as far as possible, bending at the hips. Keep your knees slightly bent. Keeping your arms straight, extend through the hip to stand straight up. Avoid pulling upward through the shoulders; all of the motion should originate through the hips.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "cable",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Knee_Across_The_Body",
+      "name": "Knee Across The Body",
+      "description": "Lie down on the floor with your right leg straight. Bend your left leg and lower it across your body, holding the knee down toward the floor with your right hand. (The knee doesn't need to touch the floor if you're tight.)\nPlace your left arm comfortably beside you and turn your head to the left. Imagine you have a weight tied to your tailbone. let your tailbone fall back toward the floor as your chest reaches in the opposite direction to stretch your lower back. Switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Worlds_Greatest_Stretch",
+      "name": "World's Greatest Stretch",
+      "description": "This is a three-part stretch. Begin by lunging forward, with your front foot flat on the ground and on the toes of your back foot. With your knees bent, squat down until your knee is almost touching the ground. Keep your torso erect, and hold this position for 10-20 seconds.\nNow, place the arm on the same side as your front leg on the ground, with the elbow next to the foot. Your other hand should be placed on the ground, parallel to your lead leg, to help support you during this portion of the stretch.\nAfter 10-20 seconds, place your hands on either side of your front foot. Raise the toes of the front foot off of the ground, and straighten your leg. You may need to reposition your rear leg to do so. Hold for 10-20 seconds, and then repeat the entire sequence for the other side.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Smith_Machine_Stiff-Legged_Deadlift",
+      "name": "Smith Machine Stiff-Legged Deadlift",
+      "description": "To begin, set the bar on the smith machine to a height that is around the middle of your thighs. Once the correct height is chosen and the bar is loaded, grasp the bar using a pronated (palms forward) grip that is shoulder width apart. You may need some wrist wraps if using a significant amount of weight.\nLift the bar up by fully extending your arms while keeping your back straight. Stand with your torso straight and your legs spaced using a shoulder width or narrower stance. The knees should be slightly bent. This is your starting position.\nKeeping the knees stationary, lower the barbell to over the top of your feet by bending at the waist while keeping your back straight. Keep moving forward as if you were going to pick something from the floor until you feel a stretch on the hamstrings. Exhale as you perform this movement\nStart bringing your torso up straight again as soon as you feel the hamstrings stretch by extending your hips and waist until you are back at the starting position. Inhale as you perform this movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Double_Kettlebell_Alternating_Hang_Clean",
+      "name": "Double Kettlebell Alternating Hang Clean",
+      "description": "Place two kettlebells between your feet. To get in the starting position, push your butt back and look straight ahead.\nClean one kettlebell to your shoulder and hold on to the other kettlebell.\nWith a fluid motion, lower the top kettlebell while driving the bottom kettlebell up.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Hamstring_and_Calf_Stretch",
+      "name": "Seated Hamstring and Calf Stretch",
+      "description": "Loop a belt, rope, or band around one foot. Sit down with both legs extended . This will be your starting position.\nLeaning forward slightly, pull on the belt to draw the toes of your foot back. Hold this position for 10-20 seconds and then repeat with the other leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": "other",
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Seated_Leg_Curl",
+      "name": "Seated Leg Curl",
+      "description": "Adjust the machine lever to fit your height and sit on the machine with your back against the back support pad.\nPlace the back of lower leg on top of padded lever (just a few inches under the calves) and secure the lap pad against your thighs, just above the knees. Then grasp the side handles on the machine as you point your toes straight (or you can also use any of the other two stances) and ensure that the legs are fully straight right in front of you. This will be your starting position.\nAs you exhale, pull the machine lever as far as possible to the back of your thighs by flexing at the knees. Keep your torso stationary at all times. Hold the contracted position for a second.\nSlowly return to the starting position as you breathe in.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Clean",
+      "name": "Dumbbell Clean",
+      "description": "Begin standing with a dumbbell in each hand with your feet shoulder width apart.\nLower the weights to the floor by flexing at the hips and knees, pushing your hips back until the dumbbells reach the floor. This will be your starting position.\nTo initiate the movement, violently jump upward by extending the hips, knees, and ankles to acclerate the weights upward. Maintaining a neutral grip on the dumbbells, keep the arms straight until full extension is reached.\nAfter full extension, rebend the hips and knees to receive the weight in a squat position. Allow the arms to bend, guiding the dumbbells to your shoulders.\nUpon receiving the weight in the squat position, extend the hips and knees to finish in a standing position with the weights on your shoulders.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Split_Squats",
+      "name": "Split Squats",
+      "description": "Being in a standing position. Jump into a split leg position, with one leg forward and one leg back, flexing the knees and lowering your hips slightly as you do so.\nAs you descend, immediately reverse direction, standing back up and jumping, reversing the position of your legs. Repeat 5-10 times on each leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": null,
+      "force": "push",
+      "mechanic": null
+    },
+    {
+      "id": "Step-up_with_Knee_Raise",
+      "name": "Step-up with Knee Raise",
+      "description": "Stand facing a box or bench of an appropriate height with your feet together. This will be your starting position.\nBegin the movement by stepping up, putting your left foot on the top of the bench. Extend through the hip and knee of your front leg to stand up on the box. As you stand on the box with your left leg, flex your right knee and hip, bringing your knee as high as you can.\nReverse this motion to step down off the box, and then repeat the sequence on the opposite leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Prone_Manual_Hamstring",
+      "name": "Prone Manual Hamstring",
+      "description": "You will need a partner for this exercise. Lay face down with your legs straight. Your assistant will place their hand on your heel.\nTo begin, flex the knee to curl your leg up. Your partner should provide resistance, starting light and increasing the pressure as the movement is completed. Communicate with your partner to monitor appropriate resistance levels.\nPause at the top, returning the leg to the starting position as your partner provides resistance going the other direction.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Chair_Leg_Extended_Stretch",
+      "name": "Chair Leg Extended Stretch",
+      "description": "Sit upright in a chair and grip the seat on the sides.\nRaise one leg, extending the knee, flexing the ankle as you do so.\nSlowly move that leg outward as far as you can, and then back to the center and down.\nRepeat for your other leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Band_Hamstring_Curl",
+      "name": "Seated Band Hamstring Curl",
+      "description": "Secure a band close to the ground and place a bench a couple feet away from it.\nSeat yourself on the bench and secure the band behind your ankles, beginning with your legs straight. This will be your starting position.\nFlex the knees, bringing your feet towards the bench. You may need to lean back slightly to keep your feet from striking the floor.\nPause at the completion of the movement, and then slowly return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Leg-Up_Hamstring_Stretch",
+      "name": "Leg-Up Hamstring Stretch",
+      "description": "Lie flat on your back, bend one knee, and put that foot flat on the floor to stabilize your spine.\nExtend the other leg in the air. If you're tight, you wont be able to straighten it. That's okay. Extend the knee so that the sole of the lifted foot faces the ceiling (or as close as you can get it).\nSlowly straighten the legs as much as possible and then pull the leg toward your nose. Switch sides.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Lying_Glute",
+      "name": "Lying Glute",
+      "description": "Lie on your back with your partner kneeling beside you.\nFlex the hip of one leg, raising it off of the floor. Rotate the leg so the foot is over the opposite hip, the lower leg perpendicular to your body. Your partner should hold the knee and ankle in place. This will be your starting position.\nAttempt to push your leg towards your partner, who should be preventing any actual movement of the leg.\nAfter 10-20 seconds, completely relax as your partner gently pushes the ankle and knee towards your chest. Be sure to inform your helper when the stretch is adequate to prevent injury or overstretching.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "expert",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Standing_Toe_Touches",
+      "name": "Standing Toe Touches",
+      "description": "Stand with some space in front and behind you.\nBend at the waist, keeping your legs straight, until you can relax and let your upper body hang down in front of you. Let your arms and hands hang down naturally. Hold for 10 to 20 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Intermediate_Groin_Stretch",
+      "name": "Intermediate Groin Stretch",
+      "description": "Lie on your back with your legs extended. Loop a belt, rope, or band around one of your feet, and swing that leg as far to the side as you can. This will be your starting position.\nPull gently on the belt to create tension in your groin and hamstring muscles. Hold for 10-20 seconds, and repeat on the other side.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": "other",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Hip_Extension_with_Bands",
+      "name": "Hip Extension with Bands",
+      "description": "Secure one end of the band to the lower portion of a post and attach the other to one ankle.\nFacing the attachment point of the band, hold on to the column to stabilize yourself.\nKeeping your head and your chest up, move the resisted leg back as far as you can while keeping the knee straight.\nReturn the leg to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Floor_Hamstring_Stretch",
+      "name": "Seated Floor Hamstring Stretch",
+      "description": "Sit on a mat with your right leg extended in front of you and your left leg bent with your foot against your right inner thigh.\nLean forward from your hips and reach for your ankle until you feel a stretch in your hamstring. Hold for 15 seconds, then repeat for your other side.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Ankle_On_The_Knee",
+      "name": "Ankle On The Knee",
+      "description": "From a lying position, bend your knees and keep your feet on the floor.\nPlace your ankle of one foot on your opposite knee.\nGrasp the thigh or knee of the bottom leg and pull both of your legs into the chest. Relax your neck and shoulders. Hold for 10-20 seconds and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Piriformis-SMR",
+      "name": "Piriformis-SMR",
+      "description": "Sit with your buttocks on top of a foam roll. Bend your knees, and then cross one leg so that the ankle is over the knee. This will be your starting position.\nShift your weight to the side of the crossed leg, rolling over the buttocks until you feel tension in your upper glute. You may assist the stretch by using one hand to pull the bent knee towards your chest. Hold this position for 10-30 seconds, and then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "intermediate",
+      "equipment": "foam roll",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Hamstring-SMR",
+      "name": "Hamstring-SMR",
+      "description": "In a seated position, extend your legs over a foam roll so that it is position on the back of the upper legs. Place your hands to the side or behind you to help support your weight. This will be your starting position.\nUsing your hands, lift your hips off of the floor and shift your weight on the foam roll to one leg. Relax the hamstrings of the leg you are stretching.\nRoll over the foam from below the hip to above the back of the knee, pausing at points of tension for 10-30 seconds. Repeat for the other leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "foam roll",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Floor_Glute-Ham_Raise",
+      "name": "Floor Glute-Ham Raise",
+      "description": "You can use a partner for this exercise or brace your feet under something stable.\nBegin on your knees with your upper legs and torso upright. If using a partner, they will firmly hold your feet to keep you in position. This will be your starting position.\nLower yourself by extending at the knee, taking care to NOT flex the hips as you go forward.\nPlace your hands in front of you as you reach the floor. This movement is very difficult and you may be unable to do it unaided. Use your arms to lightly push off the floor to aid your return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": null,
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Glute",
+      "name": "Seated Glute",
+      "description": "In a seated position with your knees bent, cross one ankle over the opposite knee. Your partner will stand behind you. Now, lean forward as your partner braces your shoulders with their hands. This will be your starting position.\nAttempt to push your torso back for 10-20 seconds, as your partner prevents any actual movement of your torso.\nNow relax your muscles as your partner increases the stretch by gently pushing your torso forward for 10-20 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "expert",
+      "equipment": "body only",
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Kettlebell_Dead_Clean",
+      "name": "Kettlebell Dead Clean",
+      "description": "Place kettlebell between your feet. To get in the starting position, push your butt back and look straight ahead.\nClean the kettlebell to your shoulder. Clean the kettlebell to your shoulders by extending through the legs and hips as you raise the kettlebell towards your shoulder. The wrist should rotate as you do so.\nLower the kettlebell, keeping the hamstrings loaded by keeping your back straight and your butt out.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One-Legged_Cable_Kickback",
+      "name": "One-Legged Cable Kickback",
+      "description": "Hook a leather ankle cuff to a low cable pulley and then attach the cuff to your ankle.\nFace the weight stack from a distance of about two feet, grasping the steel frame for support.\nWhile keeping your knees and hips bent slightly and your abs tight, contract your glutes to slowly \"kick\" the working leg back in a semicircular arc as high as it will comfortably go as you breathe out. Tip: At full extension, squeeze your glutes for a second in order to achieve a peak contraction.\nNow slowly bring your working leg forward, resisting the pull of the cable until you reach the starting position.\nRepeat for the recommended amount of repetitions.\nSwitch legs and repeat the movement for the other side.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "cable",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Glute_Kickback",
+      "name": "Glute Kickback",
+      "description": "Kneel on the floor or an exercise mat and bend at the waist with your arms extended in front of you (perpendicular to the torso) in order to get into a kneeling push-up position but with the arms spaced at shoulder width. Your head should be looking forward and the bend of the knees should create a 90-degree angle between the hamstrings and the calves. This will be your starting position.\nAs you exhale, lift up your right leg until the hamstrings are in line with the back while maintaining the 90-degree angle bend. Contract the glutes throughout this movement and hold the contraction at the top for a second. Tip: At the end of the movement the upper leg should be parallel to the floor while the calf should be perpendicular to it.\nGo back to the initial position as you inhale and now repeat with the left leg.\nContinue to alternate legs until all of the recommended repetitions have been performed.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Romanian_Deadlift",
+      "name": "Romanian Deadlift",
+      "description": "Put a barbell in front of you on the ground and grab it using a pronated (palms facing down) grip that a little wider than shoulder width. Tip: Depending on the weight used, you may need wrist wraps to perform the exercise and also a raised platform in order to allow for better range of motion.\nBend the knees slightly and keep the shins vertical, hips back and back straight. This will be your starting position.\nKeeping your back and arms completely straight at all times, use your hips to lift the bar as you exhale. Tip: The movement should not be fast but steady and under control.\nOnce you are standing completely straight up, lower the bar by pushing the hips back, only slightly bending the knees, unlike when squatting. Tip: Take a deep breath at the start of the movement and keep your chest up. Hold your breath as you lower and exhale as you complete the movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Stiff-Legged_Barbell_Deadlift",
+      "name": "Stiff-Legged Barbell Deadlift",
+      "description": "Grasp a bar using an overhand grip (palms facing down). You may need some wrist wraps if using a significant amount of weight.\nStand with your torso straight and your legs spaced using a shoulder width or narrower stance. The knees should be slightly bent. This is your starting position.\nKeeping the knees stationary, lower the barbell to over the top of your feet by bending at the hips while keeping your back straight. Keep moving forward as if you were going to pick something from the floor until you feel a stretch on the hamstrings. Inhale as you perform this movement.\nStart bringing your torso up straight again by extending your hips until you are back at the starting position. Exhale as you perform this movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "barbell",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Kettlebell_Hang_Clean",
+      "name": "Kettlebell Hang Clean",
+      "description": "Place kettlebell between your feet. To get in the starting position, push your butt back and look straight ahead.\nClean kettlebell to your shoulder. Clean the kettlebell to your shoulders by extending through the legs and hips as you raise the kettlebell towards your shoulder. The wrist should rotate as you do so.\nLower kettlebell to a hanging position between your legs while keeping the hamstrings loaded. Keep your head up at all times.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "kettlebells",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "The_Straddle",
+      "name": "The Straddle",
+      "description": "Begin in a seated, upright position. Start by extending your legs in front of you in a V.\nWith your hands on the floor, lean forward as far as possible. Hold for 10 to 20 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Platform_Hamstring_Slides",
+      "name": "Platform Hamstring Slides",
+      "description": "For this movement a wooden floor or similar is needed. Lay on your back with your legs extended. Place a gym towel or a light weight underneath your heel. This will be your starting position.\nBegin the movement by flexing the knee, keeping your other leg straight.\nContinue bringing the heel closer to you, sliding it on the floor.\nAt full knee flexion, reverse the movement to return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Natural_Glute_Ham_Raise",
+      "name": "Natural Glute Ham Raise",
+      "description": "Using the leg pad of a lat pulldown machine or a preacher bench, position yourself so that your ankles are under the pads, knees on the seat, and you are facing away from the machine. You should be upright and maintaining good posture.\nThis will be your starting position. Lower yourself under control until your knees are almost completely straight.\nRemaining in control, raise yourself back up to the starting position.\nIf you are unable to complete a rep, use a band, a partner, or push off of a box to aid in completing a repetition.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One_Knee_To_Chest",
+      "name": "One Knee To Chest",
+      "description": "Start off by lying on the floor.\nExtend one leg straight and pull the other knee to your chest. Hold under the knee joint to protect the kneecap.\nGently tug that knee toward your nose.\nSwitch sides. This stretches the buttocks and lower back of the bent leg and the hip flexor of the straight leg.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Flutter_Kicks",
+      "name": "Flutter Kicks",
+      "description": "On a flat bench lie facedown with the hips on the edge of the bench, the legs straight with toes high off the floor and with the arms on top of the bench holding on to the front edge.\nSqueeze your glutes and hamstrings and straighten the legs until they are level with the hips. This will be your starting position.\nStart the movement by lifting the left leg higher than the right leg.\nThen lower the left leg as you lift the right leg.\nContinue alternating in this manner (as though you are doing a flutter kick in water) until you have done the recommended amount of repetitions for each leg. Make sure that you keep a controlled movement at all times. Tip: You will breathe normally as you perform this movement.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Hamstring",
+      "name": "Seated Hamstring",
+      "description": "In a seated position with your legs extended, have your partner stand behind you. Now, lean forward as your partner braces your shoulders with their hands. This will be your starting position.\nAttempt to push your torso back for 10-20 seconds, as your partner prevents any actual movement of your torso.\nNow relax your muscles as your partner increases the stretch by gently pushing your torso forward for 10-20 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "expert",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Reverse_Hyperextension",
+      "name": "Reverse Hyperextension",
+      "description": "Place your feet between the pads after loading an appropriate weight. Lay on the top pad, allowing your hips to hang off the back, while grasping the handles to hold your position.\nTo begin the movement, flex the hips, pulling the legs forward.\nReverse the motion by extending the hips, kicking the leg back. It is very important not to over-extend the hip on this movement, stopping short of your full range of motion.\nReturn by again flexing the hip, pulling the carriage forward as far as you can.\nRepeat for the desired number of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Upper_Back-Leg_Grab",
+      "name": "Upper Back-Leg Grab",
+      "description": "While seated, bend forward to hug your thighs from underneath with both arms.\nKeep your knees together and your legs extended out as you bring your chest down to your knees. You can also stretch your middle back by pulling your back away from your knees as your hugging them.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Lying_Hamstring",
+      "name": "Lying Hamstring",
+      "description": "Lie on your back with your legs extended. Your partner should be kneeling beside you. Raise one leg up towards the ceiling and have your partner hold the ankle. Your partner can use their shoulder to brace your leg if necessary. This will be your starting position.\nWith your partner holding your leg in place, attempt to flex the knee, contracting the hamstrings for 10-20 seconds.\nThen relax your leg, allowing your partner to gently push the leg towards your head. Be sure to inform your helper when the stretch is adequate to prevent injury or overstretching. Switch sides once complete.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "expert",
+      "equipment": "other",
+      "force": "static",
+      "mechanic": null
+    }
+  ]
+}

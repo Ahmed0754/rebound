@@ -1,0 +1,583 @@
+{
+  "about": "Chronic elbow pain, trains regularly, with dumbbells.",
+  "answers": {
+    "goal": "return_to_movement",
+    "region": "elbow",
+    "onset": "chronic",
+    "painNow": 3,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "30_49",
+    "conditions": [],
+    "equipment": [
+      "dumbbells"
+    ],
+    "activityLevel": "trains_regularly",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-28T18:55:43.463Z",
+  "pool": "40",
+  "candidates": [
+    {
+      "id": "Standing_Inner-Biceps_Curl",
+      "name": "Standing Inner-Biceps Curl",
+      "description": "Stand up with a dumbbell in each hand being held at arms length. The elbows should be close to the torso. Your legs should be at about shoulder's width apart from each other.\nRotate the palms of the hands so that they are facing inward in a neutral position. This will be your starting position.\nWhile holding the upper arms stationary, curl the weights out while contracting the biceps as you breathe out. Your wrist should turn so that when the weights are fully elevated you have supinated grip (palms facing up).\nOnly the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Tip: Keep the forearms aligned with your outer deltoids.\nHold the contracted position for a second as you squeeze the biceps.\nSlowly begin to bring the dumbbells back to the starting position as your breathe in. Remember to rotate the wrists as you lower the weight in order to switch back to a neutral grip.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Incline_Hammer_Curls",
+      "name": "Incline Hammer Curls",
+      "description": "Seat yourself on an incline bench with a dumbbell in each hand. You should pressed firmly against he back with your feet together. Allow the dumbbells to hang straight down at your side, holding them with a neutral grip. This will be your starting position.\nInitiate the movement by flexing at the elbow, attempting to keep the upper arm stationary.\nContinue to the top of the movement and pause, then slowly return to the start position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Dumbbell_Reverse_Curl",
+      "name": "Standing Dumbbell Reverse Curl",
+      "description": "To begin, stand straight with a dumbbell in each hand using a pronated grip (palms facing down). Your arms should be fully extended while your feet are shoulder width apart from each other. This is the starting position.\nWhile holding the upper arms stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the muscle.\nSlowly begin to bring the dumbbells back to starting position as your breathe in.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Towel_Triceps_Extension",
+      "name": "Standing Towel Triceps Extension",
+      "description": "To begin, stand up with both arms fully extended above the head holding one end of a towel with both hands. Your elbows should be in and the arms perpendicular to the floor with the palms facing each other while your feet should be shoulder width apart from each other. This is the starting position.\nNow communicate with your partner so that he/she can grip the other side of the towel to apply resistance. Keeping your upper arms close to your head (elbows in) and perpendicular to the floor, lower the resistance in a semicircular motion behind your head until your forearms touch your biceps. Tip: The upper arms should remain stationary and only the forearms should move. Breathe in as you perform this step.\nGo back to the starting position by using the triceps to raise the towel. Breathe out as you perform this step.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Tricep_Dumbbell_Kickback",
+      "name": "Tricep Dumbbell Kickback",
+      "description": "Start with a dumbbell in each hand and your palms facing your torso. Keep your back straight with a slight bend in the knees and bend forward at the waist. Your torso should be almost parallel to the floor. Make sure to keep your head up. Your upper arms should be close to your torso and parallel to the floor. Your forearms should be pointed towards the floor as you hold the weights. There should be a 90-degree angle formed between your forearm and upper arm. This is your starting position.\nNow, while keeping your upper arms stationary, exhale and use your triceps to lift the weights until the arm is fully extended. Focus on moving the forearm.\nAfter a brief pause at the top contraction, inhale and slowly lower the dumbbells back down to the starting position.\nRepeat the movement for the prescribed amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "One_Arm_Supinated_Dumbbell_Triceps_Extension",
+      "name": "One Arm Supinated Dumbbell Triceps Extension",
+      "description": "Lie flat on a bench while holding a dumbbell at arms length. Your arm should be perpendicular to your body. The palm of your hand should be facing towards your face as a supinated grip is required to perform this exercise.\nPlace your non lifting hand on your bicep for support.\nSlowly begin to lower the dumbbell down as you breathe in.\nThen, begin lifting the dumbbell upward as you contract the triceps. Remember to breathe out during the concentric (lifting part of the exercise).\nRepeat until you have performed your set repetitions.\nSwitch arms and repeat the movement.\nSwitch arms again and repeat the movement.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Kneeling_Forearm_Stretch",
+      "name": "Kneeling Forearm Stretch",
+      "description": "Start by kneeling on a mat with your palms flat and your fingers pointing back toward your knees.\nSlowly lean back keeping your palms flat on the floor until you feel a stretch in your wrists and forearms. Hold for 20-30 seconds.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Tricep_Side_Stretch",
+      "name": "Tricep Side Stretch",
+      "description": "Bring right arm across your body and over your left shoulder, holding your elbow with your left hand, until you feel a stretch in your tricep. Then repeat for your other arm.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Decline_Dumbbell_Triceps_Extension",
+      "name": "Decline Dumbbell Triceps Extension",
+      "description": "Secure your legs at the end of the decline bench and lie down with a dumbbell on each hand on top of your thighs. The palms of your hand will be facing each other.\nOnce you are laying down, move the dumbbells in front of you at shoulder width. The palms of the hands should be facing each other and the arms should be perpendicular to the floor and fully extended. This will be your starting position.\nAs you breathe in and you keep the upper arms stationary (and elbows in), bring the dumbbells down slowly by moving your forearms in a semicircular motion towards you until your thumbs are next to your ears. Breathe in as you perform this portion of the movement.\nLift the dumbbells back to the starting position by contracting the triceps and exhaling.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Triceps_Stretch",
+      "name": "Triceps Stretch",
+      "description": "Reach your hand behind your head, grasp your elbow and gently pull. Hold for 10 to 20 seconds, then switch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Wrist_Circles",
+      "name": "Wrist Circles",
+      "description": "Start by standing straight with your feet being shoulder width apart from each other. Elevate your arms to the side of you until they are fully extended and parallel to the floor at a height that is evenly aligned with your shoulders. Tip: Your torso and arms should form the letter \"T: Your palms should be facing down. This is the starting position.\nKeeping your entire body stationary except for the wrists, begin to rotate both wrists forward in a circular motion. Tip: Pretend that you are trying to draw circles by using your hands as the brush. Breathe normally as you perform this exercise.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "One_Arm_Pronated_Dumbbell_Triceps_Extension",
+      "name": "One Arm Pronated Dumbbell Triceps Extension",
+      "description": "Lie flat on a bench while holding a dumbbell at arms length. Your arm should be perpendicular to your body. The palm of your hand should be facing towards your feet as a pronated grip is required to perform this exercise.\nPlace your non lifting hand on your bicep for support.\nSlowly begin to lower the dumbbell down as you breathe in.\nThen, begin lifting the dumbbell upward as you contract the triceps. Remember to breathe out during the concentric (lifting part of the exercise).\nRepeat until you have performed your set repetitions.\nSwitch arms and repeat the movement.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Triceps_Press",
+      "name": "Seated Triceps Press",
+      "description": "Sit down on a bench with back support and grasp a dumbbell with both hands and hold it overhead at arm's length. Tip: a better way is to have somebody hand it to you especially if it is very heavy. The resistance should be resting in the palms of your hands with your thumbs around it. The palm of the hand should be facing inward. This will be your starting position.\nKeeping your upper arms close to your head (elbows in) and perpendicular to the floor, lower the resistance in a semi-circular motion behind your head until your forearms touch your biceps. Tip: The upper arms should remain stationary and only the forearms should move. Breathe in as you perform this step.\nGo back to the starting position by using the triceps to raise the dumbbell. Breathe out as you perform this step.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Tricep_Extension_-Pronated_Grip",
+      "name": "Dumbbell Tricep Extension -Pronated Grip",
+      "description": "Lie down on a flat bench holding two dumbbells directly above your shoulders. Your arms should be fully extended and form a 90 degree angle from your torso and the floor.\nThe palms of your hands should be facing forward, and your elbows should be tucked in. This will be your starting position.\nNow, inhale and slowly lower the dumbbells until they are near your ears. Be sure to keep your upper arms stationary and your elbows tucked in.\nThen, exhale and use your triceps to return the weight to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Cross_Body_Hammer_Curl",
+      "name": "Cross Body Hammer Curl",
+      "description": "Stand up straight with a dumbbell in each hand. Your hands should be down at your side with your palms facing in.\nWhile keeping your palms facing in and without twisting your arm, curl the dumbbell of the right arm up towards your left shoulder as you exhale. Touch the top of the dumbbell to your shoulder and hold the contraction for a second.\nSlowly lower the dumbbell along the same path as you inhale and then repeat the same movement for the left arm.\nContinue alternating in this fashion until the recommended amount of repetitions is performed for each arm.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Body_Tricep_Press",
+      "name": "Body Tricep Press",
+      "description": "Position a bar in a rack at chest height.\nStanding, take a shoulder width grip on the bar and step a yard or two back, feet together and arms extended so that you are leaning on the bar. This will be your starting position.\nBegin by flexing the elbow, lowering yourself towards the bar.\nPause, and then reverse the motion by extending the elbows.\nProgress from bodyweight by adding chains over your shoulders.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Dumbbell_Triceps_Extension",
+      "name": "Standing Dumbbell Triceps Extension",
+      "description": "To begin, stand up with a dumbbell held by both hands. Your feet should be about shoulder width apart from each other. Slowly use both hands to grab the dumbbell and lift it over your head until both arms are fully extended.\nThe resistance should be resting in the palms of your hands with your thumbs around it. The palm of the hands should be facing up towards the ceiling. This will be your starting position.\nKeeping your upper arms close to your head with elbows in and perpendicular to the floor, lower the resistance in a semicircular motion behind your head until your forearms touch your biceps. Tip: The upper arms should remain stationary and only the forearms should move. Breathe in as you perform this step.\nGo back to the starting position by using the triceps to raise the dumbbell. Breathe out as you perform this step.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Close-Grip_Dumbbell_Press",
+      "name": "Close-Grip Dumbbell Press",
+      "description": "Place a dumbbell standing up on a flat bench.\nEnsuring that the dumbbell stays securely placed at the top of the bench, lie perpendicular to the bench with only your shoulders lying on the surface. Hips should be below the bench and your legs bent with your feet firmly on the floor.\nGrasp the dumbbell with both hands and hold it straight over your chest at arm's length. Both palms should be pressing against the underside of the sides of the dumbbell. This will be your starting position.\nInitiate the movement by lowering the dumbbell to your chest.\nReturn to the starting position by extending the elbows.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Dumbbell_Lying_Supination",
+      "name": "Dumbbell Lying Supination",
+      "description": "Lie sideways on a flat bench with one arm holding a dumbbell and the other hand on top of the bench folded so that you can rest your head on it.\nBend the elbows of the arm holding the dumbbell so that it creates a 90-degree angle between the upper arm and the forearm.\nNow raise the upper arm so that the forearm is parallel to the floor and perpendicular to your torso (Tip: So the forearm will be directly in front of you). The upper arm will be stationary by your torso and should be parallel to the floor (aligned with your torso at all times). This will be your starting position.\nAs you breathe out, externally rotate your forearm so that the dumbbell is lifted up in a semicircle motion as you maintain the 90 degree angle bend between the upper arms and the forearm. You will continue this external rotation until the forearm is perpendicular to the floor and the torso pointing towards the ceiling. At this point you will hold the contraction for a second.\nAs you breathe in, slowly go back to the starting position.\nRepeat for the recommended amount of repetitions and then switch to the other arm.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Zottman_Curl",
+      "name": "Zottman Curl",
+      "description": "Stand up with your torso upright and a dumbbell in each hand being held at arms length. The elbows should be close to the torso.\nMake sure the palms of the hands are facing each other. This will be your starting position.\nWhile holding the upper arm stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Your wrist should rotate so that you have a supinated (palms up) grip. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level.\nHold the contracted position for a second as you squeeze the biceps.\nNow during the contracted position, rotate your wrist until you now have a pronated (palms facing down) grip with the thumb at a higher position than the pinky.\nSlowly begin to bring the dumbbells back down using the pronated grip.\nAs the dumbbells close your thighs, start rotating the wrist so that you go back to a neutral (palms facing your body) grip.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Incline_Inner_Biceps_Curl",
+      "name": "Incline Inner Biceps Curl",
+      "description": "Hold a dumbbell in each hand and lie back on an incline bench.\nThe dumbbells should be at arm's length hanging at your sides and your palms should be facing out. This will be your starting position.\nNow as you exhale curl the weight outward and up while keeping your forearms in line with your side deltoids. Continue the curl until the dumbbells are at shoulder height and to the sides of your deltoids. Tip: The end of the movement should look similar to a double biceps pose.\nAfter a second contraction at the top of the movement, start to inhale and slowly lower the weights back to the starting position using the same path used to bring them up.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": null,
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Incline_Dumbbell_Curl",
+      "name": "Incline Dumbbell Curl",
+      "description": "Sit back on an incline bench with a dumbbell in each hand held at arms length. Keep your elbows close to your torso and rotate the palms of your hands until they are facing forward. This will be your starting position.\nWhile holding the upper arm stationary, curl the weights forward while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second.\nSlowly begin to bring the dumbbells back to starting position as your breathe in.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Concentration_Curls",
+      "name": "Concentration Curls",
+      "description": "Sit down on a flat bench with one dumbbell in front of you between your legs. Your legs should be spread with your knees bent and feet on the floor.\nUse your right arm to pick the dumbbell up. Place the back of your right upper arm on the top of your inner right thigh. Rotate the palm of your hand until it is facing forward away from your thigh. Tip: Your arm should be extended and the dumbbell should be above the floor. This will be your starting position.\nWhile holding the upper arm stationary, curl the weights forward while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Tip: At the top of the movement make sure that the little finger of your arm is higher than your thumb. This guarantees a good contraction. Hold the contracted position for a second as you squeeze the biceps.\nSlowly begin to bring the dumbbells back to starting position as your breathe in. Caution: Avoid swinging motions at any time.\nRepeat for the recommended amount of repetitions. Then repeat the movement with the left arm.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Bench_Dips",
+      "name": "Bench Dips",
+      "description": "For this exercise you will need to place a bench behind your back. With the bench perpendicular to your body, and while looking away from it, hold on to the bench on its edge with the hands fully extended, separated at shoulder width. The legs will be extended forward, bent at the waist and perpendicular to your torso. This will be your starting position.\nSlowly lower your body as you inhale by bending at the elbows until you lower yourself far enough to where there is an angle slightly smaller than 90 degrees between the upper arm and the forearm. Tip: Keep the elbows as close as possible throughout the movement. Forearms should always be pointing down.\nUsing your triceps to bring your torso up again, lift yourself back to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Dumbbell_Palms-Down_Wrist_Curl",
+      "name": "Seated Dumbbell Palms-Down Wrist Curl",
+      "description": "Start out by placing two dumbbells on the floor in front of a flat bench.\nSit down on the edge of the flat bench with your legs at about shoulder width apart. Make sure to keep your feet on the floor.\nUse your arms to grab both of the dumbbells and bring them up so that your forearms are resting against your thighs with the palms of the hands facing down. Your wrists should be hanging over the edge of your thighs.\nStart out by curling your wrist upwards and exhaling.\nSlowly lower your wrists back down to the starting position while inhaling. Make sure to inhale during this part of the exercise. Tip: Your forearms should be stationary as your wrist is the only movement needed to perform this exercise.\nRepeat for the recommended amount of repetitions.\nWhen finished, simply lower the dumbbells to the floor.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Flexor_Incline_Dumbbell_Curls",
+      "name": "Flexor Incline Dumbbell Curls",
+      "description": "Hold the dumbbell towards the side farther from you so that you have more weight on the side closest to you. (This can be done for a good effect on all bicep dumbbell exercises). Now do a normal incline dumbbell curl, but keep your wrists as far back as possible so as to neutralize any stress that is placed on them.\nSit on an incline bench that is angled at 45-degrees while holding a dumbbell on each hand.\nLet your arms hang down on your sides, with the elbows in, and turn the palms of your hands forward with the thumbs pointing away from the body. Tip: You will keep this hand position throughout the movement as there should not be any twisting of the hands as they come up. This will be your starting position.\nCurl up the two dumbbells at the same time until your biceps are fully contracted and exhale. Tip: Do not swing the arms or use momentum. Keep a controlled motion at all times. Hold the contracted position for a second at the top.\nAs you inhale, slowly go back to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Alternate_Bicep_Curl",
+      "name": "Dumbbell Alternate Bicep Curl",
+      "description": "Stand (torso upright) with a dumbbell in each hand held at arms length. The elbows should be close to the torso and the palms of your hand should be facing your thighs.\nWhile holding the upper arm stationary, curl the right weight as you rotate the palm of the hands until they are facing forward. At this point continue contracting the biceps as you breathe out until your biceps is fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps. Tip: Only the forearms should move.\nSlowly begin to bring the dumbbell back to the starting position as your breathe in. Tip: Remember to twist the palms back to the starting position (facing your thighs) as you come down.\nRepeat the movement with the left hand. This equals one repetition.\nContinue alternating in this manner for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Lying_Pronation",
+      "name": "Dumbbell Lying Pronation",
+      "description": "Lie on a flat bench face down with one arm holding a dumbbell and the other hand on top of the bench folded so that you can rest your head on it.\nBend the elbows of the arm holding the dumbbell so that it creates a 90-degree angle between the upper arm and the forearm.\nNow raise the upper arm so that the forearm is perpendicular to the floor and the upper arm is perpendicular to your torso. Tip: The upper arm should be parallel to the floor and also creating a 90-degree angle with your torso. This will be your starting position.\nAs you breathe out, externally rotate your forearm so that the dumbbell is lifted forward as you maintain the 90 degree angle bend between the upper arms and the forearm. You will continue this external rotation until the forearm is parallel to the floor. At this point you will hold the contraction for a second.\nAs you breathe in, slowly go back to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Push-Ups_-_Close_Triceps_Position",
+      "name": "Push-Ups - Close Triceps Position",
+      "description": "Lie on the floor face down and place your hands closer than shoulder width for a close hand position. Make sure that you are holding your torso up at arms' length.\nLower yourself until your chest almost touches the floor as you inhale.\nUsing your triceps and some of your pectoral muscles, press your upper body back up to the starting position and squeeze your chest. Breathe out as you perform this step.\nAfter a second pause at the contracted position, repeat the movement for the prescribed amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Lying_Dumbbell_Tricep_Extension",
+      "name": "Lying Dumbbell Tricep Extension",
+      "description": "Lie on a flat bench while holding two dumbbells directly in front of you. Your arms should be fully extended at a 90-degree angle from your torso and the floor. The palms should be facing in and the elbows should be tucked in. This is the starting position.\nAs you breathe in and you keep the upper arms stationary with the elbows in, slowly lower the weight until the dumbbells are near your ears.\nAt that point, while keeping the elbows in and the upper arms stationary, use the triceps to bring the weight back up to the starting position as you breathe out.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension",
+      "name": "Standing Bent-Over Two-Arm Dumbbell Triceps Extension",
+      "description": "With a dumbbell in each hand and the palms facing your torso, bend your knees slightly and bring your torso forward, by bending at the waist, while keeping the back straight until it is almost parallel to the floor. Make sure that you keep the head up. The upper arms should be close to the torso and parallel to the floor while the forearms are pointing towards the floor as the hands hold the weights. Tip: There should be a 90-degree angle between the forearms and the upper arm. This is your starting position.\nKeeping the upper arms stationary, use the triceps to lift the weights as you exhale until the forearms are parallel to the floor and the whole arms are extended. Like many other arm exercises, only the forearm moves.\nAfter a second contraction at the top, slowly lower the dumbbells back to their starting position as you inhale.\nRepeat the movement for the prescribed amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_One-Arm_Dumbbell_Curl_Over_Incline_Bench",
+      "name": "Standing One-Arm Dumbbell Curl Over Incline Bench",
+      "description": "Stand on the back side of an incline bench as if you were going to be a spotter for someone. Have a dumbbell in one hand and rest it across the incline bench with a supinated (palms up) grip.\nPosition your non lifting hand at the corner or side of the incline bench. The chest should be pressed against the top part of the incline and your feet should be pressed against the floor at a wide stance. This is the starting position.\nWhile holding the upper arm stationary, curl the dumbbell upward while contracting the biceps as you breathe out. Only the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbell is at shoulder level. Hold the contracted position for a second.\nSlowly begin to bring the dumbbells back to starting position as your breathe in.\nRepeat for the recommended amount of repetitions.\nSwitch arms while performing this exercise.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Lying_Supine_Dumbbell_Curl",
+      "name": "Lying Supine Dumbbell Curl",
+      "description": "Lie down on a flat bench face up while holding a dumbbell in each arm on top of your thighs.\nBring the dumbbells to the sides with the arms extended and the palms of the hands facing your thighs (neutral grip).\nWhile keeping the arms close to your torso and elbows in, slowly lower your arms (as you keep them extended with a slight bend at the elbows) as far down towards the floor as you can go. Once you cannot go down any further, lock your upper arms in that position and that will be your starting position.\nAs you breathe out, slowly begin to curl the weights up as you simultaneously rotate your wrists so that the palms of the hands face up. Continue curling the weight until your biceps are fully contracted and squeeze hard at the top position for a second. Tip: Only the forearms should move. Upper arms should remain stationary and elbows should stay in throughout the movement.\nReturn back to the starting position very slowly.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "One_Arm_Dumbbell_Preacher_Curl",
+      "name": "One Arm Dumbbell Preacher Curl",
+      "description": "Grab a dumbbell with the right arm and place the upper arm on top of the preacher bench or the incline bench. The dumbbell should be held at shoulder length. This will be your starting position.\nAs you breathe in, slowly lower the dumbbell until your upper arm is extended and the biceps is fully stretched.\nAs you exhale, use the biceps to curl the weight up until your biceps is fully contracted and the dumbbell is at shoulder height. Again, remember that to ensure full contraction you need to bring that small finger higher than the thumb.\nSqueeze the biceps hard for a second at the contracted position and repeat for the recommended amount of repetitions.\nSwitch arms and repeat the movement.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Dumbbell_Inner_Biceps_Curl",
+      "name": "Seated Dumbbell Inner Biceps Curl",
+      "description": "Sit on the end of a flat bench with a dumbbell in each hand being held at arms length. The elbows should be close to the torso.\nRotate the palms of the hands so that they are facing inward in a neutral position. This will be your starting position.\nWhile holding the upper arms stationary, curl the dumbbells out and up, turning the palms out as you lift and keeping your forearms in line with your outer deltoids. Tips:\nOnly the forearms should move. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps.\nSlowly begin to bring the dumbbells back to the starting position as your breathe in. Remember to rotate your arms as you lower the dumbbells so that you can switch back to a neutral grip.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Body-Up",
+      "name": "Body-Up",
+      "description": "Assume a plank position on the ground. You should be supporting your bodyweight on your toes and forearms, keeping your torso straight. Your forearms should be shoulder-width apart. This will be your starting position.\nPressing your palms firmly into the ground, extend through the elbows to raise your body from the ground. Keep your torso rigid as you perform the movement.\nSlowly lower your forearms back to the ground by allowing the elbows to flex.\nRepeat.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Preacher_Hammer_Dumbbell_Curl",
+      "name": "Preacher Hammer Dumbbell Curl",
+      "description": "Place the upper part of both arms on top of the preacher bench as you hold a dumbbell in each hand with the palms facing each other (neutral grip).\nAs you breathe in, slowly lower the dumbbells until your upper arm is extended and the biceps is fully stretched.\nAs you exhale, use the biceps to curl the weight up until your biceps is fully contracted and the dumbbells are at shoulder height.\nSqueeze the biceps hard for a second at the contracted position and repeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench",
+      "name": "Palms-Down Dumbbell Wrist Curl Over A Bench",
+      "description": "Start out by placing two dumbbells on one side of a flat bench.\nKneel down on both of your knees so that your body is facing the flat bench.\nUse your arms to grab both of the dumbbells with a pronated grip (palms facing down) and bring them up so that your forearms are resting against the flat bench. Your wrists should be hanging over the edge.\nStart out by curling your wrist upwards and exhaling.\nSlowly lower your wrists back down to the starting position while inhaling.\nYour forearms should be stationary as your wrist is the only movement needed to perform this exercise.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension",
+      "name": "Seated Bent-Over Two-Arm Dumbbell Triceps Extension",
+      "description": "Sit down at the end of a flat bench with a dumbbell in both arms using a neutral grip (palms of the hand facing you).\nBend your knees slightly and bring your torso forward, by bending at the waist, while keeping the back straight until it is almost parallel to the floor. Make sure that you keep the head up.\nThe upper arms with the dumbbells should be close to the torso and aligned with it (lifted up until they are parallel to the floor while the forearms are pointing towards the floor as the hands hold the weights). Tip: There should be a 90-degree angle between the forearms and the upper arm. This is your starting position.\nKeeping the upper arms stationary, use the triceps to lift the weight as you exhale until the forearms are parallel to the floor and the whole arm is extended. Like many other arm exercises, only the forearm moves.\nAfter a second contraction at the top, slowly lower the dumbbells back to the starting position as you inhale.\nRepeat the movement for the prescribed amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "category": "strength",
+      "level": "intermediate",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Alternate_Incline_Dumbbell_Curl",
+      "name": "Alternate Incline Dumbbell Curl",
+      "description": "Sit down on an incline bench with a dumbbell in each hand being held at arms length. Tip: Keep the elbows close to the torso.This will be your starting position.\nWhile holding the upper arm stationary, curl the right weight forward while contracting the biceps as you breathe out. As you do so, rotate the hand so that the palm is facing up. Continue the movement until your biceps is fully contracted and the dumbbells are at shoulder level. Hold the contracted position for a second as you squeeze the biceps. Tip: Only the forearms should move.\nSlowly begin to bring the dumbbell back to starting position as your breathe in.\nRepeat the movement with the left hand. This equals one repetition.\nContinue alternating in this manner for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "pull",
+      "mechanic": "isolation"
+    }
+  ]
+}

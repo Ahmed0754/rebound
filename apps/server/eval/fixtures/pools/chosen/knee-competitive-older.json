@@ -1,0 +1,305 @@
+{
+  "about": "Pulls both ways: competitive and wanting sport back, but 50+ with diabetes.",
+  "answers": {
+    "goal": "prevent_recurrence",
+    "region": "knee",
+    "onset": "chronic",
+    "painNow": 1,
+    "aggravators": [],
+    "redFlags": [],
+    "ageBand": "50_plus",
+    "conditions": [
+      "diabetes"
+    ],
+    "equipment": [
+      "full_gym"
+    ],
+    "activityLevel": "competitive",
+    "sessionMinutes": 20
+  },
+  "freeText": null,
+  "frozenAt": "2026-10-28T18:55:54.955Z",
+  "pool": "chosen",
+  "candidates": [
+    {
+      "id": "Upper_Back-Leg_Grab",
+      "name": "Upper Back-Leg Grab",
+      "description": "While seated, bend forward to hug your thighs from underneath with both arms.\nKeep your knees together and your legs extended out as you bring your chest down to your knees. You can also stretch your middle back by pulling your back away from your knees as your hugging them.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Smith_Single-Leg_Split_Squat",
+      "name": "Smith Single-Leg Split Squat",
+      "description": "To begin, place a flat bench 2-3 feet behind the smith machine. Then, set the bar on the height that best matches your height. Once the correct height is chosen and the bar is loaded, step under the bar and place the back of your shoulders (slightly below the neck) across it.\nHold on to the bar using both arms at each side (palms facing forward), unlock it and lift it off the rack by first pushing with your legs and at the same time straightening your torso.\nPosition your legs by placing one foot slightly forward under the bar and extending your other leg back and place the top of your foot on the bench. This will be your starting position\nBegin to slowly lower the bar by bending the knee as you maintain a straight posture with the head up. Continue down until the angle between the upper leg and the calf becomes slightly less than 90-degrees (which is the point in which the upper legs are below parallel to the floor). Inhale as you perform this portion of the movement. Tip: If you performed the exercise correctly, the front of the knee should make an imaginary straight line with the toes that is perpendicular to the front. If your knee is past that imaginary line (if it is past your toes) then you are placing undue stress on the knee and the exercise has been performed incorrectly.\nBegin to raise the bar as you exhale by pushing the floor with the heel of your foot mainly as you straighten your leg again and go back to the starting position.\nRepeat for the recommended amount of repetitions.\nSwitch legs and repeat the movement.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Step-up_with_Knee_Raise",
+      "name": "Step-up with Knee Raise",
+      "description": "Stand facing a box or bench of an appropriate height with your feet together. This will be your starting position.\nBegin the movement by stepping up, putting your left foot on the top of the bench. Extend through the hip and knee of your front leg to stand up on the box. As you stand on the box with your left leg, flex your right knee and hip, bringing your knee as high as you can.\nReverse this motion to step down off the box, and then repeat the sequence on the opposite leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Calf_Raises_-_With_Bands",
+      "name": "Calf Raises - With Bands",
+      "description": "Grab an exercise band and stand on it with your toes making sure that the length of the band between the foot and the arms is the same for both sides.\nWhile holding the handles of the band, raise the arms to the side of your head as if you were getting ready to perform a shoulder press. The palms should be facing forward with the elbows bent and to the sides. This movement will create tension on the band. This will be your starting position.\nKeeping the hands by your shoulder, stand up on your toes as you exhale and contract the calves hard at the top of the movement.\nAfter a one second contraction, slowly go back down to the starting position.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Calf_Stretch_Elbows_Against_Wall",
+      "name": "Calf Stretch Elbows Against Wall",
+      "description": "Stand facing a wall from a couple feet away.\nLean against the wall, placing your weight on your forearms.\nAttempt to keep your heels on the ground. Hold for 10-20 seconds. You may move further or closer the wall, making it more or less difficult, respectively.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Dumbbell_Seated_One-Leg_Calf_Raise",
+      "name": "Dumbbell Seated One-Leg Calf Raise",
+      "description": "Place a block on the floor about 12 inches from a flat bench.\nSit on a flat bench and place a dumbbell on your upper left thigh about 3 inches above your knee.\nNow place the ball of your left foot on the block. This will be your starting position.\nRaise your toes up as high as possible as you exhale and you contract your calf muscle. Hold the contraction for a second.\nSlowly return to the starting position, stretching as far down as possible.\nRepeat for your prescribed number of repetitions and then repeat with the right leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Smith_Machine_Stiff-Legged_Deadlift",
+      "name": "Smith Machine Stiff-Legged Deadlift",
+      "description": "To begin, set the bar on the smith machine to a height that is around the middle of your thighs. Once the correct height is chosen and the bar is loaded, grasp the bar using a pronated (palms forward) grip that is shoulder width apart. You may need some wrist wraps if using a significant amount of weight.\nLift the bar up by fully extending your arms while keeping your back straight. Stand with your torso straight and your legs spaced using a shoulder width or narrower stance. The knees should be slightly bent. This is your starting position.\nKeeping the knees stationary, lower the barbell to over the top of your feet by bending at the waist while keeping your back straight. Keep moving forward as if you were going to pick something from the floor until you feel a stretch on the hamstrings. Exhale as you perform this movement\nStart bringing your torso up straight again as soon as you feel the hamstrings stretch by extending your hips and waist until you are back at the starting position. Inhale as you perform this movement.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Front_Leg_Raises",
+      "name": "Front Leg Raises",
+      "description": "Stand next to a chair or other support, holding on with one hand.\nSwing your leg forward, keeping the leg straight. Continue with a downward swing, bringing the leg as far back as your flexibility allows. Repeat 5-10 times, and then switch legs.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "pull",
+      "mechanic": null
+    },
+    {
+      "id": "Prone_Manual_Hamstring",
+      "name": "Prone Manual Hamstring",
+      "description": "You will need a partner for this exercise. Lay face down with your legs straight. Your assistant will place their hand on your heel.\nTo begin, flex the knee to curl your leg up. Your partner should provide resistance, starting light and increasing the pressure as the movement is completed. Communicate with your partner to monitor appropriate resistance levels.\nPause at the top, returning the leg to the starting position as your partner provides resistance going the other direction.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Leg_Press",
+      "name": "Leg Press",
+      "description": "Using a leg press machine, sit down on the machine and place your legs on the platform directly in front of you at a medium (shoulder width) foot stance. (Note: For the purposes of this discussion we will use the medium stance described above which targets overall development; however you can choose any of the three stances described in the foot positioning section).\nLower the safety bars holding the weighted platform in place and press the platform all the way up until your legs are fully extended in front of you. Tip: Make sure that you do not lock your knees. Your torso and the legs should make a perfect 90-degree angle. This will be your starting position.\nAs you inhale, slowly lower the platform until your upper and lower legs make a 90-degree angle.\nPushing mainly with the heels of your feet and using the quadriceps go back to the starting position as you exhale.\nRepeat for the recommended amount of repetitions and ensure to lock the safety pins properly once you are done. You do not want that platform falling on you fully loaded.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "One_Half_Locust",
+      "name": "One Half Locust",
+      "description": "Lie facedown on the floor.\nPut your left hand under your left hipbone to pad your hip and pubic bone.\nBend your right knee so you can hold the foot in your right hand.\nLift the foot in the air and simultaneously lift your shoulders off the floor. This also stretches the right hip flexor and the chest and shoulders. Switch sides. If it doesn't bother your back, you can try it with both arms and legs at the same time.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "Calf_Press",
+      "name": "Calf Press",
+      "description": "Adjust the seat so that your legs are only slightly bent in the start position. The balls of your feet should be firmly on the platform.\nSelect an appropriate weight, and grasp the handles. This will be your starting position.\nStraighten the legs by extending the knees, just barely lifting the weight from the stack. Your ankle should be fully flexed, toes pointing up. Execute the movement by pressing downward through the balls of your feet as far as possible.\nAfter a brief pause, reverse the motion and repeat.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "90_90_Hamstring",
+      "name": "90/90 Hamstring",
+      "description": "Lie on your back, with one leg extended straight out.\nWith the other leg, bend the hip and knee to 90 degrees. You may brace your leg with your hands if necessary. This will be your starting position.\nExtend your leg straight into the air, pausing briefly at the top. Return the leg to the starting position.\nRepeat for 10-20 repetitions, and then switch to the other leg.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "body only",
+      "force": "push",
+      "mechanic": null
+    },
+    {
+      "id": "Squats_-_With_Bands",
+      "name": "Squats - With Bands",
+      "description": "To start out, make sure that the exercise band is at an even split between both the left and right side of the body. To do this, use your hands to grab both sides of the band and place both feet in the middle of the band. Your feet should be shoulder width apart from each other.\nWhen holding the bands, they should be the same height on each side. You should be using a pronated grip (palms facing forward) and have the handles of the bands next to your face for this exercise. This is the starting position.\nSlowly start to bend the knees and lower the legs so that your thighs are parallel to the floor while exhaling.\nUse the heel of your feet to push your body up to the starting position as you exhale.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "bands",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Lying_Leg_Curls",
+      "name": "Lying Leg Curls",
+      "description": "Adjust the machine lever to fit your height and lie face down on the leg curl machine with the pad of the lever on the back of your legs (just a few inches under the calves). Tip: Preferably use a leg curl machine that is angled as opposed to flat since an angled position is more favorable for hamstrings recruitment.\nKeeping the torso flat on the bench, ensure your legs are fully stretched and grab the side handles of the machine. Position your toes straight (or you can also use any of the other two stances described on the foot positioning section). This will be your starting position.\nAs you exhale, curl your legs up as far as possible without lifting the upper legs from the pad. Once you hit the fully contracted position, hold it for a second.\nAs you inhale, bring the legs back to the initial position. Repeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "pull",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Standing_Gastrocnemius_Calf_Stretch",
+      "name": "Standing Gastrocnemius Calf Stretch",
+      "description": "Place your right heel on a step with your knee extended and lean forward to grab your right toe with your right hand. Your left knee should be slightly bent and your back should be straight.\nSupport your weight on your left leg and place your left hand on your left thigh.\nPull your right toes toward your knee until you feel a stretch in your calf.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    },
+    {
+      "id": "On-Your-Back_Quad_Stretch",
+      "name": "On-Your-Back Quad Stretch",
+      "description": "Lie on a flat bench or step, and hang one leg and arm over the side.\nBend the knee and hold the top of the foot. As you do this, be careful not to arch your lower back.\nPull the belly button to the spine to stay in neutral. Press your foot down and into your hand. To add the hip stretch, lift the hip of the leg you're holding up toward the ceiling.\nSwitch sides.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": "other",
+      "force": "static",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Seated_Calf_Raise",
+      "name": "Seated Calf Raise",
+      "description": "Sit on the machine and place your toes on the lower portion of the platform provided with the heels extending off. Choose the toe positioning of your choice (forward, in, or out) as per the beginning of this chapter.\nPlace your lower thighs under the lever pad, which will need to be adjusted according to the height of your thighs. Now place your hands on top of the lever pad in order to prevent it from slipping forward.\nLift the lever slightly by pushing your heels up and release the safety bar. This will be your starting position.\nSlowly lower your heels by bending at the ankles until the calves are fully stretched. Inhale as you perform this movement.\nRaise the heels by extending the ankles as high as possible as you contract the calves and breathe out. Hold the top contraction for a second.\nRepeat for the recommended amount of repetitions.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "machine",
+      "force": "push",
+      "mechanic": "isolation"
+    },
+    {
+      "id": "Split_Squat_with_Dumbbells",
+      "name": "Split Squat with Dumbbells",
+      "description": "Position yourself into a staggered stance with the rear foot elevated and front foot forward.\nHold a dumbbell in each hand, letting them hang at the sides. This will be your starting position.\nBegin by descending, flexing your knee and hip to lower your body down. Maintain good posture througout the movement. Keep the front knee in line with the foot as you perform the exercise.\nAt the bottom of the movement, drive through the heel to extend the knee and hip to return to the starting position.",
+      "unit": "reps",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "category": "strength",
+      "level": "beginner",
+      "equipment": "dumbbell",
+      "force": "push",
+      "mechanic": "compound"
+    },
+    {
+      "id": "Seated_Floor_Hamstring_Stretch",
+      "name": "Seated Floor Hamstring Stretch",
+      "description": "Sit on a mat with your right leg extended in front of you and your left leg bent with your foot against your right inner thigh.\nLean forward from your hips and reach for your ankle until you feel a stretch in your hamstring. Hold for 15 seconds, then repeat for your other side.",
+      "unit": "hold",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "category": "stretching",
+      "level": "beginner",
+      "equipment": null,
+      "force": "static",
+      "mechanic": null
+    }
+  ]
+}

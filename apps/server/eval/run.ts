@@ -19,15 +19,16 @@ import { generate, type Quality } from "../src/models/regimes.js";
 import type { RegimeItem } from "../src/types/index.js";
 import { heuristicPlan, randomPlan } from "./baselines.js";
 import { FIXTURES, loadFixtures, type Fixture } from "./fixture.js";
+import { POOLS } from "./pools.js";
 import { grade, rubric } from "./graders.js";
 import { REPORTS, toMarkdown, type Graded, type Stamp } from "./report.js";
 
 type Plan = { items: RegimeItem[]; quality: Quality | null };
 
-/** One way of making a plan from a fixture. */
+/** One way of making a plan from a fixture. `run` counts the repeats, from 0. */
 type Maker = {
   id: string;
-  make: (fixture: Fixture, limits: Limits) => Promise<Plan>;
+  make: (fixture: Fixture, limits: Limits, run: number) => Promise<Plan>;
 };
 
 function gemini(enforceQuality: boolean) {
@@ -48,14 +49,29 @@ const MAKERS: Maker[] = [
   { id: "gemini", make: gemini(true) },
   // The same, without retrying for quality: what the quality tier adds.
   { id: "gemini-no-quality", make: gemini(false) },
-  // No model at all: what Gemini adds over a few rules, and over chance.
-  { id: "heuristic", make: heuristicPlan },
+  // No model at all: what Gemini adds over a few rules, and over chance. The
+  // heuristic is deterministic, so its repeats are identical by design.
+  { id: "heuristic", make: (fixture, limits) => heuristicPlan(fixture, limits) },
   { id: "random", make: randomPlan },
 ];
 
+// `--runs 5` repeats every maker on every fixture (piece E): one run is within
+// noise of the next, so a difference between makers means little without the
+// spread beside it.
+function runsWanted(): number {
+  const at = process.argv.indexOf("--runs");
+  const runs = at === -1 ? 1 : Number(process.argv[at + 1]);
+
+  if (!Number.isInteger(runs) || runs < 1) {
+    throw new Error(`--runs needs a whole number of at least 1, not ${process.argv[at + 1]}`);
+  }
+
+  return runs;
+}
+
 // What one maker made of one fixture, graded. A failure is kept, never
 // dropped: it is graded as an empty plan.
-async function run(maker: Maker, fixture: Fixture): Promise<Graded> {
+async function run(maker: Maker, fixture: Fixture, repeat: number): Promise<Graded> {
   const limits = getLimits(fixture.answers);
   const context = { region: fixture.answers.region, answers: fixture.answers, limits };
   const started = Date.now();
@@ -67,7 +83,7 @@ async function run(maker: Maker, fixture: Fixture): Promise<Graded> {
     error = `${fixture.candidates.length} candidates, fewer than the ${limits.count.min} a plan needs`;
   } else {
     try {
-      plan = await maker.make(fixture, limits);
+      plan = await maker.make(fixture, limits, repeat);
     } catch (caught) {
       error = String(caught);
     }
@@ -76,6 +92,7 @@ async function run(maker: Maker, fixture: Fixture): Promise<Graded> {
   return {
     fixture: fixture.id,
     maker: maker.id,
+    run: repeat,
     ms: Date.now() - started,
     error,
     items: plan?.items ?? null,
@@ -85,10 +102,16 @@ async function run(maker: Maker, fixture: Fixture): Promise<Graded> {
 }
 
 async function main() {
-  const fixtures = await loadFixtures();
+  const runs = runsWanted();
+  // `--pool <name>` runs on one of piece E's other candidate pools (pools.ts)
+  // instead of the 20 `create` would draw.
+  const at = process.argv.indexOf("--pool");
+  const pool = at === -1 ? undefined : process.argv[at + 1];
+  const dir = pool === undefined ? FIXTURES : join(POOLS, pool);
+  const fixtures = await loadFixtures(dir);
 
   if (fixtures.length === 0) {
-    console.log(`No fixtures in ${FIXTURES} yet, so nothing to run.`);
+    console.log(`No fixtures in ${dir} yet, so nothing to run.`);
     return;
   }
 
@@ -96,13 +119,15 @@ async function main() {
 
   // One at a time: the Gemini makers share one API key's rate limit, and the
   // time each plan takes is part of what is measured.
-  for (const fixture of fixtures) {
-    for (const maker of MAKERS) {
-      const result = await run(maker, fixture);
-      results.push(result);
-      console.log(
-        `${fixture.id} · ${maker.id} · ${result.error === null ? `${result.items!.length} exercises` : `failed: ${result.error}`} · ${result.ms} ms`
-      );
+  for (let repeat = 0; repeat < runs; repeat++) {
+    for (const fixture of fixtures) {
+      for (const maker of MAKERS) {
+        const result = await run(maker, fixture, repeat);
+        results.push(result);
+        console.log(
+          `run ${repeat + 1}/${runs} · ${fixture.id} · ${maker.id} · ${result.error === null ? `${result.items!.length} exercises` : `failed: ${result.error}`} · ${result.ms} ms`
+        );
+      }
     }
   }
 
@@ -113,6 +138,8 @@ async function main() {
     model: MODEL,
     rubric: rubric().version,
     fixtures: fixtures.length,
+    runs,
+    ...(pool === undefined ? {} : { pool }),
     makers: MAKERS.map((maker) => maker.id),
   };
   const report = {

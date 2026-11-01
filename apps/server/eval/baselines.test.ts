@@ -38,6 +38,18 @@ describe.each([
   });
 });
 
+describe("the random baseline, repeated", () => {
+  it("draws again on each run, and the same again for the same run", async () => {
+    const fixture = fixtures.find((f) => f.id === "knee-plain")!;
+    const limits = getLimits(fixture.answers);
+    const ids = async (run: number) => (await randomPlan(fixture, limits, run)).items.map((item) => item.id);
+
+    expect(await ids(0)).toEqual((await randomPlan(fixture, limits)).items.map((item) => item.id));
+    expect(await ids(1)).toEqual(await ids(1));
+    expect(await ids(1)).not.toEqual(await ids(0));
+  });
+});
+
 describe("the heuristic baseline", () => {
   it("takes turns between the categories the limits allow", async () => {
     const fixture = fixtures.find((f) => f.id === "knee-plain")!;

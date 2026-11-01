@@ -22,13 +22,14 @@ export type Fixture = {
   candidates: Candidate[];
 };
 
-export async function loadFixtures(): Promise<Fixture[]> {
-  await mkdir(FIXTURES, { recursive: true });
-  const files = (await readdir(FIXTURES)).filter((file) => file.endsWith(".json")).sort();
+/** The fixtures in `dir`: the default ones, or a pool's (pools.ts). */
+export async function loadFixtures(dir = FIXTURES): Promise<Fixture[]> {
+  await mkdir(dir, { recursive: true });
+  const files = (await readdir(dir)).filter((file) => file.endsWith(".json")).sort();
 
   return Promise.all(
     files.map(async (file) => ({
-      ...JSON.parse(await readFile(join(FIXTURES, file), "utf8")),
+      ...JSON.parse(await readFile(join(dir, file), "utf8")),
       id: basename(file, ".json"),
     }))
   );
