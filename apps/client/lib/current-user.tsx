@@ -1,54 +1,67 @@
 "use client";
 
-// The current account, shared by every page. Mounted once in app/layout.tsx.
+// The logged-in account, shared by every page. Mounted once in app/layout.tsx.
 //
-// "Signed in" is just an id this browser remembers - there is no auth. On load
-// the id is checked against the server, because the account may have been
-// deleted since (from another tab, or by a teammate on the shared database).
+// Logged in means holding a session token from the server. On load the token
+// is checked against the server, because it may have expired, been logged out
+// from another tab, or belong to an account deleted since.
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, getUser, messageOf, type User } from "@/lib/api";
+import { ApiError, getMe, logOut, messageOf, type Session, type User } from "@/lib/api";
 import { KEYS, read, remove, write } from "@/lib/storage";
 
 type State =
   | { status: "loading" }
   | { status: "none" }
-  | { status: "ready"; user: User }
-  // The server couldn't be asked. The stored id is kept: the account may be fine.
+  | { status: "ready"; user: User; token: string }
+  // The server couldn't be asked. The stored token is kept: it may be fine.
   | { status: "error"; message: string };
 
 type CurrentUser = {
   state: State;
-  select: (user: User) => void;
-  clear: () => void;
+  // After signing up or logging in.
+  signIn: (session: Session) => void;
+  // Ends the session on the server too. Also what to call after deleting the
+  // account, when there is no session left to end - that failure is ignored.
+  signOut: () => Promise<void>;
 };
 
 const Context = createContext<CurrentUser | null>(null);
+
+// A half-finished questionnaire belongs to whoever started it, so logging in
+// or out throws the draft away.
+function forget() {
+  remove("local", KEYS.token);
+  remove("session", KEYS.draft);
+}
 
 export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
-    const storedId = read("local", KEYS.userId);
+    // Left over from before passwords, when this id alone was a login.
+    remove("local", KEYS.legacyUserId);
 
-    if (storedId === null) {
+    const token = read("local", KEYS.token);
+
+    if (token === null) {
       setState({ status: "none" });
       return;
     }
 
     let cancelled = false;
 
-    getUser(storedId)
+    getMe(token)
       .then((user) => {
-        if (!cancelled) setState({ status: "ready", user });
+        if (!cancelled) setState({ status: "ready", user, token });
       })
       .catch((error) => {
         if (cancelled) return;
 
-        // Deleted: forget it, so the next screen is the account picker.
-        if (error instanceof ApiError && error.status === 404) {
-          remove("local", KEYS.userId);
+        // Expired, logged out elsewhere, or the account is gone: log in again.
+        if (error instanceof ApiError && error.status === 401) {
+          forget();
           setState({ status: "none" });
           return;
         }
@@ -61,21 +74,25 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // A half-finished questionnaire belongs to whoever started it, so switching
-  // or leaving an account throws the draft away.
-  const select = useCallback((user: User) => {
-    write("local", KEYS.userId, user.id);
-    remove("session", KEYS.draft);
-    setState({ status: "ready", user });
+  const signIn = useCallback(({ user, token }: Session) => {
+    forget();
+    write("local", KEYS.token, token);
+    setState({ status: "ready", user, token });
   }, []);
 
-  const clear = useCallback(() => {
-    remove("local", KEYS.userId);
-    remove("session", KEYS.draft);
+  const signOut = useCallback(async () => {
+    const token = read("local", KEYS.token);
+
+    forget();
     setState({ status: "none" });
+
+    // After forgetting it locally, so a dead server can't keep anyone logged in.
+    if (token !== null) {
+      await logOut(token).catch(() => undefined);
+    }
   }, []);
 
-  return <Context.Provider value={{ state, select, clear }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ state, signIn, signOut }}>{children}</Context.Provider>;
 }
 
 export function useCurrentUser(): CurrentUser {
@@ -88,9 +105,9 @@ export function useCurrentUser(): CurrentUser {
   return value;
 }
 
-// For pages that need an account: the user once known, and a redirect to
-// /account when there is none. Null while loading or redirecting.
-export function useRequiredUser(): { user: User | null; error: string | null } {
+// For pages that need an account: the user and token once known, and a
+// redirect to /account when logged out. Null while loading or redirecting.
+export function useRequiredUser(): { user: User | null; token: string | null; error: string | null } {
   const { state } = useCurrentUser();
   const router = useRouter();
 
@@ -102,6 +119,7 @@ export function useRequiredUser(): { user: User | null; error: string | null } {
 
   return {
     user: state.status === "ready" ? state.user : null,
+    token: state.status === "ready" ? state.token : null,
     error: state.status === "error" ? state.message : null,
   };
 }

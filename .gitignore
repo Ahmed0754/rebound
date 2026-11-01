@@ -15,3 +15,6 @@ roadmap/
 # Next.js writes these agent instruction files into apps/web on `next dev`
 AGENTS.md
 CLAUDE.md
+
+# Session logs kept local
+documents/session-logs/

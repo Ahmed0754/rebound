@@ -37,7 +37,7 @@ type Saved = { step: number; draft: Draft };
 const PAIN_LEVELS = Array.from({ length: 11 }, (_, i) => i);
 
 export default function OnboardingPage() {
-  const { user, error: accountError } = useRequiredUser();
+  const { user, token, error: accountError } = useRequiredUser();
   const router = useRouter();
 
   const [regions, setRegions] = useState<string[] | null>(null);
@@ -103,7 +103,7 @@ export default function OnboardingPage() {
   }
 
   async function submit() {
-    if (!user || submitting) return;
+    if (!user || !token || submitting) return;
 
     const answers = toAnswers(draft);
 
@@ -120,7 +120,7 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      const result = await createOnboarding(user.id, answers, draft.freeText);
+      const result = await createOnboarding(token, answers, draft.freeText);
 
       remove("session", KEYS.draft);
       write("local", KEYS.lastOnboarding(user.id), result.id);

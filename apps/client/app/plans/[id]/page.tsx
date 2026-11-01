@@ -35,7 +35,7 @@ function when(iso: string): string {
 
 export default function PlanPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, error: accountError } = useRequiredUser();
+  const { user, token, error: accountError } = useRequiredUser();
   const router = useRouter();
 
   const [load, setLoad] = useState<Load>({ status: "loading" });
@@ -47,16 +47,14 @@ export default function PlanPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!token) return;
 
     let cancelled = false;
 
-    getRegimeById(id)
+    //Another account's plan is a 404 from the server, the same as a missing one.
+    getRegimeById(token, id)
       .then((plan) => {
-        if (cancelled) return;
-        //The server doesn't check ownership on this route yet, so the client
-        //does: another account's plan is treated as not found.
-        setLoad(plan.userId === user.id ? { status: "loaded", plan } : { status: "missing" });
+        if (!cancelled) setLoad({ status: "loaded", plan });
       })
       .catch((e) => {
         if (cancelled) return;
@@ -66,7 +64,7 @@ export default function PlanPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, id]);
+  }, [token, id]);
 
   if (accountError) {
     return (
@@ -130,13 +128,14 @@ export default function PlanPage() {
   //exercise's unit names. The bounds are the server's to enforce; its 400
   //message is shown and the editor stays open with the numbers to fix.
   async function save() {
-    if (!doses) return;
+    if (!doses || !token) return;
 
     setBusy(true);
     setError(null);
 
     try {
       const updated = await updateRegime(
+        token,
         plan.id,
         plan.regime.map((ex) => ({
           id: ex.id,
@@ -156,13 +155,13 @@ export default function PlanPage() {
   }
 
   async function remove() {
-    if (!window.confirm("Delete this plan? This can't be undone.")) return;
+    if (!token || !window.confirm("Delete this plan? This can't be undone.")) return;
 
     setBusy(true);
     setError(null);
 
     try {
-      await deleteRegime(plan.id);
+      await deleteRegime(token, plan.id);
       router.push("/plans");
     } catch (e) {
       //Left on screen: a failed delete means it's still in the database.

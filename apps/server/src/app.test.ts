@@ -37,6 +37,11 @@ const BROKEN_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
 const USER_ID = "33333333-3333-3333-3333-333333333333";
 const OTHER_USER_ID = "44444444-4444-4444-4444-444444444444";
 
+// Session tokens, and what the mocked sessions model says they belong to.
+const TOKEN = "token-for-user";
+const OTHER_TOKEN = "token-for-other-user";
+const AUTH = { Authorization: `Bearer ${TOKEN}` };
+
 const CREATED_AT = "2026-09-24T00:00:00.000Z";
 const EDITED_AT = "2026-09-30T00:00:00.000Z";
 
@@ -106,15 +111,15 @@ vi.mock("./models/regimes.js", () => ({
     return input.muscle === "knee" ? { ...saved, userId: input.userId } : null;
   }),
   list: vi.fn(async (userId: string) => (userId === USER_ID ? [saved] : [])),
-  get: vi.fn(async (id: string) => {
+  get: vi.fn(async (id: string, userId: string) => {
     if (id === BROKEN_ID) {
       throw new Error("database is down");
     }
 
-    return id === SAVED_ID ? saved : null;
+    return id === SAVED_ID && userId === USER_ID ? saved : null;
   }),
-  update: vi.fn(async (id: string, picks: { id: string; sets: number; reps: number }[]) => {
-    if (id !== SAVED_ID) {
+  update: vi.fn(async (id: string, userId: string, picks: { id: string; sets: number; reps: number }[]) => {
+    if (id !== SAVED_ID || userId !== USER_ID) {
       return null;
     }
 
@@ -134,13 +139,14 @@ vi.mock("./models/regimes.js", () => ({
       }),
     };
   }),
-  remove: vi.fn(async (id: string) => id === SAVED_ID),
+  remove: vi.fn(async (id: string, userId: string) => id === SAVED_ID && userId === USER_ID),
   getCandidatesFor: vi.fn(async () => []),
   getFunnelFor: vi.fn(async () => FUNNEL),
   toCandidateQuery: vi.fn((answers: { region: string }) => ({ region: answers.region })),
 }));
 
 const user = { id: USER_ID, username: "shahid", createdAt: CREATED_AT };
+const PASSWORD = "correct horse battery";
 
 class DuplicateUsername extends Error {
   constructor(username: string) {
@@ -246,9 +252,30 @@ vi.mock("./models/users.js", () => ({
 
     return { id: USER_ID, username, createdAt: CREATED_AT };
   }),
-  list: vi.fn(async () => [user]),
+  // "shahid" is the only account with a password; its hash is the password
+  // itself, which the auth.js mock below compares directly.
+  findForLogin: vi.fn(async (username: string) =>
+    username.toLowerCase() === "shahid" ? { user, passwordHash: PASSWORD } : null
+  ),
   get: vi.fn(async (id: string) => (id === USER_ID ? user : null)),
   remove: vi.fn(async (id: string) => id === USER_ID),
+}));
+
+// No database: the token map stands in for the sessions table.
+vi.mock("./models/sessions.js", () => ({
+  create: vi.fn(async () => "new-token"),
+  userIdFor: vi.fn(async (token: string) =>
+    token === TOKEN ? USER_ID : token === OTHER_TOKEN ? OTHER_USER_ID : null
+  ),
+  remove: vi.fn(async () => undefined),
+}));
+
+// Real scrypt is slow on purpose, and auth.test.ts covers it. Here a "hash"
+// is just the password, so login tests are about routing and status codes.
+vi.mock("./auth.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./auth.js")>()),
+  verifyPassword: vi.fn(async (password: string, hash: string) => password === hash),
+  verifyNothing: vi.fn(async () => false),
 }));
 
 const { app } = await import("./app.js");
@@ -285,20 +312,24 @@ async function json<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
+// Logged in as USER_ID. The tests that are *about* logging in call fetch directly.
 function send(method: string, path: string, body?: unknown) {
   return fetch(`${base}${path}`, {
     method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: body === undefined ? AUTH : { ...AUTH, "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 }
 
-// Creating a regime now requires an account, so the ordinary helper sends
-// one. The tests that are *about* the header call fetch directly.
+function authed(url: string) {
+  return fetch(url, { headers: AUTH });
+}
+
+// Creating a regime requires being logged in, so the ordinary helper is.
 function postRegime(body: unknown) {
   return fetch(`${base}/api/regimes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-User-Id": USER_ID },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(body),
   });
 }
@@ -322,18 +353,18 @@ describe("GET /health", () => {
 });
 
 describe("GET /api/regimes", () => {
-  function listRegimes(userId: string | null) {
+  function listRegimes(token: string | null) {
     return fetch(`${base}/api/regimes`, {
-      headers: userId === null ? undefined : { "X-User-Id": userId },
+      headers: token === null ? undefined : { Authorization: `Bearer ${token}` },
     });
   }
 
-  it("returns 400 without an account", async () => {
-    expect((await listRegimes(null)).status).toBe(400);
+  it("returns 401 when not logged in", async () => {
+    expect((await listRegimes(null)).status).toBe(401);
   });
 
   it("returns the caller's regimes", async () => {
-    const res = await listRegimes(USER_ID);
+    const res = await listRegimes(TOKEN);
 
     expect(res.status).toBe(200);
     const body = await json<RegimeBody[]>(res);
@@ -343,7 +374,7 @@ describe("GET /api/regimes", () => {
 
   // "Nothing yet" is an answer, so it is an empty list rather than a 404.
   it("returns an empty list for an account with none", async () => {
-    const res = await listRegimes(OTHER_USER_ID);
+    const res = await listRegimes(OTHER_TOKEN);
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual([]);
@@ -352,7 +383,7 @@ describe("GET /api/regimes", () => {
 
 describe("GET /api/regimes/:id", () => {
   it("returns the regime with that id", async () => {
-    const res = await fetch(`${base}/api/regimes/${SAVED_ID}`);
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}`);
 
     expect(res.status).toBe(200);
     const body = await json<RegimeBody>(res);
@@ -361,30 +392,42 @@ describe("GET /api/regimes/:id", () => {
   });
 
   it("404s for an id that exists in no regime", async () => {
-    const res = await fetch(`${base}/api/regimes/99999999-9999-9999-9999-999999999999`);
+    const res = await authed(`${base}/api/regimes/99999999-9999-9999-9999-999999999999`);
     expect(res.status).toBe(404);
   });
 
+  // The same answer as a missing one, so ids cannot be probed.
+  it("404s for another account's regime", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}`, {
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("401s when not logged in", async () => {
+    expect((await fetch(`${base}/api/regimes/${SAVED_ID}`)).status).toBe(401);
+  });
+
   it("404s for a malformed id rather than failing", async () => {
-    const res = await fetch(`${base}/api/regimes/not-a-uuid`);
+    const res = await authed(`${base}/api/regimes/not-a-uuid`);
     expect(res.status).toBe(404);
     expect(await json<ErrorBody>(res)).toEqual({ error: "no regime with that id" });
   });
 
   it("does not match a path with an extra segment", async () => {
     // ":id" captures one segment and never two.
-    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/extra`);
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/extra`);
     expect(res.status).toBe(404);
     expect((await json<ErrorBody>(res)).error).toBe("not found");
   });
 
   it("does not capture an empty id from a trailing slash", async () => {
-    // It reaches the collection route instead, which is why this is a 400
-    // about the missing account rather than a lookup of the id "".
-    const res = await fetch(`${base}/api/regimes/`);
+    // It reaches the collection route instead: the account's list, not a
+    // lookup of the id "".
+    const res = await authed(`${base}/api/regimes/`);
 
-    expect(res.status).toBe(400);
-    expect((await json<ErrorBody>(res)).error).toBe("X-User-Id must be a user id");
+    expect(res.status).toBe(200);
+    expect(Array.isArray(await res.json())).toBe(true);
   });
 });
 
@@ -448,40 +491,32 @@ describe("POST /api/regimes", () => {
     expect(body.id).toBe(SAVED_ID);
   });
 
-  it("tags the regime with the caller's X-User-Id", async () => {
-    const res = await fetch(`${base}/api/regimes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-User-Id": USER_ID },
-      body: JSON.stringify({ muscle: "knee" }),
-    });
-
-    expect((await json<RegimeBody>(res)).userId).toBe(USER_ID);
+  it("saves the regime to the logged-in account", async () => {
+    expect((await json<RegimeBody>(await postRegime({ muscle: "knee" }))).userId).toBe(USER_ID);
   });
 
-  // `regimes.user_id` is `not null`, so a request naming no account cannot
-  // produce a regime. Both of these used to answer 201 with userId null.
-  it("returns 400 when there is no X-User-Id", async () => {
+  // `regimes.user_id` is `not null`, so a request from nobody cannot
+  // produce a regime.
+  it("returns 401 when not logged in", async () => {
     const res = await fetch(`${base}/api/regimes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ muscle: "knee" }),
     });
 
-    expect(res.status).toBe(400);
-    expect((await json<ErrorBody>(res)).error).toBe("X-User-Id must be a user id");
+    expect(res.status).toBe(401);
+    expect((await json<ErrorBody>(res)).error).toBe("log in to do that");
   });
 
-  // A broken id has not identified an account either, so it is the same
-  // answer rather than a silent fallback to "nobody".
-  it("returns 400 for a malformed X-User-Id", async () => {
+  // A made-up or expired token is the same answer: log in again.
+  it("returns 401 for a token no session has", async () => {
     const res = await fetch(`${base}/api/regimes`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-User-Id": "not-a-uuid" },
+      headers: { "Content-Type": "application/json", Authorization: "Bearer made-up" },
       body: JSON.stringify({ muscle: "knee" }),
     });
 
-    expect(res.status).toBe(400);
-    expect((await json<ErrorBody>(res)).error).toBe("X-User-Id must be a user id");
+    expect(res.status).toBe(401);
   });
 
   it("returns 201 and a regime for a known body region", async () => {
@@ -638,6 +673,14 @@ describe("PUT /api/regimes/:id", () => {
 });
 
 describe("DELETE /api/regimes/:id", () => {
+  it("404s for another account's regime, and deletes nothing", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(404);
+  });
+
   it("returns 204 with no body", async () => {
     const res = await send("DELETE", `/api/regimes/${SAVED_ID}`);
 
@@ -663,85 +706,162 @@ describe("DELETE /api/regimes/:id", () => {
 });
 
 describe("POST /api/users", () => {
-  it("returns 201 and the new account for a valid username", async () => {
-    const res = await send("POST", "/api/users", { username: "newuser" });
+  function signUp(body: unknown) {
+    return fetch(`${base}/api/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("returns 201, the new account and a session token", async () => {
+    const res = await signUp({ username: "newuser", password: PASSWORD });
     expect(res.status).toBe(201);
-    const body = await json<{ id: string; username: string }>(res);
-    expect(body.username).toBe("newuser");
-    expect(body.id).toBe(USER_ID);
+    const body = await json<{ user: { id: string; username: string }; token: string }>(res);
+    expect(body.user.username).toBe("newuser");
+    expect(body.user.id).toBe(USER_ID);
+    expect(body.token).toBe("new-token");
   });
 
-  it("normalises case and surrounding whitespace", async () => {
-    const res = await send("POST", "/api/users", { username: "  NewUser  " });
+  it("never sends the password back", async () => {
+    const res = await signUp({ username: "newuser", password: PASSWORD });
+    expect(await res.text()).not.toContain(PASSWORD);
+  });
+
+  it("normalises case and surrounding whitespace in the username", async () => {
+    const res = await signUp({ username: "  NewUser  ", password: PASSWORD });
     expect(res.status).toBe(201);
-    expect((await json<{ username: string }>(res)).username).toBe("newuser");
+    expect((await json<{ user: { username: string } }>(res)).user.username).toBe("newuser");
   });
 
   it("returns 400 when username is missing", async () => {
-    const res = await send("POST", "/api/users", {});
-    expect(res.status).toBe(400);
+    expect((await signUp({ password: PASSWORD })).status).toBe(400);
   });
 
   it("returns 400 for a username failing the charset", async () => {
-    const res = await send("POST", "/api/users", { username: "sh!" });
-    expect(res.status).toBe(400);
+    expect((await signUp({ username: "sh!", password: PASSWORD })).status).toBe(400);
   });
 
   it("returns 400 for a username that is too short", async () => {
-    const res = await send("POST", "/api/users", { username: "ab" });
+    expect((await signUp({ username: "ab", password: PASSWORD })).status).toBe(400);
+  });
+
+  it("returns 400 when password is missing", async () => {
+    const res = await signUp({ username: "newuser" });
     expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("password must be 8-128 characters");
+  });
+
+  it("returns 400 for a password that is too short", async () => {
+    expect((await signUp({ username: "newuser", password: "short" })).status).toBe(400);
+  });
+
+  it("returns 400 for a password that is too long", async () => {
+    expect((await signUp({ username: "newuser", password: "x".repeat(129) })).status).toBe(400);
   });
 
   it("returns 409 for a username already taken", async () => {
-    const res = await send("POST", "/api/users", { username: "shahid" });
+    const res = await signUp({ username: "shahid", password: PASSWORD });
     expect(res.status).toBe(409);
     expect((await json<ErrorBody>(res)).error).toContain("shahid");
   });
 });
 
-describe("GET /api/users", () => {
-  it("returns every account", async () => {
-    const res = await fetch(`${base}/api/users`);
+describe("POST /api/sessions", () => {
+  function logIn(body: unknown) {
+    return fetch(`${base}/api/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("returns the account and a session token for the right password", async () => {
+    const res = await logIn({ username: "shahid", password: PASSWORD });
     expect(res.status).toBe(200);
-    expect(await json<unknown[]>(res)).toEqual([user]);
+    await expect(res.json()).resolves.toEqual({ user, token: "new-token" });
+  });
+
+  it("ignores case in the username", async () => {
+    expect((await logIn({ username: "Shahid", password: PASSWORD })).status).toBe(200);
+  });
+
+  it("returns 401 for a wrong password", async () => {
+    const res = await logIn({ username: "shahid", password: "not the password" });
+    expect(res.status).toBe(401);
+    expect((await json<ErrorBody>(res)).error).toBe("wrong username or password");
+  });
+
+  // The same message as a wrong password, so the form can't be used to find
+  // out who has an account.
+  it("returns the same 401 for a username nobody has", async () => {
+    const res = await logIn({ username: "nobody", password: PASSWORD });
+    expect(res.status).toBe(401);
+    expect((await json<ErrorBody>(res)).error).toBe("wrong username or password");
+  });
+
+  it("returns 401 for an empty body", async () => {
+    expect((await logIn({})).status).toBe(401);
   });
 });
 
-describe("GET /api/users/:id", () => {
-  it("returns the account with that id", async () => {
-    const res = await fetch(`${base}/api/users/${USER_ID}`);
-    expect(res.status).toBe(200);
-    expect(await json<unknown>(res)).toEqual(user);
-  });
-
-  it("404s for an id that exists in no account", async () => {
-    const res = await fetch(`${base}/api/users/${OTHER_USER_ID}`);
-    expect(res.status).toBe(404);
-  });
-
-  it("404s for a malformed id rather than failing", async () => {
-    const res = await fetch(`${base}/api/users/not-a-uuid`);
-    expect(res.status).toBe(404);
-    expect(await json<ErrorBody>(res)).toEqual({ error: "no user with that id" });
-  });
-});
-
-describe("DELETE /api/users/:id", () => {
-  it("returns 204 with no body", async () => {
-    const res = await send("DELETE", `/api/users/${USER_ID}`);
+describe("DELETE /api/sessions", () => {
+  it("logs out: 204 with no body", async () => {
+    const res = await send("DELETE", "/api/sessions");
     expect(res.status).toBe(204);
     expect(await res.text()).toBe("");
   });
 
-  it("404s for an id that exists in no account", async () => {
-    const res = await send("DELETE", `/api/users/${OTHER_USER_ID}`);
-    expect(res.status).toBe(404);
+  it("returns 401 when not logged in", async () => {
+    expect((await fetch(`${base}/api/sessions`, { method: "DELETE" })).status).toBe(401);
+  });
+});
+
+describe("GET /api/users/me", () => {
+  it("returns the logged-in account", async () => {
+    const res = await authed(`${base}/api/users/me`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toEqual(user);
+  });
+
+  it("returns 401 when not logged in", async () => {
+    expect((await fetch(`${base}/api/users/me`)).status).toBe(401);
+  });
+
+  it("returns 401 when the session's account has been deleted", async () => {
+    const res = await fetch(`${base}/api/users/me`, {
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("DELETE /api/users/me", () => {
+  it("returns 204 with no body", async () => {
+    const res = await send("DELETE", "/api/users/me");
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe("");
+  });
+
+  it("returns 401 when not logged in", async () => {
+    expect((await fetch(`${base}/api/users/me`, { method: "DELETE" })).status).toBe(401);
+  });
+});
+
+// Nobody needs anyone's account but their own, so these are gone.
+describe("routes that no longer exist", () => {
+  it("does not list accounts", async () => {
+    expect((await authed(`${base}/api/users`)).status).toBe(404);
+  });
+
+  it("does not look an account up by id", async () => {
+    expect((await authed(`${base}/api/users/${USER_ID}`)).status).toBe(404);
   });
 });
 
 describe("errors", () => {
   it("turns a thrown model error into a 500 without leaking it", async () => {
-    const res = await fetch(`${base}/api/regimes/${BROKEN_ID}`);
+    const res = await authed(`${base}/api/regimes/${BROKEN_ID}`);
     expect(res.status).toBe(500);
     expect(await json<ErrorBody>(res)).toEqual({ error: "internal server error" });
   });
@@ -758,6 +878,12 @@ describe("CORS", () => {
     for (const method of ["GET", "POST", "PUT", "DELETE"]) {
       expect(allowed).toContain(method);
     }
+  });
+
+  // Without it the browser drops the session token from every cross-origin call.
+  it("allows the Authorization header", async () => {
+    const res = await fetch(`${base}/api/regimes`, { method: "OPTIONS" });
+    expect(res.headers.get("access-control-allow-headers")).toContain("Authorization");
   });
 
   it("sets the allow-origin header on real responses", async () => {
@@ -802,19 +928,16 @@ describe("POST /api/onboarding", () => {
     sessionMinutes: 10,
   };
 
-  function postOnboarding(body: unknown, userId: string | null = USER_ID) {
+  function postOnboarding(body: unknown, loggedIn = true) {
     return fetch(`${base}/api/onboarding`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(userId === null ? {} : { "X-User-Id": userId }),
-      },
+      headers: { "Content-Type": "application/json", ...(loggedIn ? AUTH : {}) },
       body: JSON.stringify(body),
     });
   }
 
-  it("returns 400 without an account", async () => {
-    expect((await postOnboarding(answers, null)).status).toBe(400);
+  it("returns 401 when not logged in", async () => {
+    expect((await postOnboarding(answers, false)).status).toBe(401);
   });
 
   it("names the valid options when an answer is outside its list", async () => {
@@ -898,7 +1021,7 @@ describe("POST /api/onboarding", () => {
 describe("GET /api/onboarding/:id/candidates", () => {
   function getCandidates(onboardingId: string) {
     return fetch(`${base}/api/onboarding/${onboardingId}/candidates`, {
-      headers: { "X-User-Id": USER_ID },
+      headers: AUTH,
     });
   }
 

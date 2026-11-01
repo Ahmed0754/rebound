@@ -181,6 +181,17 @@ h3 {
   font-size: 13px;
 }
 
+/* A button that reads as a link, for an action inside a sentence. */
+.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Forms */
 
 .field {

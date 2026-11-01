@@ -1,6 +1,8 @@
-// The model for accounts: create, list, get, remove. No passwords and no
-// sessions - see ADR 0014. Every account is a test account.
+// The model for accounts: sign up, find for logging in, get, remove. A
+// password is hashed before it reaches the database, and the hash never
+// leaves this file except to be checked - `User` has no field for it.
 
+import { hashPassword } from "../auth.js";
 import { pool } from "./db.js";
 
 export type User = {
@@ -41,16 +43,18 @@ function fromDbRow(row: UserRow): User {
 }
 
 /**
- * Creates an account and returns it.
+ * Creates an account with a password and returns it.
  *
  * Lets the unique index raise the conflict rather than checking first:
  * checking first is a race between the check and the insert.
  */
-export async function create(username: string): Promise<User> {
+export async function create(username: string, password: string): Promise<User> {
+  const passwordHash = await hashPassword(password);
+
   try {
     const created = await pool.query<UserRow>(
-      `insert into users (username) values ($1) returning ${USER_COLUMNS}`,
-      [username]
+      `insert into users (username, password_hash) values ($1, $2) returning ${USER_COLUMNS}`,
+      [username, passwordHash]
     );
 
     return fromDbRow(created.rows[0]);
@@ -63,13 +67,27 @@ export async function create(username: string): Promise<User> {
   }
 }
 
-/** Every account, newest first - so testing has something to pick from. */
-export async function list(): Promise<User[]> {
-  const found = await pool.query<UserRow>(
-    `select ${USER_COLUMNS} from users order by created_at desc`
+/**
+ * An account and its password hash, for checking a login. Null when there is
+ * no such username, and for the test accounts made before passwords, which
+ * have no hash and so cannot log in.
+ */
+export async function findForLogin(
+  username: string
+): Promise<{ user: User; passwordHash: string } | null> {
+  // `lower(username)` so the query uses the users_username_lower index.
+  const found = await pool.query<UserRow & { password_hash: string | null }>(
+    `select ${USER_COLUMNS}, password_hash from users where lower(username) = lower($1)`,
+    [username]
   );
 
-  return found.rows.map(fromDbRow);
+  const row = found.rows[0];
+
+  if (row === undefined || row.password_hash === null) {
+    return null;
+  }
+
+  return { user: fromDbRow(row), passwordHash: row.password_hash };
 }
 
 /** One account by id, or null when no account has that id, malformed ids included. */
@@ -85,7 +103,10 @@ export async function get(id: string): Promise<User | null> {
   return found.rows.length === 0 ? null : fromDbRow(found.rows[0]);
 }
 
-/** Deletes one account, and reports whether there was one to delete. */
+/**
+ * Deletes one account, and reports whether there was one to delete. Its
+ * plans, questionnaires and sessions go with it (`on delete cascade`).
+ */
 export async function remove(id: string): Promise<boolean> {
   if (!UUID.test(id)) {
     return false;

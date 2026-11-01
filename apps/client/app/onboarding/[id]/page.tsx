@@ -27,15 +27,15 @@ type Load = { status: "loading" } | { status: "missing" } | { status: "error"; m
 
 export default function OutcomePage() {
   const { id } = useParams<{ id: string }>();
-  const { user, error: accountError } = useRequiredUser();
+  const { token, error: accountError } = useRequiredUser();
   const [load, setLoad] = useState<Load>({ status: "loading" });
 
   useEffect(() => {
-    if (!user) return;
+    if (!token) return;
 
     let cancelled = false;
 
-    getOnboarding(user.id, id)
+    getOnboarding(token, id)
       .then((result) => {
         if (!cancelled) setLoad({ status: "loaded", result });
       })
@@ -48,7 +48,7 @@ export default function OutcomePage() {
     return () => {
       cancelled = true;
     };
-  }, [user, id]);
+  }, [token, id]);
 
   if (accountError) {
     return (
@@ -58,7 +58,7 @@ export default function OutcomePage() {
     );
   }
 
-  if (!user || load.status === "loading") {
+  if (!token || load.status === "loading") {
     return (
       <main className="page">
         <Loading />
@@ -95,7 +95,7 @@ export default function OutcomePage() {
   //they are different situations and need different help.
   if (result.outcome === "crisis") return <CrisisScreen />;
   if (result.outcome === "see_a_doctor") return <SeeADoctorScreen result={result} />;
-  return <ReadyScreen result={result} userId={user.id} />;
+  return <ReadyScreen result={result} token={token} />;
 }
 
 // Crisis support first, and nothing about exercise or doctors.
@@ -204,10 +204,10 @@ type Build =
 
 function ReadyScreen({
   result,
-  userId,
+  token,
 }: {
   result: Extract<OnboardingResult, { outcome: "ready" }>;
-  userId: string;
+  token: string;
 }) {
   const router = useRouter();
   const [build, setBuild] = useState<Build>({ status: "idle" });
@@ -219,7 +219,7 @@ function ReadyScreen({
   useEffect(() => {
     let cancelled = false;
 
-    getFunnel(userId, result.id)
+    getFunnel(token, result.id)
       .then((f) => {
         if (!cancelled) setFunnel(f);
       })
@@ -228,7 +228,7 @@ function ReadyScreen({
     return () => {
       cancelled = true;
     };
-  }, [userId, result.id]);
+  }, [token, result.id]);
 
   useEffect(() => {
     if (build.status !== "building") return;
@@ -247,7 +247,7 @@ function ReadyScreen({
     setBuild({ status: "building" });
 
     try {
-      const plan = await createRegimeFromOnboarding(userId, result.id);
+      const plan = await createRegimeFromOnboarding(token, result.id);
       router.push(`/plans/${plan.id}`);
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
@@ -311,6 +311,8 @@ function ReadyScreen({
           {build.status === "building" ? "Building…" : build.status === "failed" ? "Try again" : "Build my plan"}
         </button>
       )}
+
+      {build.status === "building" && <p className="muted small">This can take up to 20 seconds.</p>}
     </main>
   );
 }

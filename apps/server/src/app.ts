@@ -5,7 +5,7 @@
 import express, { type ErrorRequestHandler } from "express";
 import onboardingController from "./controllers/onboarding.js";
 import regimesController from "./controllers/regimes.js";
-import usersController from "./controllers/users.js";
+import { sessionsRouter, users } from "./controllers/users.js";
 import { listRegions } from "./models/exercises.js";
 
 // The page runs on :3000 and this API on :4000, so the browser must be told :3000 is allowed.
@@ -17,7 +17,7 @@ export const app = express();
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", webOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-User-Id");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   // The browser asks permission with its own OPTIONS request before a cross-origin
   // POST, PUT or DELETE. A method left out of the header above is refused by the
@@ -47,7 +47,8 @@ app.get("/api/regions", async (_req, res) => {
 
 app.use("/api/onboarding", onboardingController);
 app.use("/api/regimes", regimesController);
-app.use("/api/users", usersController);
+app.use("/api/users", users);
+app.use("/api/sessions", sessionsRouter);
 
 // Reached only when no route matched.
 app.use((_req, res) => {
