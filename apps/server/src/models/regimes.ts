@@ -501,7 +501,7 @@ export async function generate(input: {
 export async function create(input: {
   muscle: string;
   userId: string;
-  onboarding?: { answers: Answers; limits: Limits; freeText: string | null };
+  onboarding?: { id: string; answers: Answers; limits: Limits; freeText: string | null };
 }): Promise<Regime | null> {
   const { muscle, userId, onboarding } = input;
   const limits = onboarding?.limits ?? widestLimits();
@@ -554,10 +554,17 @@ export async function create(input: {
     await client.query("begin");
 
     const created = await client.query<RegimeRow>(
-      `insert into regimes (muscle, body_region, user_id, limits, quality)
-       values ($1, $2, $3, $4, $5)
+      `insert into regimes (muscle, body_region, user_id, limits, quality, onboarding_id)
+       values ($1, $2, $3, $4, $5, $6)
        returning ${REGIME_COLUMNS}`,
-      [muscle, region, userId, JSON.stringify(limits), quality === null ? null : JSON.stringify(quality)]
+      [
+        muscle,
+        region,
+        userId,
+        JSON.stringify(limits),
+        quality === null ? null : JSON.stringify(quality),
+        onboarding?.id ?? null,
+      ]
     );
 
     const row = created.rows[0];
@@ -598,6 +605,42 @@ export async function get(id: string, userId: string): Promise<Regime | null> {
   }
 
   return fromDbRow(found.rows[0], await readItems(pool, id));
+}
+
+/**
+ * One regime with what the evaluation needs beside it: the questionnaire it
+ * was built from, when that was recorded, and what the quality checks made
+ * of it at generation time. Null in the same cases as `get`.
+ *
+ * Kept apart from `get` because `quality` is for measuring the checks, not
+ * for showing the person the plan is for - only the evaluation reads it.
+ */
+export async function getForEvaluation(
+  id: string,
+  userId: string
+): Promise<{ regime: Regime; onboardingId: string | null; quality: Quality | null } | null> {
+  if (!UUID.test(id)) {
+    return null;
+  }
+
+  const found = await pool.query<RegimeRow & { onboarding_id: string | null; quality: Quality | null }>(
+    `select ${REGIME_COLUMNS}, onboarding_id, quality
+       from regimes
+      where id = $1 and user_id = $2`,
+    [id, userId]
+  );
+
+  if (found.rows.length === 0) {
+    return null;
+  }
+
+  const row = found.rows[0];
+
+  return {
+    regime: fromDbRow(row, await readItems(pool, id)),
+    onboardingId: row.onboarding_id,
+    quality: row.quality,
+  };
 }
 
 /**

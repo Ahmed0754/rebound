@@ -156,3 +156,22 @@ export async function get(id: string, userId: string): Promise<Onboarding | null
 
   return fromDbRow(found.rows[0]);
 }
+
+/**
+ * `userId`'s questionnaires for `region` saved at or before `before`, newest
+ * first. For regimes made before they recorded which questionnaire they came
+ * from: the one just before a plan is the best guess at the one behind it,
+ * and the caller says it is a guess.
+ */
+export async function listBefore(userId: string, region: string, before: string): Promise<Onboarding[]> {
+  const found = await pool.query<OnboardingRow>(
+    `select ${COLUMNS}
+       from onboarding_responses
+      where user_id = $1 and region = $2 and created_at <= $3
+      order by created_at desc
+      limit 10`,
+    [userId, region, before]
+  );
+
+  return found.rows.map(fromDbRow);
+}

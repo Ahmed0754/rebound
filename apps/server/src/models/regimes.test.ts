@@ -124,7 +124,7 @@ describe("create, from a questionnaire", () => {
   });
 
   function build(freeText: string | null = null) {
-    return create({ muscle: "knee", userId: "u", onboarding: { answers, limits, freeText } });
+    return create({ muscle: "knee", userId: "u", onboarding: { id: "o", answers, limits, freeText } });
   }
 
   beforeEach(() => {
@@ -169,6 +169,15 @@ describe("create, from a questionnaire", () => {
 
     const insert = db.client.query.mock.calls.find(([sql]) => String(sql).includes("insert into regimes"));
     expect(JSON.parse(insert![1][3])).toEqual(limits);
+  });
+
+  it("records the questionnaire the plan was built from", async () => {
+    propose.mockResolvedValueOnce(answer(valid));
+
+    await build();
+
+    const insert = db.client.query.mock.calls.find(([sql]) => String(sql).includes("insert into regimes"));
+    expect(insert![1][5]).toBe("o");
   });
 
   it("retries once, telling the model what was wrong", async () => {
@@ -235,7 +244,7 @@ describe("create, checking quality before it saves", () => {
   });
 
   function build() {
-    return create({ muscle: "knee", userId: "u", onboarding: { answers, limits, freeText: null } });
+    return create({ muscle: "knee", userId: "u", onboarding: { id: "o", answers, limits, freeText: null } });
   }
 
   // The quality column is the insert's fifth parameter.

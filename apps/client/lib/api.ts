@@ -252,6 +252,110 @@ export function deleteRegime(token: string, regimeId: string): Promise<void> {
   return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE", token });
 }
 
+// One row of a table in the server's eval/REFERENCES.md, its cells keyed by
+// that table's headers and still in markdown.
+export type ReferenceRow = { section: string; subsection: string | null; cells: Record<string, string> };
+
+// Where a criterion ended up for a plan. "unsatisfiable": it applies, but no
+// exercise these answers allow could meet it, so it isn't held against the plan.
+export type Outcome = "met" | "missed" | "not_applicable" | "unsatisfiable";
+export type PickVerdict = "suits" | "questionable" | "unsuitable";
+
+// One question put to the judge: exactly what it was sent, and every answer
+// that came back. `result` is null when no attempt parsed.
+export type JudgeCall<T> = {
+  request: { model: string; system: string; contents: string; temperature?: number; responseSchema: unknown };
+  attempts: { ms: number; raw: string | null; error: string | null }[];
+  result: T | null;
+};
+
+type Verdict<V> = { id: string; verdict: V; reason: string };
+
+// Everything the eval's code checks and LLM judge made of one saved plan,
+// run fresh on each request. Shapes mirror apps/server/eval/live.ts.
+export type Evaluation = {
+  regime: { id: string; region: string; createdAt: string; updatedAt: string; editedSinceGenerated: boolean };
+  questionnaire: {
+    id: string;
+    // "inferred" when the plan predates recording its questionnaire, so the
+    // server matched one by account, region and time.
+    link: "recorded" | "inferred";
+    createdAt: string;
+    answers: Answers;
+    freeText: string | null;
+    screening: Screening;
+  };
+  limits: Limits;
+  limitsRecorded: boolean;
+  firedRules: string[];
+  pool: { size: number };
+  generation: { attempts: number; firstMissed: string[] } | null;
+  versions: { generatorModel: string; judgeModel: string; judgeVersion: string; rubric: string; sameModel: boolean };
+  hard: string[];
+  live: {
+    id: string;
+    ask: string;
+    sources: string[];
+    outcome: Outcome | null;
+    atGeneration: Outcome | null;
+    missedFirst: boolean;
+    reference: ReferenceRow | null;
+  }[];
+  provisional: {
+    id: string;
+    says: string;
+    sources: string[];
+    gradedBy: "code" | "judge";
+    outcome: Outcome | "judge_failed" | null;
+    judgeReason: string | null;
+    reference: ReferenceRow | null;
+  }[];
+  picks: (Exercise & {
+    tags: {
+      primaryMuscles: string[];
+      category: string;
+      level: string;
+      equipment: string | null;
+      force: string | null;
+      mechanic: string | null;
+    } | null;
+    verdict: PickVerdict | null;
+    reason: string | null;
+    benchmarkNotes: { id: string; exercise: string; note: string }[];
+    referencePlans: ReferenceRow[];
+    overlapsWith: string[];
+  })[];
+  safety: {
+    id: string;
+    says: string;
+    liveCheck: boolean;
+    verdict: "met" | "missed" | null;
+    reason: string | null;
+    reference: ReferenceRow | null;
+  }[];
+  rationalesSkipped: string | null;
+  benchmarks: {
+    id: string;
+    sources: string[];
+    notes: { exercise: string; note: string }[];
+    reference: ReferenceRow | null;
+  }[];
+  shape: { pinned: boolean; overlap: string[][] };
+  calls: {
+    plan: JudgeCall<{ criteria: Verdict<"met" | "missed">[]; picks: Verdict<PickVerdict>[] }>;
+    rationales: JudgeCall<{ safety: Verdict<"met" | "missed">[] }> | null;
+  };
+  references: { sources: Record<string, ReferenceRow>; readLabels: ReferenceRow[] };
+  ms: number;
+};
+
+// Grades a saved plan in code and asks the LLM judge about it, live. Slow -
+// two Gemini calls - and nothing is saved. 409 when the plan has no
+// questionnaire behind it to judge it against.
+export function evaluateRegime(token: string, regimeId: string): Promise<Evaluation> {
+  return request(`/api/regimes/${id(regimeId)}/evaluation`, { method: "POST", token });
+}
+
 // The message to show for anything a call threw.
 export function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

@@ -190,6 +190,9 @@ export default function PlanPage() {
           <button type="button" className="btn btn-small btn-danger" onClick={remove} disabled={busy}>
             Delete plan
           </button>
+          <Link className="btn btn-small" href={`/plans/${plan.id}/evaluation`}>
+            See how it was judged
+          </Link>
         </div>
       )}
 

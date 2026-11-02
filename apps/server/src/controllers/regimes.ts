@@ -3,11 +3,13 @@
 
 import { Router } from "express";
 import { decide, getLimits } from "../clinical.js";
-import { get as getOnboarding } from "../models/onboarding.js";
+import { evaluate } from "../../eval/live.js";
+import { get as getOnboarding, listBefore, type Onboarding } from "../models/onboarding.js";
 import {
   create,
   GenerationFailed,
   get,
+  getForEvaluation,
   list,
   remove,
   TooFewCandidates,
@@ -189,6 +191,7 @@ async function fromOnboarding(onboardingId: string, userId: string) {
       muscle: onboarding.answers.region,
       userId,
       onboarding: {
+        id: onboarding.id,
         answers: onboarding.answers,
         limits: getLimits(onboarding.answers),
         freeText: onboarding.note.freeText,
@@ -248,6 +251,48 @@ router.get("/:id", async (req, res) => {
   }
 
   res.send(regime);
+});
+
+/**
+ * Runs the eval's graders and judge on one saved regime and returns all of
+ * it - see eval/live.ts. A POST because every call asks the judge again: two
+ * Gemini calls, nothing cached and nothing saved.
+ *
+ * The judge grades a plan for a person, so it needs the questionnaire behind
+ * the plan. Regimes record it now; for one made before they did, the latest
+ * of the account's questionnaires for that region that led to a plan, saved
+ * before the plan was, is taken instead, and the response says so. 409 when
+ * there is none: a plan from the type-a-body-part path has no person to judge
+ * it for.
+ */
+router.post("/:id/evaluation", async (req, res) => {
+  const userId = userIdOf(res);
+  const found = await getForEvaluation(req.params.id, userId);
+
+  if (found === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  let onboarding: Onboarding | null = null;
+  let link: "recorded" | "inferred" = "recorded";
+
+  if (found.onboardingId !== null) {
+    onboarding = await getOnboarding(found.onboardingId, userId);
+  }
+
+  if (onboarding === null) {
+    link = "inferred";
+    const earlier = await listBefore(userId, found.regime.muscle, found.regime.createdAt);
+    onboarding = earlier.find((o) => decide(o.answers, o.note.screening) === "ready") ?? null;
+  }
+
+  if (onboarding === null) {
+    res.status(409).send({ error: "this plan has no questionnaire behind it, so there is nobody to judge it for" });
+    return;
+  }
+
+  res.send(await evaluate({ regime: found.regime, quality: found.quality, onboarding, link }));
 });
 
 router.put("/:id", async (req, res) => {

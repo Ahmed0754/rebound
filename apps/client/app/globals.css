@@ -452,3 +452,209 @@ h3 {
 .funnel-value {
   font-variant-numeric: tabular-nums;
 }
+
+/* Evaluation: how one plan was judged. Wider than other pages, for the
+   prompts and the reference tables. */
+
+.page-wide {
+  max-width: 860px;
+}
+
+.eval-section {
+  margin-top: 32px;
+  scroll-margin-top: 16px;
+}
+
+.eval-section h2 .by {
+  font-size: 13px;
+  font-weight: normal;
+  color: var(--faint);
+}
+
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-bottom: 8px;
+}
+
+.toc a {
+  color: var(--muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.caveats {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.criterion-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crit-id {
+  font-weight: 700;
+}
+
+.criterion-text {
+  margin: 8px 0 4px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.badge-good {
+  color: #0b5d1e;
+  background: #e7f6eb;
+}
+
+.badge-bad {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.badge-warn {
+  color: var(--warn-text);
+  background: var(--warn-bg);
+}
+
+.badge-neutral {
+  color: var(--muted);
+  border-color: var(--border-strong);
+}
+
+.by-pill {
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.by-judge {
+  border-style: solid;
+  border-color: var(--crisis);
+  color: var(--crisis);
+}
+
+.judge-says {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--crisis);
+  background: var(--crisis-bg);
+  font-size: 14px;
+}
+
+.judge-label {
+  font-weight: 600;
+  color: var(--crisis);
+}
+
+.src-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.src {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.source:target {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--border-strong);
+}
+
+.ref {
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.ref summary,
+.call summary {
+  cursor: pointer;
+}
+
+.ref-cells {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.ref-cells > div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+}
+
+.ref-cells dt {
+  color: var(--muted);
+}
+
+.ref-cells dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.call {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.call summary {
+  font-weight: 600;
+}
+
+.call pre {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  max-height: 420px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.folded > summary {
+  cursor: pointer;
+  margin-bottom: 12px;
+}
