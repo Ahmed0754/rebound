@@ -16,6 +16,8 @@
   --danger-bg: #fdecef;
   --warn-text: #7a4b00;
   --warn-bg: #fff6e5;
+  --success: #1e6b34;
+  --success-bg: #e9f6ec;
   --crisis: #5b1a8c;
   --crisis-bg: #f5eefb;
   --bar: #888;
@@ -316,6 +318,14 @@ h3 {
 .notice {
   color: var(--warn-text);
   background: var(--warn-bg);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.success {
+  color: var(--success);
+  background: var(--success-bg);
   border-radius: var(--radius);
   padding: 10px 12px;
   margin: 12px 0;

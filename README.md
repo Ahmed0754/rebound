@@ -58,6 +58,8 @@ Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 nee
 | `POST` | `/api/users` | `{username, password}` | `201 {user, token}`, logged in | `400` bad name or password · `409` taken |
 | `GET` | `/api/users/me` 👤 | — | `200` user | `401` |
 | `DELETE` | `/api/users/me` 👤 | — | `204`, and its plans, questionnaires and sessions with it | `401` |
+| `PUT` | `/api/users/me/password` 👤 | `{currentPassword, newPassword}` | `204`, every other session ends | `400` new password 8–128 characters · `403` current password wrong · `401` |
+| `DELETE` | `/api/users/me/sessions` 👤 | — | `204`, every session ends, this one included | `401` |
 | `POST` | `/api/sessions` | `{username, password}` | `200 {user, token}` | `401` wrong username or password (never says which) |
 | `DELETE` | `/api/sessions` 👤 | — | `204`, the token stops working | `401` |
 | `POST` | `/api/onboarding` 👤 | answers + optional `freeText` | `201` `{id, outcome, screening, …}` | `400` names the expected values |

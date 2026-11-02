@@ -258,6 +258,8 @@ vi.mock("./models/users.js", () => ({
     username.toLowerCase() === "shahid" ? { user, passwordHash: PASSWORD } : null
   ),
   get: vi.fn(async (id: string) => (id === USER_ID ? user : null)),
+  getPasswordHash: vi.fn(async (id: string) => (id === USER_ID ? PASSWORD : null)),
+  setPassword: vi.fn(async () => undefined),
   remove: vi.fn(async (id: string) => id === USER_ID),
 }));
 
@@ -268,6 +270,7 @@ vi.mock("./models/sessions.js", () => ({
     token === TOKEN ? USER_ID : token === OTHER_TOKEN ? OTHER_USER_ID : null
   ),
   remove: vi.fn(async () => undefined),
+  removeAll: vi.fn(async () => undefined),
 }));
 
 // Real scrypt is slow on purpose, and auth.test.ts covers it. Here a "hash"
@@ -845,6 +848,77 @@ describe("DELETE /api/users/me", () => {
 
   it("returns 401 when not logged in", async () => {
     expect((await fetch(`${base}/api/users/me`, { method: "DELETE" })).status).toBe(401);
+  });
+});
+
+describe("PUT /api/users/me/password", () => {
+  const NEW_PASSWORD = "a brand new password";
+
+  function changePassword(body: unknown) {
+    return send("PUT", "/api/users/me/password", body);
+  }
+
+  it("returns 204, saves the new password and logs out every other session", async () => {
+    const { setPassword } = await import("./models/users.js");
+    const { removeAll } = await import("./models/sessions.js");
+    vi.mocked(setPassword).mockClear();
+    vi.mocked(removeAll).mockClear();
+
+    const res = await changePassword({ currentPassword: PASSWORD, newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(204);
+    expect(setPassword).toHaveBeenCalledWith(USER_ID, NEW_PASSWORD);
+    expect(removeAll).toHaveBeenCalledWith(USER_ID, TOKEN);
+  });
+
+  // Not 401: the session is fine, and a 401 would log the client out.
+  it("returns 403 and changes nothing for a wrong current password", async () => {
+    const { setPassword } = await import("./models/users.js");
+    vi.mocked(setPassword).mockClear();
+
+    const res = await changePassword({ currentPassword: "not the password", newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(403);
+    expect((await json<ErrorBody>(res)).error).toBe("current password is wrong");
+    expect(setPassword).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a current password too long to be anyone's", async () => {
+    const res = await changePassword({ currentPassword: "x".repeat(129), newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 400 for a new password that is too short", async () => {
+    const res = await changePassword({ currentPassword: PASSWORD, newPassword: "short" });
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("new password must be 8-128 characters");
+  });
+
+  it("returns 400 for a new password that is too long", async () => {
+    const res = await changePassword({ currentPassword: PASSWORD, newPassword: "x".repeat(129) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 401 when not logged in", async () => {
+    const res = await fetch(`${base}/api/users/me/password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: PASSWORD, newPassword: NEW_PASSWORD }),
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("DELETE /api/users/me/sessions", () => {
+  it("logs out every session, this one included", async () => {
+    const { removeAll } = await import("./models/sessions.js");
+    vi.mocked(removeAll).mockClear();
+
+    const res = await send("DELETE", "/api/users/me/sessions");
+    expect(res.status).toBe(204);
+    expect(removeAll).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("returns 401 when not logged in", async () => {
+    expect((await fetch(`${base}/api/users/me/sessions`, { method: "DELETE" })).status).toBe(401);
   });
 });
 

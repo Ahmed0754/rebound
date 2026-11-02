@@ -1,4 +1,5 @@
-// The model for accounts: sign up, find for logging in, get, remove. A
+// The model for accounts: sign up, find for logging in, change the password,
+// get, remove. A
 // password is hashed before it reaches the database, and the hash never
 // leaves this file except to be checked - `User` has no field for it.
 
@@ -88,6 +89,27 @@ export async function findForLogin(
   }
 
   return { user: fromDbRow(row), passwordHash: row.password_hash };
+}
+
+/** An account's password hash, for checking it before a change. Null when there is none. */
+export async function getPasswordHash(id: string): Promise<string | null> {
+  if (!UUID.test(id)) {
+    return null;
+  }
+
+  const found = await pool.query<{ password_hash: string | null }>(
+    `select password_hash from users where id = $1`,
+    [id]
+  );
+
+  return found.rows[0]?.password_hash ?? null;
+}
+
+/** Replaces an account's password. Hashed here, like `create`. */
+export async function setPassword(id: string, password: string): Promise<void> {
+  const passwordHash = await hashPassword(password);
+
+  await pool.query(`update users set password_hash = $2 where id = $1`, [id, passwordHash]);
 }
 
 /** One account by id, or null when no account has that id, malformed ids included. */

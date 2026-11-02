@@ -200,6 +200,17 @@ export function deleteMe(token: string): Promise<void> {
   return request("/api/users/me", { method: "DELETE", token });
 }
 
+// Changes the password. 403 means the current password was wrong, 400 that the
+// new one is the wrong length. Every other device is logged out; this one isn't.
+export function changePassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+  return request("/api/users/me/password", { method: "PUT", token, body: { currentPassword, newPassword } });
+}
+
+// Ends every session this account has, this one included.
+export function logOutEverywhere(token: string): Promise<void> {
+  return request("/api/users/me/sessions", { method: "DELETE", token });
+}
+
 // Saves a whole questionnaire in one go and returns the server's decision.
 // Slow when there is a note: the server screens it with Gemini first.
 export function createOnboarding(
