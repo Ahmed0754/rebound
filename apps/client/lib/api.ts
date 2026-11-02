@@ -258,6 +258,35 @@ export function updateRegime(token: string, regimeId: string, regime: RegimeEdit
   return request(`/api/regimes/${id(regimeId)}`, { method: "PUT", token, body: { regime } });
 }
 
+// One day's pain check-in on a plan. `day` is the person's own date, "2026-11-02".
+export type CheckIn = {
+  day: string;
+  pain: number;
+  didExercises: boolean;
+  updatedAt: string;
+};
+
+// A plan's check-ins, oldest first. A 404 for another account's plan.
+export function listCheckIns(token: string, regimeId: string): Promise<CheckIn[]> {
+  return request(`/api/regimes/${id(regimeId)}/checkins`, { token });
+}
+
+// Saves one day's check-in, replacing that day's if there is one. 400 for a
+// day in the future or before the plan was made.
+export function saveCheckIn(
+  token: string,
+  regimeId: string,
+  day: string,
+  pain: number,
+  didExercises: boolean
+): Promise<CheckIn> {
+  return request(`/api/regimes/${id(regimeId)}/checkins/${id(day)}`, {
+    method: "PUT",
+    token,
+    body: { pain, didExercises },
+  });
+}
+
 // Deletes a saved plan. Hard delete on the server; there is no undo.
 export function deleteRegime(token: string, regimeId: string): Promise<void> {
   return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE", token });

@@ -1,13 +1,14 @@
 "use client";
 
 //this is one plan: its exercises, doses and rationales, with editing of the
-//doses and deleting the whole plan.
+//doses, deleting the whole plan, and the pain tracker.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ExerciseFigure } from "@/components/exercise-figure";
 import { LimitsPanel } from "@/components/limits";
+import { PainTracker } from "@/components/pain-tracker";
 import { AccountError, BackLink, ErrorMessage, Loading } from "@/components/ui";
 import { ApiError, deleteRegime, getRegimeById, messageOf, updateRegime, type Exercise, type Regime } from "@/lib/api";
 import { useRequiredUser } from "@/lib/current-user";
@@ -261,6 +262,9 @@ export default function PlanPage() {
           </button>
         </div>
       )}
+
+      {/* Out of the way while the doses are being edited. */}
+      {!editing && token && <PainTracker token={token} planId={plan.id} />}
 
       {/* Older plans were saved before the server recorded their limits. */}
       {plan.limits && <LimitsPanel limits={plan.limits} title="The limits this plan was built inside" />}
