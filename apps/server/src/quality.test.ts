@@ -7,7 +7,7 @@ import { asksFor, checkQuality, CRITERIA, type Tagged } from "./quality.js";
 
 // Nothing wrong with this person, so both categories are allowed.
 const WELL: Answers = {
-  goal: "general_mobility",
+  goal: "Move more freely in general",
   region: "knee",
   onset: "subacute",
   painNow: 1,

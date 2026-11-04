@@ -169,7 +169,7 @@ function storedOnboarding(id: string, userId: string, region: string, screening 
     userId,
     createdAt: CREATED_AT,
     answers: {
-      goal: "reduce_pain",
+      goal: "Reduce pain",
       region,
       onset: "acute",
       painNow: 8,
@@ -1124,7 +1124,7 @@ describe("GET /api/regions", () => {
 
 describe("POST /api/onboarding", () => {
   const answers = {
-    goal: "reduce_pain",
+    goal: "Reduce pain",
     region: "knee",
     onset: "acute",
     painNow: 3,
@@ -1181,6 +1181,59 @@ describe("POST /api/onboarding", () => {
 
     expect(res.status).toBe(400);
     expect((await json<ErrorBody>(res)).error).toBe("freeText must be at most 500 characters");
+  });
+
+  it("rejects a blank goal, and one over 200 characters", async () => {
+    for (const goal of ["   ", "a".repeat(201), 7]) {
+      const res = await postOnboarding({ ...answers, goal });
+
+      expect(res.status).toBe(400);
+      expect((await json<ErrorBody>(res)).error).toBe("goal is required, in at most 200 characters");
+    }
+  });
+
+  it("saves the goal trimmed, in the person's own words", async () => {
+    const { create } = await import("./models/onboarding.js");
+    vi.mocked(create).mockClear();
+
+    await postOnboarding({ ...answers, goal: "  carry my shopping up the stairs  " });
+
+    expect(vi.mocked(create).mock.calls[0][1]).toMatchObject({ goal: "carry my shopping up the stairs" });
+  });
+
+  // A typed goal is prose, so it is screened even when there is no note.
+  it("screens a typed goal when there is no note", async () => {
+    const res = await postOnboarding({ ...answers, goal: "get back to 5k runs" });
+
+    await expect(res.json()).resolves.toMatchObject({ outcome: "ready", screening: "clear" });
+  });
+
+  it("sends a goal that discloses a red flag to a doctor", async () => {
+    const res = await postOnboarding({ ...answers, goal: "keep walking while I'm pregnant" });
+
+    await expect(res.json()).resolves.toMatchObject({
+      outcome: "see_a_doctor",
+      noteCategories: ["pregnancy_related"],
+    });
+  });
+
+  it("screens the goal and the note together, in one call", async () => {
+    const { screenNote } = await import("./models/classifier.js");
+    vi.mocked(screenNote).mockClear();
+
+    await postOnboarding({ ...answers, goal: "play with my kids", freeText: "worse in the mornings" });
+
+    expect(vi.mocked(screenNote).mock.calls).toEqual([["play with my kids\n\nworse in the mornings"]]);
+  });
+
+  // The examples are our words, so a tapped one adds nothing to screen.
+  it("does not screen a goal tapped from the examples", async () => {
+    const { screenNote } = await import("./models/classifier.js");
+    vi.mocked(screenNote).mockClear();
+
+    await postOnboarding({ ...answers, goal: "Reduce pain", freeText: "stairs are the worst" });
+
+    expect(vi.mocked(screenNote).mock.calls).toEqual([["stairs are the worst"]]);
   });
 
   it("treats a blank note as no note, with nothing to screen", async () => {

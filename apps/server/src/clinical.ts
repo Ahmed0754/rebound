@@ -11,12 +11,22 @@
 // source's id in eval/REFERENCES.md, which says how each one was read.
 // "Judgment" means no source was found for it.
 
-export const GOALS = [
-  "return_to_movement",
-  "reduce_pain",
-  "prevent_recurrence",
-  "general_mobility",
+// The goal is the person's own words, not a choice from a list. No rule here
+// reads it - only the generation prompt does - so a fixed list bought nothing
+// and lost most of what they meant. These are the suggestions the
+// questionnaire offers to tap instead of typing. They are our words, so a goal
+// that is exactly one of them has nothing in it to screen.
+export const GOAL_EXAMPLES = [
+  "Get back to moving normally",
+  "Reduce pain",
+  "Stop it coming back",
+  "Move more freely in general",
 ] as const;
+
+// Long enough for "run a 5k again by spring without my knee flaring up",
+// short enough to stay a goal rather than a second note. The database
+// enforces the same number.
+export const GOAL_MAX_LENGTH = 200;
 
 // Under a week, one to six weeks, longer.
 export const ONSETS = ["acute", "subacute", "chronic"] as const;
@@ -64,7 +74,6 @@ export const RED_FLAGS = [
   "fever_or_weight_loss",
 ] as const;
 
-export type Goal = (typeof GOALS)[number];
 export type Onset = (typeof ONSETS)[number];
 export type AgeBand = (typeof AGE_BANDS)[number];
 export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
@@ -77,7 +86,8 @@ export type Difficulty = (typeof DIFFICULTIES)[number];
 export type Category = (typeof CATEGORIES)[number];
 
 export type Answers = {
-  goal: Goal;
+  // In their own words, screened with the note. Nothing in this file reads it.
+  goal: string;
   // What hurts, as typed. Resolved to a body region at generation time by
   // `matchRegion`, not here.
   region: string;

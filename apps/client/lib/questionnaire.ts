@@ -4,12 +4,17 @@
 // endpoint. They must match the server's strings exactly; if they drift, the
 // server's 400 message names the values it expects. The labels are ours.
 
-export const GOALS = {
-  return_to_movement: "Get back to moving normally",
-  reduce_pain: "Reduce pain",
-  prevent_recurrence: "Stop it coming back",
-  general_mobility: "Move more freely in general",
-} as const;
+// The goal is typed, not picked. These are suggestions to tap instead, copied
+// from GOAL_EXAMPLES in clinical.ts: the server skips screening a goal that
+// matches one exactly, so they must stay word for word the same.
+export const GOAL_EXAMPLES = [
+  "Get back to moving normally",
+  "Reduce pain",
+  "Stop it coming back",
+  "Move more freely in general",
+] as const;
+
+export const GOAL_LIMIT = 200;
 
 export const ONSETS = {
   acute: "Less than a week ago",
@@ -69,7 +74,6 @@ export const RED_FLAGS = {
   fever_or_weight_loss: "Have you had a fever, or lost weight without trying?",
 } as const;
 
-export type Goal = keyof typeof GOALS;
 export type Onset = keyof typeof ONSETS;
 export type AgeBand = keyof typeof AGE_BANDS;
 export type ActivityLevel = keyof typeof ACTIVITY_LEVELS;
@@ -82,7 +86,7 @@ export type RedFlag = keyof typeof RED_FLAGS;
 // What POST /api/onboarding takes, minus the note.
 export type Answers = {
   region: string;
-  goal: Goal;
+  goal: string;
   onset: Onset;
   painNow: number;
   redFlags: RedFlag[];
@@ -99,7 +103,7 @@ export type Answers = {
 // question, also unset, so skipping one is visible rather than a silent "no".
 export type Draft = {
   region: string | null;
-  goal: Goal | null;
+  goal: string;
   onset: Onset | null;
   painNow: number | null;
   redFlags: Partial<Record<RedFlag, boolean>>;
@@ -114,7 +118,7 @@ export type Draft = {
 
 export const EMPTY_DRAFT: Draft = {
   region: null,
-  goal: null,
+  goal: "",
   onset: null,
   painNow: null,
   redFlags: {},
@@ -136,7 +140,8 @@ export const STEPS = ["What's going on", "Safety check", "About you", "Anything 
 export function missingOn(step: number, draft: Draft): string | null {
   if (step === 0) {
     if (draft.region === null) return "Choose where it hurts.";
-    if (draft.goal === null) return "Choose a goal.";
+    if (draft.goal.trim() === "") return "Tell us what you want to get back to.";
+    if (draft.goal.trim().length > GOAL_LIMIT) return `Keep your goal to ${GOAL_LIMIT} characters.`;
     if (draft.onset === null) return "Choose when it started.";
     if (draft.painNow === null) return "Rate your pain right now.";
   }
@@ -169,7 +174,7 @@ export function toAnswers(draft: Draft): Answers | null {
 
   return {
     region: draft.region!,
-    goal: draft.goal!,
+    goal: draft.goal.trim(),
     onset: draft.onset!,
     painNow: draft.painNow!,
     redFlags: (Object.keys(RED_FLAGS) as RedFlag[]).filter((flag) => draft.redFlags[flag] === true),

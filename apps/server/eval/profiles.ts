@@ -23,7 +23,7 @@ export type Profile = {
 
 // Nobody in particular: no rule fires on these alone.
 const BASE: Answers = {
-  goal: "return_to_movement",
+  goal: "Get back to moving normally",
   region: "knee",
   onset: "subacute",
   painNow: 2,
@@ -66,7 +66,7 @@ export const PROFILES: Profile[] = [
     "knee-competitive-older",
     "Pulls both ways: competitive and wanting sport back, but 50+ with diabetes.",
     {
-      goal: "prevent_recurrence",
+      goal: "Stop it coming back",
       onset: "chronic",
       painNow: 1,
       ageBand: "50_plus",
@@ -107,7 +107,7 @@ export const PROFILES: Profile[] = [
   // Hamstring
   profile("hamstring-runner", "A competitive runner whose hamstring hates impact, with a full gym.", {
     region: "hamstring",
-    goal: "prevent_recurrence",
+    goal: "Stop it coming back",
     ageBand: "under_30",
     aggravators: ["impact"],
     activityLevel: "competitive",
@@ -115,7 +115,7 @@ export const PROFILES: Profile[] = [
   }),
   profile("hamstring-severe", "Chronic hamstring pain at 7: stretching only, 10 minutes.", {
     region: "hamstring",
-    goal: "reduce_pain",
+    goal: "Reduce pain",
     onset: "chronic",
     painNow: 7,
     sessionMinutes: 10,
@@ -139,13 +139,13 @@ export const PROFILES: Profile[] = [
   // Lower back
   profile("back-chronic", "Chronic low back pain, owns nothing: LBACK-1 and LBACK-4 both apply.", {
     region: "lower back",
-    goal: "reduce_pain",
+    goal: "Reduce pain",
     onset: "chronic",
     painNow: 4,
   }),
   profile("back-acute-flexion", "A fresh low back flare-up that bending under load sets off.", {
     region: "lower back",
-    goal: "reduce_pain",
+    goal: "Reduce pain",
     onset: "acute",
     painNow: 6,
     aggravators: ["loaded_flexion"],
@@ -156,7 +156,7 @@ export const PROFILES: Profile[] = [
     "Trains in a full gym, low pain, but loaded bending and sitting both aggravate it.",
     {
       region: "lower back",
-      goal: "prevent_recurrence",
+      goal: "Stop it coming back",
       onset: "chronic",
       ageBand: "under_30",
       aggravators: ["loaded_flexion", "sitting"],
@@ -185,7 +185,7 @@ export const PROFILES: Profile[] = [
   }),
   profile("shoulder-gym", "Chronic, low pain, competitive, full gym: the widest shoulder pool.", {
     region: "shoulder",
-    goal: "prevent_recurrence",
+    goal: "Stop it coming back",
     onset: "chronic",
     ageBand: "under_30",
     activityLevel: "competitive",
@@ -193,7 +193,7 @@ export const PROFILES: Profile[] = [
   }),
   profile("shoulder-severe-older", "A fresh, severe shoulder flare-up at 50+ with an autoimmune condition.", {
     region: "shoulder",
-    goal: "reduce_pain",
+    goal: "Reduce pain",
     onset: "acute",
     painNow: 9,
     ageBand: "50_plus",

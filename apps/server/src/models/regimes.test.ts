@@ -31,7 +31,7 @@ vi.mock("./exercises.js", () => ({
 }));
 
 const WELL: Answers = {
-  goal: "general_mobility",
+  goal: "Move more freely in general",
   region: "knee",
   onset: "subacute",
   painNow: 1,

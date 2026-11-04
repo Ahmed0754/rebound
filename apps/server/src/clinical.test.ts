@@ -17,7 +17,7 @@ import {
 
 // Nothing wrong with this person. Each test overrides only what it is about.
 const WELL: Answers = {
-  goal: "general_mobility",
+  goal: "Move more freely in general",
   region: "knee",
   onset: "subacute",
   painNow: 1,
