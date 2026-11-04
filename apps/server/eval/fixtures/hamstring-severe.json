@@ -1,7 +1,7 @@
 {
   "about": "Chronic hamstring pain at 7: stretching only, 10 minutes.",
   "answers": {
-    "goal": "reduce_pain",
+    "goal": "Reduce pain",
     "region": "hamstring",
     "onset": "chronic",
     "painNow": 7,

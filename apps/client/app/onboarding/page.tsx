@@ -16,7 +16,8 @@ import {
   CONDITIONS,
   EMPTY_DRAFT,
   EQUIPMENT,
-  GOALS,
+  GOAL_EXAMPLES,
+  GOAL_LIMIT,
   NOTE_LIMIT,
   ONSETS,
   RED_FLAGS,
@@ -35,6 +36,9 @@ import { KEYS, read, remove, write } from "@/lib/storage";
 type Saved = { step: number; draft: Draft };
 
 const PAIN_LEVELS = Array.from({ length: 11 }, (_, i) => i);
+
+//What the goal was stored as in a draft before it was typed.
+const OLD_GOAL_CODES = ["return_to_movement", "reduce_pain", "prevent_recurrence", "general_mobility"];
 
 export default function OnboardingPage() {
   const { user, token, error: accountError } = useRequiredUser();
@@ -58,7 +62,11 @@ export default function OnboardingPage() {
     if (stored !== null) {
       try {
         const saved = JSON.parse(stored) as Saved;
-        setDraft({ ...EMPTY_DRAFT, ...saved.draft });
+        //A draft saved before the goal was typed holds null or a code there,
+        //which would read as a goal nobody wrote; it starts blank instead.
+        const goal =
+          typeof saved.draft.goal === "string" && !OLD_GOAL_CODES.includes(saved.draft.goal) ? saved.draft.goal : "";
+        setDraft({ ...EMPTY_DRAFT, ...saved.draft, goal });
         setStep(Math.min(Math.max(saved.step, 0), STEPS.length - 1));
       } catch {
         remove("session", KEYS.draft);
@@ -148,6 +156,10 @@ export default function OnboardingPage() {
   }
 
   const noteLength = draft.freeText.trim().length;
+  const goalLength = draft.goal.trim().length;
+  //What the server will send to the classifier: a typed goal or any note.
+  //A goal tapped from the examples needs no screening.
+  const screened = noteLength > 0 || !(GOAL_EXAMPLES as readonly string[]).includes(draft.goal.trim());
   const last = step === STEPS.length - 1;
 
   return (
@@ -181,13 +193,40 @@ export default function OnboardingPage() {
             )}
           </Field>
 
-          <Field label="What's your main goal?">
-            <Choices
-              options={GOALS}
-              selected={draft.goal ? [draft.goal] : []}
-              onPick={(goal) => update({ goal })}
+          <label className="field">
+            <span className="field-label">What do you want to be able to do again?</span>
+            <p className="muted small" style={{ margin: "-4px 0 8px" }}>
+              In your own words, like &ldquo;carry my shopping up the stairs&rdquo; or &ldquo;get back to 5k
+              runs&rdquo;. Or tap one below to start from.
+            </p>
+            <textarea
+              className="textarea"
+              rows={2}
+              value={draft.goal}
+              onChange={(e) => update({ goal: e.target.value })}
+              placeholder="My goal is to…"
             />
-          </Field>
+            <span
+              className="small"
+              style={{ color: goalLength > GOAL_LIMIT ? "var(--danger)" : "var(--faint)" }}
+              aria-live="polite"
+            >
+              {goalLength}/{GOAL_LIMIT}
+            </span>
+          </label>
+          <div className="choices" style={{ margin: "-12px 0 20px" }}>
+            {GOAL_EXAMPLES.map((example) => (
+              <button
+                key={example}
+                type="button"
+                className="choice"
+                aria-pressed={draft.goal.trim() === example}
+                onClick={() => update({ goal: example })}
+              >
+                {example}
+              </button>
+            ))}
+          </div>
 
           <Field label="When did it start?">
             <Choices
@@ -331,7 +370,7 @@ export default function OnboardingPage() {
 
       {submitting && (
         <p className="muted" aria-live="polite">
-          {draft.freeText.trim()
+          {screened
             ? "Reviewing your answers… this can take up to 40 seconds."
             : "Saving your answers…"}
         </p>

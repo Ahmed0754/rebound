@@ -9,7 +9,6 @@ import type {
   Answers,
   Condition,
   Equipment,
-  Goal,
   Onset,
   RedFlag,
   Screening,
@@ -18,7 +17,8 @@ import type {
 
 // The free-text note and what screening made of it. Kept apart from `answers`
 // because the rules in clinical.ts never read prose - only the classifier and
-// the generation prompt do.
+// the generation prompt do. The screening covers the goal as well, which is
+// prose too but stays in `answers` because it is required.
 export type Note = {
   freeText: string | null;
   screening: Screening;
@@ -76,7 +76,7 @@ function fromDbRow(row: OnboardingRow): Onboarding {
     userId: row.user_id,
     createdAt: row.created_at.toISOString(),
     answers: {
-      goal: row.goal as Goal,
+      goal: row.goal,
       region: row.region,
       onset: row.onset as Onset,
       painNow: row.pain_now,

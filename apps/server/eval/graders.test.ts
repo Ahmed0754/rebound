@@ -8,7 +8,7 @@ import type { RegimeItem } from "../src/types/index.js";
 import { grade, PROVISIONAL } from "./graders.js";
 
 const answers: Answers = {
-  goal: "return_to_movement",
+  goal: "Get back to moving normally",
   region: "knee",
   onset: "subacute",
   painNow: 2,

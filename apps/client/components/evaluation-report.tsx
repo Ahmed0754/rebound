@@ -14,7 +14,6 @@ import {
   AGGRAVATORS,
   CONDITIONS,
   EQUIPMENT,
-  GOALS,
   ONSETS,
   regionLabel,
   SESSION_MINUTES,
@@ -160,7 +159,7 @@ export function EvaluationReport({ e }: { e: Evaluation }) {
               {(
                 [
                   ["Area", regionLabel(answers.region)],
-                  ["Goal", GOALS[answers.goal] ?? answers.goal],
+                  ["Goal", answers.goal],
                   ["Started", ONSETS[answers.onset] ?? answers.onset],
                   ["Pain now", `${answers.painNow} of 10`],
                   ["Makes it worse", list(answers.aggravators, AGGRAVATORS, "Nothing listed")],

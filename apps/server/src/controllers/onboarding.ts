@@ -11,7 +11,8 @@ import {
   CONDITIONS,
   EQUIPMENT,
   FREE_TEXT_MAX_LENGTH,
-  GOALS,
+  GOAL_EXAMPLES,
+  GOAL_MAX_LENGTH,
   ONSETS,
   RED_FLAGS,
   SESSION_MINUTES,
@@ -75,10 +76,10 @@ function many<T extends string>(value: unknown, allowed: readonly T[]): T[] | nu
 function parseAnswers(body: unknown): { answers: Answers } | { error: string } {
   const input = (body ?? {}) as Record<string, unknown>;
 
-  const goal = one(input.goal, GOALS);
+  const goal = typeof input.goal === "string" ? input.goal.trim() : "";
 
-  if (goal === null) {
-    return { error: `goal must be one of: ${GOALS.join(", ")}` };
+  if (goal === "" || goal.length > GOAL_MAX_LENGTH) {
+    return { error: `goal is required, in at most ${GOAL_MAX_LENGTH} characters` };
   }
 
   const region = typeof input.region === "string" ? input.region.trim().toLowerCase() : "";
@@ -252,12 +253,20 @@ router.post("/", async (req, res) => {
     return;
   }
 
+  // The goal is prose too, so it is screened with the note: one call, one
+  // verdict for everything the person wrote. A goal tapped from the examples
+  // is our wording, not theirs, so on its own it needs no screening.
+  const typedGoal = (GOAL_EXAMPLES as readonly string[]).includes(parsed.answers.goal)
+    ? null
+    : parsed.answers.goal;
+  const prose = [typedGoal, note.freeText].filter((text) => text !== null);
+
   // Screened only once the rest is known to be valid, so a bad request never
   // costs a model call.
   const screened =
-    note.freeText === null
+    prose.length === 0
       ? { screening: "not_needed" as const, categories: [], quote: null, model: null }
-      : await screenNote(note.freeText);
+      : await screenNote(prose.join("\n\n"));
 
   // Saved even for a red flag or a crisis: the row is the record that someone
   // was turned away, and nothing is generated from it either way.

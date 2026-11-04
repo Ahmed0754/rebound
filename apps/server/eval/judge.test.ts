@@ -15,7 +15,7 @@ import {
 } from "./judge.js";
 
 const answers: Answers = {
-  goal: "reduce_pain",
+  goal: "Reduce pain",
   region: "neck",
   onset: "chronic",
   painNow: 4,
