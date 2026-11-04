@@ -41,7 +41,8 @@ export default function AccountPage() {
 
       signIn(session);
       //A new account has no plans yet, so it goes straight to the questionnaire.
-      router.push(mode === "sign_up" ? "/onboarding" : "/plans");
+      //A returning one lands on the dashboard.
+      router.push(mode === "sign_up" ? "/onboarding" : "/");
     } catch (e) {
       setError(messageOf(e));
       setBusy(false);
