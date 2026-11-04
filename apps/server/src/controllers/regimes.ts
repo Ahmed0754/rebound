@@ -4,6 +4,7 @@
 import { Router } from "express";
 import { decide, getLimits } from "../clinical.js";
 import { evaluate } from "../../eval/live.js";
+import * as checkins from "../models/checkins.js";
 import { get as getOnboarding, listBefore, type Onboarding } from "../models/onboarding.js";
 import {
   create,
@@ -332,6 +333,84 @@ router.put("/:id", async (req, res) => {
 
     throw error;
   }
+});
+
+// The pain tracker. A plan's check-ins are found through the plan, so another
+// account's plan is the same 404 here as everywhere else.
+router.get("/:id/checkins", async (req, res) => {
+  const regime = await get(req.params.id, userIdOf(res));
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  res.send(await checkins.list(regime.id));
+});
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+// "2026-11-02" in UTC, `offset` days from `iso`.
+function utcDay(iso: string | Date, offset = 0): string {
+  const date = new Date(iso);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * What is wrong with a check-in's day, or null. A real date, not in the future
+ * and not before the plan existed. A day either side, because the day is the
+ * person's own and they may be ahead of or behind UTC.
+ */
+function badDay(day: string, planCreatedAt: string): string | null {
+  if (!DAY.test(day) || utcDay(`${day}T00:00:00Z`) !== day) {
+    return "day must be a date like 2026-11-02";
+  }
+
+  if (day > utcDay(new Date(), 1)) {
+    return "day can't be in the future";
+  }
+
+  if (day < utcDay(planCreatedAt, -1)) {
+    return "day can't be before the plan was made";
+  }
+
+  return null;
+}
+
+// PUT, not POST: saving the same day again replaces it, so sending it twice is harmless.
+router.put("/:id/checkins/:day", async (req, res) => {
+  const userId = userIdOf(res);
+  const regime = await get(req.params.id, userId);
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  const dayError = badDay(req.params.day, regime.createdAt);
+
+  if (dayError !== null) {
+    res.status(400).send({ error: dayError });
+    return;
+  }
+
+  const pain = req.body?.pain;
+  const didExercises = req.body?.didExercises;
+
+  // `pain` is a smallint with a check constraint; anything else would reach
+  // Postgres as an error and surface as a 500.
+  if (!Number.isInteger(pain) || pain < 0 || pain > 10) {
+    res.status(400).send({ error: "pain must be a whole number from 0 to 10" });
+    return;
+  }
+
+  if (typeof didExercises !== "boolean") {
+    res.status(400).send({ error: "didExercises must be true or false" });
+    return;
+  }
+
+  res.send(await checkins.save({ regimeId: regime.id, userId, day: req.params.day, pain, didExercises }));
 });
 
 router.delete("/:id", async (req, res) => {

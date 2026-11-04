@@ -1,18 +1,18 @@
 "use client";
 
-//this is the account page: log in, sign up, log out, or delete the account.
+//this is the account page: log in or sign up. Once logged in, the account is
+//managed from /profile, so a logged-in visitor is sent there.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorMessage, Loading } from "@/components/ui";
-import { deleteMe, logIn, messageOf, signUp } from "@/lib/api";
+import { logIn, messageOf, signUp } from "@/lib/api";
 import { useCurrentUser } from "@/lib/current-user";
-import { KEYS, remove } from "@/lib/storage";
 
 type Mode = "log_in" | "sign_up";
 
 export default function AccountPage() {
-  const { state, signIn, signOut } = useCurrentUser();
+  const { state, signIn } = useCurrentUser();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>("log_in");
@@ -20,6 +20,14 @@ export default function AccountPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  //Not while `busy`: that is a login this page just made, and `submit` is
+  //already sending it on to the questionnaire or the plans.
+  useEffect(() => {
+    if (state.status === "ready" && !busy) {
+      router.replace("/profile");
+    }
+  }, [state.status, busy, router]);
 
   async function submit() {
     setBusy(true);
@@ -45,62 +53,11 @@ export default function AccountPage() {
     setError(null);
   }
 
-  //The database cascades this to every plan and questionnaire the account
-  //owns, so it is confirmed first.
-  async function removeAccount() {
-    if (state.status !== "ready") return;
-
-    const { user, token } = state;
-    const ok = window.confirm(
-      `Delete "${user.username}"? This also deletes all of its plans and questionnaires, and can't be undone.`
-    );
-    if (!ok) return;
-
-    setBusy(true);
-    setError(null);
-
-    try {
-      await deleteMe(token);
-      remove("local", KEYS.lastOnboarding(user.id));
-      await signOut();
-    } catch (e) {
-      setError(messageOf(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (state.status === "loading") {
+  //Ready too: that is the moment before a redirect lands.
+  if (state.status === "loading" || state.status === "ready") {
     return (
       <main className="page">
         <Loading />
-      </main>
-    );
-  }
-
-  if (state.status === "ready") {
-    return (
-      <main className="page">
-        <h1>Account</h1>
-
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-
-        <section className="card">
-          <p style={{ marginTop: 0 }}>
-            Logged in as <strong>{state.user.username}</strong>
-          </p>
-          <div className="row">
-            <button type="button" className="btn btn-primary" onClick={() => router.push("/plans")}>
-              Continue
-            </button>
-            <button type="button" className="btn" onClick={signOut} disabled={busy}>
-              Log out
-            </button>
-            <button type="button" className="btn btn-danger" onClick={removeAccount} disabled={busy}>
-              Delete this account
-            </button>
-          </div>
-        </section>
       </main>
     );
   }

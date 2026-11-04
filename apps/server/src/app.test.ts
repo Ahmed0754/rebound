@@ -258,7 +258,21 @@ vi.mock("./models/users.js", () => ({
     username.toLowerCase() === "shahid" ? { user, passwordHash: PASSWORD } : null
   ),
   get: vi.fn(async (id: string) => (id === USER_ID ? user : null)),
+  getPasswordHash: vi.fn(async (id: string) => (id === USER_ID ? PASSWORD : null)),
+  setPassword: vi.fn(async () => undefined),
   remove: vi.fn(async (id: string) => id === USER_ID),
+}));
+
+// Echoes what it was asked to save; only ever reached for USER_ID's saved
+// regime, because the controller looks the plan up for its owner first.
+vi.mock("./models/checkins.js", () => ({
+  list: vi.fn(async () => [{ day: "2026-09-25", pain: 6, didExercises: true, updatedAt: CREATED_AT }]),
+  save: vi.fn(async (input: { day: string; pain: number; didExercises: boolean }) => ({
+    day: input.day,
+    pain: input.pain,
+    didExercises: input.didExercises,
+    updatedAt: EDITED_AT,
+  })),
 }));
 
 // No database: the token map stands in for the sessions table.
@@ -268,6 +282,7 @@ vi.mock("./models/sessions.js", () => ({
     token === TOKEN ? USER_ID : token === OTHER_TOKEN ? OTHER_USER_ID : null
   ),
   remove: vi.fn(async () => undefined),
+  removeAll: vi.fn(async () => undefined),
 }));
 
 // Real scrypt is slow on purpose, and auth.test.ts covers it. Here a "hash"
@@ -705,6 +720,129 @@ describe("DELETE /api/regimes/:id", () => {
   });
 });
 
+describe("GET /api/regimes/:id/checkins", () => {
+  it("returns the plan's check-ins", async () => {
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/checkins`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toEqual([
+      { day: "2026-09-25", pain: 6, didExercises: true, updatedAt: CREATED_AT },
+    ]);
+  });
+
+  it("404s for another account's plan", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/checkins`, {
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("401s when not logged in", async () => {
+    expect((await fetch(`${base}/api/regimes/${SAVED_ID}/checkins`)).status).toBe(401);
+  });
+});
+
+describe("PUT /api/regimes/:id/checkins/:day", () => {
+  // The saved regime was made on CREATED_AT, 2026-09-24.
+  function checkIn(day: string, body: unknown, id = SAVED_ID) {
+    return send("PUT", `/api/regimes/${id}/checkins/${day}`, body);
+  }
+
+  it("saves the day's check-in and returns it", async () => {
+    const { save } = await import("./models/checkins.js");
+    vi.mocked(save).mockClear();
+
+    const res = await checkIn("2026-09-25", { pain: 4, didExercises: false });
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toEqual({
+      day: "2026-09-25",
+      pain: 4,
+      didExercises: false,
+      updatedAt: EDITED_AT,
+    });
+    expect(save).toHaveBeenCalledWith({
+      regimeId: SAVED_ID,
+      userId: USER_ID,
+      day: "2026-09-25",
+      pain: 4,
+      didExercises: false,
+    });
+  });
+
+  it("accepts both ends of the scale", async () => {
+    expect((await checkIn("2026-09-25", { pain: 0, didExercises: true })).status).toBe(200);
+    expect((await checkIn("2026-09-25", { pain: 10, didExercises: true })).status).toBe(200);
+  });
+
+  it("404s for another account's plan, and saves nothing", async () => {
+    const { save } = await import("./models/checkins.js");
+    vi.mocked(save).mockClear();
+
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/checkins/2026-09-25`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ pain: 4, didExercises: true }),
+    });
+    expect(res.status).toBe(404);
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("401s when not logged in", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/checkins/2026-09-25`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pain: 4, didExercises: true }),
+    });
+    expect(res.status).toBe(401);
+  });
+
+  describe("rejects a bad day", () => {
+    it.each([
+      ["not a date", "yesterday"],
+      ["a date that doesn't exist", "2026-02-30"],
+      ["the wrong shape", "2026-9-25"],
+    ])("%s", async (_label, day) => {
+      const res = await checkIn(day, { pain: 4, didExercises: true });
+      expect(res.status).toBe(400);
+      expect((await json<ErrorBody>(res)).error).toBe("day must be a date like 2026-11-02");
+    });
+
+    it("in the future", async () => {
+      const res = await checkIn("2999-01-01", { pain: 4, didExercises: true });
+      expect(res.status).toBe(400);
+      expect((await json<ErrorBody>(res)).error).toBe("day can't be in the future");
+    });
+
+    it("before the plan was made", async () => {
+      const res = await checkIn("2026-09-20", { pain: 4, didExercises: true });
+      expect(res.status).toBe(400);
+      expect((await json<ErrorBody>(res)).error).toBe("day can't be before the plan was made");
+    });
+  });
+
+  describe("rejects a bad body", () => {
+    it.each([
+      ["pain above 10", { pain: 11, didExercises: true }],
+      ["pain below 0", { pain: -1, didExercises: true }],
+      ["pain that isn't whole", { pain: 4.5, didExercises: true }],
+      ["pain as a string", { pain: "4", didExercises: true }],
+      ["no pain", { didExercises: true }],
+    ])("%s", async (_label, body) => {
+      const res = await checkIn("2026-09-25", body);
+      expect(res.status).toBe(400);
+      expect((await json<ErrorBody>(res)).error).toBe("pain must be a whole number from 0 to 10");
+    });
+
+    it.each([
+      ["didExercises as a string", { pain: 4, didExercises: "yes" }],
+      ["no didExercises", { pain: 4 }],
+    ])("%s", async (_label, body) => {
+      const res = await checkIn("2026-09-25", body);
+      expect(res.status).toBe(400);
+      expect((await json<ErrorBody>(res)).error).toBe("didExercises must be true or false");
+    });
+  });
+});
+
 describe("POST /api/users", () => {
   function signUp(body: unknown) {
     return fetch(`${base}/api/users`, {
@@ -845,6 +983,77 @@ describe("DELETE /api/users/me", () => {
 
   it("returns 401 when not logged in", async () => {
     expect((await fetch(`${base}/api/users/me`, { method: "DELETE" })).status).toBe(401);
+  });
+});
+
+describe("PUT /api/users/me/password", () => {
+  const NEW_PASSWORD = "a brand new password";
+
+  function changePassword(body: unknown) {
+    return send("PUT", "/api/users/me/password", body);
+  }
+
+  it("returns 204, saves the new password and logs out every other session", async () => {
+    const { setPassword } = await import("./models/users.js");
+    const { removeAll } = await import("./models/sessions.js");
+    vi.mocked(setPassword).mockClear();
+    vi.mocked(removeAll).mockClear();
+
+    const res = await changePassword({ currentPassword: PASSWORD, newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(204);
+    expect(setPassword).toHaveBeenCalledWith(USER_ID, NEW_PASSWORD);
+    expect(removeAll).toHaveBeenCalledWith(USER_ID, TOKEN);
+  });
+
+  // Not 401: the session is fine, and a 401 would log the client out.
+  it("returns 403 and changes nothing for a wrong current password", async () => {
+    const { setPassword } = await import("./models/users.js");
+    vi.mocked(setPassword).mockClear();
+
+    const res = await changePassword({ currentPassword: "not the password", newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(403);
+    expect((await json<ErrorBody>(res)).error).toBe("current password is wrong");
+    expect(setPassword).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a current password too long to be anyone's", async () => {
+    const res = await changePassword({ currentPassword: "x".repeat(129), newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 400 for a new password that is too short", async () => {
+    const res = await changePassword({ currentPassword: PASSWORD, newPassword: "short" });
+    expect(res.status).toBe(400);
+    expect((await json<ErrorBody>(res)).error).toBe("new password must be 8-128 characters");
+  });
+
+  it("returns 400 for a new password that is too long", async () => {
+    const res = await changePassword({ currentPassword: PASSWORD, newPassword: "x".repeat(129) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 401 when not logged in", async () => {
+    const res = await fetch(`${base}/api/users/me/password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: PASSWORD, newPassword: NEW_PASSWORD }),
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("DELETE /api/users/me/sessions", () => {
+  it("logs out every session, this one included", async () => {
+    const { removeAll } = await import("./models/sessions.js");
+    vi.mocked(removeAll).mockClear();
+
+    const res = await send("DELETE", "/api/users/me/sessions");
+    expect(res.status).toBe(204);
+    expect(removeAll).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("returns 401 when not logged in", async () => {
+    expect((await fetch(`${base}/api/users/me/sessions`, { method: "DELETE" })).status).toBe(401);
   });
 });
 

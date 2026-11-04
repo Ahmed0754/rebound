@@ -16,6 +16,8 @@
   --danger-bg: #fdecef;
   --warn-text: #7a4b00;
   --warn-bg: #fff6e5;
+  --success: #1e6b34;
+  --success-bg: #e9f6ec;
   --crisis: #5b1a8c;
   --crisis-bg: #f5eefb;
   --bar: #888;
@@ -316,6 +318,66 @@ h3 {
 .notice {
   color: var(--warn-text);
   background: var(--warn-bg);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+/* Pain tracker */
+
+.pain-history {
+  margin: 20px 0 12px;
+}
+
+.pain-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart-label {
+  fill: var(--faint);
+  font-size: 15px;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.dot-done {
+  fill: var(--primary);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.dot-skipped {
+  fill: var(--surface);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.success {
+  color: var(--success);
+  background: var(--success-bg);
   border-radius: var(--radius);
   padding: 10px 12px;
   margin: 12px 0;

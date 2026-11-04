@@ -4,6 +4,8 @@
 //   POST   /api/users         sign up: creates the account and logs it in
 //   GET    /api/users/me      the logged-in account
 //   DELETE /api/users/me      deletes it, with everything it owns
+//   PUT    /api/users/me/password   changes the password
+//   DELETE /api/users/me/sessions   logs out everywhere
 //   POST   /api/sessions      log in
 //   DELETE /api/sessions      log out
 //
@@ -13,7 +15,15 @@
 import { Router } from "express";
 import { PASSWORD, verifyNothing, verifyPassword } from "../auth.js";
 import * as sessions from "../models/sessions.js";
-import { create, DuplicateUsername, findForLogin, get, remove } from "../models/users.js";
+import {
+  create,
+  DuplicateUsername,
+  findForLogin,
+  get,
+  getPasswordHash,
+  remove,
+  setPassword,
+} from "../models/users.js";
 import { requireUser, tokenOf, userIdOf } from "../require-user.js";
 
 export const users = Router();
@@ -79,6 +89,42 @@ users.get("/me", requireUser, async (_req, res) => {
 
 users.delete("/me", requireUser, async (_req, res) => {
   await remove(userIdOf(res));
+  res.sendStatus(204);
+});
+
+// Asks for the current password too, so someone who picks up a logged-in
+// device can't lock the owner out.
+users.put("/me/password", requireUser, async (req, res) => {
+  const body = (req.body ?? {}) as { currentPassword?: unknown; newPassword?: unknown };
+  const current = typeof body.currentPassword === "string" ? body.currentPassword : "";
+  const next = typeof body.newPassword === "string" ? body.newPassword : "";
+
+  if (next.length < PASSWORD.min || next.length > PASSWORD.max) {
+    res.status(400).send({
+      error: `new password must be ${PASSWORD.min}-${PASSWORD.max} characters`,
+    });
+    return;
+  }
+
+  const userId = userIdOf(res);
+  const stored = await getPasswordHash(userId);
+
+  // Not a 401: the session is fine, so the client shouldn't log anyone out.
+  // Too long is refused before hashing, as at login.
+  if (stored === null || current.length > PASSWORD.max || !(await verifyPassword(current, stored))) {
+    res.status(403).send({ error: "current password is wrong" });
+    return;
+  }
+
+  await setPassword(userId, next);
+  // Anyone else logged in with the old password is logged out; this device stays in.
+  await sessions.removeAll(userId, tokenOf(req)!);
+  res.sendStatus(204);
+});
+
+// Every session this account has, this one included.
+users.delete("/me/sessions", requireUser, async (_req, res) => {
+  await sessions.removeAll(userIdOf(res));
   res.sendStatus(204);
 });
 

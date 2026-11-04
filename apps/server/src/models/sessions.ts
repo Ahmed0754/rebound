@@ -34,3 +34,14 @@ export async function userIdFor(token: string): Promise<string | null> {
 export async function remove(token: string): Promise<void> {
   await pool.query(`delete from sessions where token_hash = $1`, [hashToken(token)]);
 }
+
+/**
+ * Ends every session an account has, except `keep` when given - the one a
+ * password change was made from, so changing it doesn't log you out.
+ */
+export async function removeAll(userId: string, keep?: string): Promise<void> {
+  await pool.query(
+    `delete from sessions where user_id = $1 and ($2::text is null or token_hash <> $2)`,
+    [userId, keep === undefined ? null : hashToken(keep)]
+  );
+}

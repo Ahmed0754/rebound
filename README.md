@@ -58,6 +58,8 @@ Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 nee
 | `POST` | `/api/users` | `{username, password}` | `201 {user, token}`, logged in | `400` bad name or password · `409` taken |
 | `GET` | `/api/users/me` 👤 | — | `200` user | `401` |
 | `DELETE` | `/api/users/me` 👤 | — | `204`, and its plans, questionnaires and sessions with it | `401` |
+| `PUT` | `/api/users/me/password` 👤 | `{currentPassword, newPassword}` | `204`, every other session ends | `400` new password 8–128 characters · `403` current password wrong · `401` |
+| `DELETE` | `/api/users/me/sessions` 👤 | — | `204`, every session ends, this one included | `401` |
 | `POST` | `/api/sessions` | `{username, password}` | `200 {user, token}` | `401` wrong username or password (never says which) |
 | `DELETE` | `/api/sessions` 👤 | — | `204`, the token stops working | `401` |
 | `POST` | `/api/onboarding` 👤 | answers + optional `freeText` | `201` `{id, outcome, screening, …}` | `400` names the expected values |
@@ -68,6 +70,8 @@ Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 nee
 | `GET` | `/api/regimes/:id` 👤 | — | `200` plan | `404` |
 | `PUT` | `/api/regimes/:id` 👤 | `{regime: [{id, sets, reps \| holdSeconds}]}` | `200` plan | `400` bad list or unknown exercise · `404` |
 | `DELETE` | `/api/regimes/:id` 👤 | — | `204` | `404` |
+| `GET` | `/api/regimes/:id/checkins` 👤 | — | `200` the plan's pain check-ins, oldest first | `404` |
+| `PUT` | `/api/regimes/:id/checkins/:day` 👤 | `{pain: 0–10, didExercises}` | `200` check-in; the same day again replaces it | `400` bad day or body · `404` |
 
 `outcome` is `ready`, `see_a_doctor` or `crisis`. All three come back as a success, so a client must branch on `outcome`, never on the HTTP status. `POST /api/regimes` still accepts the original `{muscle}` body, which builds a plan with no questionnaire, held only to the widest limits.
 
@@ -160,6 +164,7 @@ The JSON shapes the API returns, since they are the contract between the two hal
 | `aggravator_exclusions` | Which exercises each "makes it worse" answer rules out |
 | `users` | Accounts: username and scrypt password hash. Accounts made before passwords have no hash and can't log in |
 | `sessions` | One row per login: the SHA-256 of its token, the account, and when it expires |
+| `pain_checkins` | The pain tracker: one row per plan per day, with pain 0–10 and whether the exercises were done |
 | `onboarding_responses` | Each questionnaire: the answers, the note, and how the note was screened. The outcome is worked out from these each time, not stored |
 | `regimes` | Each plan: owner, body region, and the limits it was validated against |
 | `regime_exercises` | The exercises of each plan, a snapshot of exactly what the user was shown |
