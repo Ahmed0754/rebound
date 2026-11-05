@@ -327,14 +327,14 @@ describe("create, checking quality before it saves", () => {
 
   // A quality miss is never a refusal: when time runs out, the plan that passed
   // the hard checks is saved, with what it missed recorded.
-  it("saves the best plan it has when the 20-second budget runs out", async () => {
+  it("saves the best plan it has when the 30-second budget runs out", async () => {
     let now = 0;
     const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
 
-    // Each answer takes 6 seconds: attempts start at 0s, 6s and 12s, and at
-    // 18s only 2s are left - under the 4 seconds an attempt needs.
+    // Each answer takes 9 seconds: attempts start at 0s, 9s and 18s, and at
+    // 27s only 3s are left - under the 4 seconds an attempt needs.
     propose.mockImplementation(async () => {
-      now += 6_000;
+      now += 9_000;
       return answer(missesKnee);
     });
 
@@ -354,7 +354,7 @@ describe("create, checking quality before it saves", () => {
     const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
 
     propose.mockImplementationOnce(async () => {
-      now += 15_000;
+      now += 25_000;
       return answer(missesKnee);
     });
     propose.mockImplementationOnce(async () => answer(withSquat));

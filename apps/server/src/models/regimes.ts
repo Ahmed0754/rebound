@@ -288,9 +288,6 @@ const CATALOGUE_EQUIPMENT: Record<Equipment, string[]> = {
   ],
 };
 
-// How many candidates Gemini is shown. Same number the typed path sends.
-const CANDIDATE_LIMIT = 20;
-
 /**
  * Turns answers and the limits derived from them into the options
  * `getCandidates` takes. Pure, so the translation - which is where v1 lost
@@ -313,7 +310,6 @@ export function toCandidateQuery(answers: Answers, limits: Limits) {
     levels: DIFFICULTIES.slice(0, DIFFICULTIES.indexOf(limits.difficultyCap) + 1),
     categories: [...limits.categories],
     aggravators: [...answers.aggravators],
-    limit: CANDIDATE_LIMIT,
   };
 }
 
@@ -339,13 +335,13 @@ export async function getFunnelFor(answers: Answers, limits: Limits) {
     return null;
   }
 
-  return { ...counts, shown: Math.min(counts.aggravators, CANDIDATE_LIMIT) };
+  return { ...counts, shown: counts.aggravators };
 }
 
 // Every attempt at a plan, retries included, has to fit inside this, by
-// decision (ADR 0024). A plan still being retried after 20 seconds is not
+// decision (ADR 0024). A plan still being retried after 30 seconds is not
 // worth the wait it costs the person on the other end.
-const GENERATION_BUDGET_MS = 20_000;
+const GENERATION_BUDGET_MS = 30_000;
 
 // No attempt starts with less than this left: a call cut off before Gemini can
 // answer is wasted, and the time is better spent returning what there is.

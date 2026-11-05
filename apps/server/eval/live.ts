@@ -36,9 +36,6 @@ import {
 } from "./judge.js";
 import { expandSources, loadReferences, sourcesIn, type Row } from "./reference-index.js";
 
-// More than the catalogue holds, so the pool is every exercise allowed.
-const WHOLE_POOL = 10_000;
-
 // The §2 row each benchmark compares with, by its parameter name there.
 const BENCHMARK_ROWS: Record<string, string> = {
   "BENCH-HOLD": "Static stretch hold",
@@ -118,7 +115,7 @@ export async function evaluate(input: {
   const region = answers.region;
   const limits: Limits = regime.limits ?? getLimits(answers);
   const [pool, references] = await Promise.all([
-    getCandidates({ ...toCandidateQuery(answers, limits), limit: WHOLE_POOL }),
+    getCandidates(toCandidateQuery(answers, limits)),
     loadReferences(),
   ]);
   const candidates: Candidate[] = pool ?? [];

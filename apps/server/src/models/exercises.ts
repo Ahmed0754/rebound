@@ -286,13 +286,10 @@ export async function countCandidates(options: CandidateFilters): Promise<{
  * models/regimes.ts does the translating, so the data layer stays unaware of
  * the rules layer and the rules layer can be read on its own.
  *
- * Still `order by random()`, but now over the right exercises: nothing yet
- * ranks one allowed exercise above another, so random is what keeps the same
- * 20 from coming back every time.
+ * Every exercise the filters allow, shuffled: nothing yet ranks one allowed
+ * exercise above another.
  */
-export async function getCandidates(
-  options: CandidateFilters & { limit: number }
-): Promise<Candidate[] | null> {
+export async function getCandidates(options: CandidateFilters): Promise<Candidate[] | null> {
   const regionMuscles = await getRegionMuscles();
   const muscles = regionMuscles[options.region];
 
@@ -309,16 +306,8 @@ export async function getCandidates(
         and ${AT_LEVEL}
         and ${IN_CATEGORY}
         and ${NOT_AGGRAVATING}
-      order by random()
-      limit $6`,
-    [
-      muscles,
-      options.equipment,
-      options.levels,
-      options.categories,
-      options.aggravators,
-      options.limit,
-    ]
+      order by random()`,
+    [muscles, options.equipment, options.levels, options.categories, options.aggravators]
   );
 
   return result.rows.map((row) => ({
