@@ -16,11 +16,11 @@ Step by step:
    - **Ready:** you're shown your limits and the reasons for them, e.g. "your pain is 7 or above".
 4. **Rules set the limits.** Nine rules each look at one answer and can only lower a ceiling (sets, reps, hold time, number of exercises, difficulty, stretching vs strength). They stack.
 5. **The library is filtered.** 703 exercises are narrowed by body area, your equipment, your level, the kinds of exercise your limits allow, and the movements you said make it worse. The page shows the count left after each step.
-6. **Gemini picks and doses.** It is shown up to 20 of what's left and picks 2–5 with sets, reps or hold times, plus one line on why each suits you.
+6. **Gemini picks and doses.** It is shown everything that's left and picks 2–5 with sets, reps or hold times, plus one line on why each suits you.
 7. **Every plan is checked before it's saved, in two tiers.**
    - **Hard checks:** every number is inside the limits, every exercise was one it was given, and no rationale says to push through pain or claims to heal anything. A plan that fails is never saved.
    - **Quality checks:** criteria taken from published sources (AAOS, APTA, ACSM, credited in [`apps/server/eval/REFERENCES.md`](./apps/server/eval/REFERENCES.md)). For example, a knee plan should include something for the quadriceps or hamstrings. A criterion only counts when the limits allow it and one of the candidates could meet it.
-   - **What happens on a miss:** Gemini is told exactly what was wrong and tries again, for up to 20 seconds in total. If time runs out, the plan that passed the hard checks with the fewest quality misses is saved. If none passed, nothing is saved and you're asked to try again later. Nothing is quietly patched.
+   - **What happens on a miss:** Gemini is told exactly what was wrong and tries again, for up to 30 seconds in total. If time runs out, the plan that passed the hard checks with the fewest quality misses is saved. If none passed, nothing is saved and you're asked to try again later. Nothing is quietly patched.
 8. **You get the plan:** each exercise with start and finish photos, numbered steps, its dose and its rationale, and the limits it was built inside. You can edit doses or delete it.
 
 ```mermaid
