@@ -21,6 +21,12 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  //"Get started" links here with ?mode=sign_up. Read after mount rather than
+  //with useSearchParams, which would need a Suspense boundary around the page.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "sign_up") setMode("sign_up");
+  }, []);
+
   //Not while `busy`: that is a login this page just made, and `submit` is
   //already sending it on to the questionnaire or the plans.
   useEffect(() => {
@@ -66,8 +72,11 @@ export default function AccountPage() {
   const signingUp = mode === "sign_up";
 
   return (
-    <main className="page">
-      <h1>{signingUp ? "Create an account" : "Log in"}</h1>
+    <main className="page auth-page">
+      <h1>{signingUp ? "Create your account" : "Welcome back"}</h1>
+      <p className="lead">
+        {signingUp ? "Free, and it takes a minute. Then a two-minute questionnaire builds your plan." : "Log in to see your plans and check in for today."}
+      </p>
 
       {state.status === "error" && <ErrorMessage>{state.message}</ErrorMessage>}
       {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -114,7 +123,7 @@ export default function AccountPage() {
         </form>
       </section>
 
-      <p className="muted">
+      <p className="muted auth-switch">
         {signingUp ? "Already have an account? " : "New here? "}
         <button type="button" className="link-button" onClick={() => switchTo(signingUp ? "log_in" : "sign_up")}>
           {signingUp ? "Log in" : "Create an account"}

@@ -67,6 +67,105 @@ export function LimitsPanel({ limits, title }: { limits: Limits; title: string }
   );
 }
 
+// The widest each range can be (ABSOLUTE in the server's clinical.ts), so a
+// plan's range can be drawn as part of the whole scale.
+const SCALE = {
+  sets: { min: 1, max: 4 },
+  reps: { min: 5, max: 15 },
+  hold: { min: 15, max: 30 },
+};
+
+const LEVELS = ["beginner", "intermediate", "expert"];
+const KINDS = ["stretching", "strength"];
+
+// A range drawn as a slider: the whole scale as a track, the allowed part
+// lit between two knobs. Only a picture of the numbers; nothing to drag.
+function RangeBar({ label, value, scale, suffix = "" }: { label: string; value: Range; scale: Range; suffix?: string }) {
+  const at = (n: number) => `${((n - scale.min) / Math.max(scale.max - scale.min, 1)) * 100}%`;
+
+  return (
+    <div className="side-panel">
+      <div className="side-title">
+        {label} <span>{range(value, suffix)}</span>
+      </div>
+      <div className="range-bar" role="img" aria-label={`${label}: ${range(value, suffix)}`}>
+        <span className="range-lit" style={{ left: at(value.min), right: `calc(100% - ${at(value.max)})` }} />
+        <span className="range-knob" style={{ left: at(value.min) }} />
+        <span className="range-knob" style={{ left: at(value.max) }} />
+      </div>
+      <div className="range-ends">
+        <span>
+          {scale.min}
+          {suffix}
+        </span>
+        <span>
+          {scale.max}
+          {suffix}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// The same limits as LimitsPanel, laid out as a column of panels for the side
+// of a plan: what kinds of exercise, how hard, and how much of each.
+export function LimitsSidebar({ limits }: { limits: Limits }) {
+  return (
+    <div className="side-stack">
+      <div className="side-panel">
+        <div className="side-title">Kinds of exercise</div>
+        <ul className="side-options">
+          {KINDS.map((kind) => {
+            const on = limits.categories.includes(kind);
+            return (
+              <li key={kind} className={on ? "on" : undefined}>
+                <span className="fake-box" aria-hidden="true" />
+                {capitalise(kind)}
+                <span className="sr-only">{on ? "allowed" : "not allowed"}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="side-panel">
+        <div className="side-title">Hardest level</div>
+        <ul className="side-options">
+          {LEVELS.map((level) => {
+            const on = limits.difficultyCap === level;
+            return (
+              <li key={level} className={on ? "on" : undefined}>
+                <span className="fake-radio" aria-hidden="true" />
+                {capitalise(level)}
+                {on && <span className="sr-only">(the hardest allowed)</span>}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <RangeBar label="Sets each" value={limits.sets} scale={SCALE.sets} />
+      <RangeBar label="Reps per set" value={limits.reps} scale={SCALE.reps} />
+      <RangeBar label="Hold time" value={limits.hold} scale={SCALE.hold} suffix="s" />
+
+      <div className="side-panel">
+        <div className="side-title">Why these limits</div>
+        {limits.reasons.length === 0 ? (
+          <p className="muted small" style={{ margin: 0 }}>
+            Nothing in your answers needed extra caution, so these are the widest limits any plan gets.
+          </p>
+        ) : (
+          <ul className="reasons small">
+            {limits.reasons.map((reason) => (
+              <li key={reason}>{capitalise(reason)}.</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Each filter in the order the server applies it. `hint` is the hover text.
 const STAGES: { key: keyof Funnel; label: string; hint: string }[] = [
   { key: "catalogue", label: "Exercises in the library", hint: "Every exercise Rebound knows." },

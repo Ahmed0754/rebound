@@ -71,7 +71,7 @@ export function PlanAdjustment({
   }
 
   return (
-    <section className="card">
+    <section className={proposed || adjustment.retake ? "card card-highlight" : "card"}>
       <h2 style={{ marginTop: 0 }}>How your plan is going</h2>
 
       <p>{adjustment.advice}</p>
@@ -91,15 +91,23 @@ export function PlanAdjustment({
 
       {proposed && (
         <>
-          <ul className="small">
+          <ul className="change-list">
             {proposed.map((p) => {
               const ex = current.get(p.id);
               if (!ex) return null;
 
               return (
                 <li key={p.id}>
-                  {ex.name}: {ex.sets} × {amountText(ex.unit, ex.reps, ex.holdSeconds)} → {p.sets} ×{" "}
-                  {amountText(p.unit, p.reps, p.holdSeconds)}
+                  <span>{ex.name}</span>
+                  <span>
+                    <span className="from">
+                      {ex.sets} × {amountText(ex.unit, ex.reps, ex.holdSeconds)}
+                    </span>{" "}
+                    →{" "}
+                    <span className="to">
+                      {p.sets} × {amountText(p.unit, p.reps, p.holdSeconds)}
+                    </span>
+                  </span>
                 </li>
               );
             })}
