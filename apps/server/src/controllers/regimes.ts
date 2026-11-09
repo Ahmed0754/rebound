@@ -2,7 +2,7 @@
 // calls the model, and picks a status code. Mounted at /api/regimes in app.ts.
 
 import { Router } from "express";
-import { decide, getLimits } from "../clinical.js";
+import { adjustPlan, decide, getLimits, widestLimits } from "../clinical.js";
 import { evaluate } from "../../eval/live.js";
 import * as checkins from "../models/checkins.js";
 import { get as getOnboarding, listBefore, type Onboarding } from "../models/onboarding.js";
@@ -411,6 +411,27 @@ router.put("/:id/checkins/:day", async (req, res) => {
   }
 
   res.send(await checkins.save({ regimeId: regime.id, userId, day: req.params.day, pain, didExercises }));
+});
+
+/**
+ * What the pain trend says to do with the plan - see `adjustPlan` in
+ * clinical.ts. A suggestion only: applying it is an ordinary PUT of the doses.
+ *
+ * Only check-ins saved since the doses last changed count, so the trend that
+ * led to one adjustment can't lead straight to another. Plans saved before
+ * their limits were recorded are held to the widest limits.
+ */
+router.get("/:id/adjustment", async (req, res) => {
+  const regime = await get(req.params.id, userIdOf(res));
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  const since = (await checkins.list(regime.id)).filter((c) => c.updatedAt >= regime.updatedAt);
+
+  res.send(adjustPlan(regime.regime, since, regime.limits ?? widestLimits()));
 });
 
 router.delete("/:id", async (req, res) => {

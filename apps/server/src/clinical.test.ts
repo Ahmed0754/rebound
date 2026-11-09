@@ -3,11 +3,14 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  adjustPlan,
   checkRationales,
   decide,
   getLimits,
   hasRedFlag,
   isCrisisText,
+  painTrend,
+  stepDoses,
   validateRegime,
   widestLimits,
   type Answers,
@@ -371,5 +374,118 @@ describe("checkRationales", () => {
     expect(found).toHaveLength(2);
     expect(found[0]).toContain('"squat"');
     expect(found[1]).toContain('"calf_stretch"');
+  });
+});
+
+describe("painTrend", () => {
+  // Oldest first, a day apart.
+  const days = (...pains: number[]) => pains.map((pain, i) => ({ day: `2026-11-${String(i + 1).padStart(2, "0")}`, pain }));
+
+  it("needs more check-ins than one window", () => {
+    expect(painTrend(days(6, 4, 2)).trend).toBe("not_enough");
+  });
+
+  it("compares the latest three with the ones before them", () => {
+    expect(painTrend(days(6, 6, 6, 3, 4, 3))).toEqual({ trend: "better", earlier: 6, recent: 10 / 3 });
+    expect(painTrend(days(2, 2, 2, 5, 4, 4)).trend).toBe("worse");
+  });
+
+  it("calls a change under 2 points steady", () => {
+    expect(painTrend(days(5, 5, 5, 4, 4, 4)).trend).toBe("steady");
+  });
+
+  it("only looks at the last six", () => {
+    // Pain was 9 a long time ago; recently it has stayed at 3.
+    expect(painTrend(days(9, 9, 9, 3, 3, 3, 3, 3, 3)).trend).toBe("steady");
+  });
+
+  it("works with one earlier check-in", () => {
+    expect(painTrend(days(7, 4, 4, 4)).trend).toBe("better");
+  });
+});
+
+describe("stepDoses", () => {
+  const limits = widestLimits();
+  const reps: DraftItem = { id: "squat", unit: "reps", sets: 2, reps: 10, holdSeconds: null };
+  const hold: DraftItem = { id: "stretch", unit: "hold", sets: 2, reps: null, holdSeconds: 20 };
+
+  it("moves reps by 2 and holds by 5 seconds", () => {
+    expect(stepDoses([reps, hold], "up", limits)).toEqual([
+      { ...reps, reps: 12 },
+      { ...hold, holdSeconds: 25 },
+    ]);
+    expect(stepDoses([reps, hold], "down", limits)).toEqual([
+      { ...reps, reps: 8 },
+      { ...hold, holdSeconds: 15 },
+    ]);
+  });
+
+  it("stays inside the limits, moving a set once the amount can't move", () => {
+    const atTop = { ...reps, reps: limits.reps.max };
+    expect(stepDoses([atTop], "up", limits)).toEqual([{ ...atTop, sets: 3 }]);
+
+    const atBottom = { ...reps, sets: 1, reps: limits.reps.min };
+    expect(stepDoses([atBottom], "down", limits)).toEqual([atBottom]);
+  });
+});
+
+describe("adjustPlan", () => {
+  const limits = widestLimits();
+  const plan: DraftItem[] = [{ id: "squat", unit: "reps", sets: 2, reps: 10, holdSeconds: null }];
+  const days = (...pains: number[]) => pains.map((pain, i) => ({ day: `2026-11-${String(i + 1).padStart(2, "0")}`, pain }));
+
+  it("suggests nothing until there is a trend", () => {
+    expect(adjustPlan(plan, days(5), limits)).toMatchObject({ trend: "not_enough", proposed: null });
+  });
+
+  it("suggests nothing when the pain is steady", () => {
+    expect(adjustPlan(plan, days(4, 4, 4, 4), limits)).toMatchObject({ trend: "steady", proposed: null });
+  });
+
+  it("suggests a harder plan when the pain is better", () => {
+    expect(adjustPlan(plan, days(6, 3, 3, 3), limits).proposed).toEqual([{ ...plan[0], reps: 12 }]);
+  });
+
+  it("suggests an easier plan when the pain is worse", () => {
+    expect(adjustPlan(plan, days(2, 5, 5, 5), limits).proposed).toEqual([{ ...plan[0], reps: 8 }]);
+  });
+
+  it("says to stop, not ease off, when worse and 7 or above", () => {
+    const result = adjustPlan(plan, days(3, 7, 8, 7), limits);
+    expect(result).toMatchObject({ trend: "worse", proposed: null });
+    expect(result.advice).toMatch(/stop the exercises/i);
+  });
+
+  it("suggests nothing when the plan is already at its limit", () => {
+    const top: DraftItem[] = [{ ...plan[0], sets: limits.sets.max, reps: limits.reps.max }];
+    expect(adjustPlan(top, days(6, 3, 3, 3), limits)).toMatchObject({ trend: "better", proposed: null });
+  });
+
+  describe("suggesting the questionnaire again", () => {
+    // Pain 8 at the start lowers the limits; this plan is at the top of them.
+    const tight = getLimits({ ...WELL, painNow: 8 });
+    const top: DraftItem[] = [{ ...plan[0], sets: tight.sets.max, reps: tight.reps.max }];
+
+    it("does when pain is better, the plan is at its limits, and a rule lowered them", () => {
+      expect(tight.reasons.length).toBeGreaterThan(0);
+      const result = adjustPlan(top, days(6, 3, 3, 3), tight);
+      expect(result).toMatchObject({ trend: "better", proposed: null, retake: true });
+      expect(result.advice).toMatch(/questionnaire/);
+    });
+
+    it("doesn't while there is still room inside the limits", () => {
+      const room: DraftItem[] = [{ ...plan[0], sets: 1, reps: tight.reps.min }];
+      expect(adjustPlan(room, days(6, 3, 3, 3), tight).retake).toBe(false);
+    });
+
+    it("doesn't when no rule lowered the limits, since a retake would change nothing", () => {
+      const top: DraftItem[] = [{ ...plan[0], sets: limits.sets.max, reps: limits.reps.max }];
+      expect(adjustPlan(top, days(6, 3, 3, 3), limits).retake).toBe(false);
+    });
+
+    it("doesn't when the pain is worse", () => {
+      const bottom: DraftItem[] = [{ ...plan[0], sets: 1, reps: tight.reps.min }];
+      expect(adjustPlan(bottom, days(2, 5, 5, 5), tight).retake).toBe(false);
+    });
   });
 });

@@ -9,6 +9,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ExerciseFigure } from "@/components/exercise-figure";
 import { LimitsPanel } from "@/components/limits";
 import { PainTracker } from "@/components/pain-tracker";
+import { PlanAdjustment } from "@/components/plan-adjustment";
 import { AccountError, BackLink, ErrorMessage, Loading } from "@/components/ui";
 import { ApiError, deleteRegime, getRegimeById, messageOf, updateRegime, type Exercise, type Regime } from "@/lib/api";
 import { useRequiredUser } from "@/lib/current-user";
@@ -46,6 +47,8 @@ export default function PlanPage() {
   const [doses, setDoses] = useState<Record<string, Dose> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  //Counts pain check-ins saved on this page, so the adjustment card refetches.
+  const [checkInsSaved, setCheckInsSaved] = useState(0);
 
   useEffect(() => {
     if (!token) return;
@@ -267,7 +270,17 @@ export default function PlanPage() {
       )}
 
       {/* Out of the way while the doses are being edited. */}
-      {!editing && token && <PainTracker token={token} planId={plan.id} />}
+      {!editing && token && (
+        <>
+          <PlanAdjustment
+            token={token}
+            plan={plan}
+            checkInsSaved={checkInsSaved}
+            onApplied={(updated) => setLoad({ status: "loaded", plan: updated })}
+          />
+          <PainTracker token={token} planId={plan.id} onSaved={() => setCheckInsSaved((n) => n + 1)} />
+        </>
+      )}
 
       {/* Older plans were saved before the server recorded their limits. */}
       {plan.limits && <LimitsPanel limits={plan.limits} title="The limits this plan was built inside" />}

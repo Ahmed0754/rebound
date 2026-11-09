@@ -2,7 +2,7 @@
 
 // The pain tracker on a plan: a daily check-in (pain 0-10, and whether the
 // exercises were done) and a graph of every check-in so far. It only records
-// and shows; nothing here decides anything about the plan.
+// and shows; what the trend means for the plan is PlanAdjustment's job.
 
 import { useEffect, useState } from "react";
 import { Choices, ErrorMessage, Loading } from "@/components/ui";
@@ -27,7 +27,15 @@ function shortDay(day: string): string {
   });
 }
 
-export function PainTracker({ token, planId }: { token: string; planId: string }) {
+export function PainTracker({
+  token,
+  planId,
+  onSaved,
+}: {
+  token: string;
+  planId: string;
+  onSaved?: () => void;
+}) {
   const [checkIns, setCheckIns] = useState<CheckIn[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -77,6 +85,7 @@ export function PainTracker({ token, planId }: { token: string; planId: string }
         [...(current ?? []).filter((c) => c.day !== checkIn.day), checkIn].sort((a, b) => a.day.localeCompare(b.day))
       );
       setSaved(true);
+      onSaved?.();
     } catch (e) {
       setError(messageOf(e));
     } finally {
