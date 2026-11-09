@@ -57,6 +57,8 @@ export type User = {
   id: string;
   username: string;
   createdAt: string;
+  // Only decides what this client shows. The server checks it for itself.
+  isAdmin: boolean;
 };
 
 // What signing up and logging in both return: the account, and the session
@@ -287,8 +289,18 @@ export function saveCheckIn(
   });
 }
 
-// What the pain trend says to do with a plan. `proposed` is the doses to
-// switch to, applied with `updateRegime`, or null when nothing should change.
+// Admin only: makes a plan's check-ins exactly this list. Unlike a real
+// check-in it can fill in past days, and each one counts as newly saved.
+export function replaceCheckIns(
+  token: string,
+  regimeId: string,
+  checkIns: Pick<CheckIn, "day" | "pain" | "didExercises">[]
+): Promise<CheckIn[]> {
+  return request(`/api/admin/regimes/${id(regimeId)}/checkins`, { method: "PUT", token, body: { checkIns } });
+}
+
+// What the last week of pain says to do with a plan. `proposed` is the doses to
+// switch to, applied with `applyAdjustment`, or null when nothing should change.
 export type Adjustment = {
   trend: "not_enough" | "better" | "steady" | "worse";
   earlier: number | null;
@@ -297,10 +309,50 @@ export type Adjustment = {
   proposed: (RegimeEdit & { unit: "reps" | "hold" })[] | null;
   // The plan is at the top of limits the questionnaire set; a new one may loosen them.
   retake: boolean;
+  // Pain is high enough that the advice is to stop the exercises.
+  stop: boolean;
 };
 
-export function getAdjustment(token: string, regimeId: string): Promise<Adjustment> {
-  return request(`/api/regimes/${id(regimeId)}/adjustment`, { token });
+// `today` is the person's own date: the week it looks at ends there.
+export function getAdjustment(token: string, regimeId: string, today: string): Promise<Adjustment> {
+  return request(`/api/regimes/${id(regimeId)}/adjustment?today=${id(today)}`, { token });
+}
+
+// Saves the suggested doses and records the change. A 409 means the
+// suggestion is no longer the one the person was shown.
+export function applyAdjustment(
+  token: string,
+  regimeId: string,
+  regime: RegimeEdit[],
+  today: string
+): Promise<Regime> {
+  return request(`/api/regimes/${id(regimeId)}/adjustments`, { method: "POST", token, body: { regime, today } });
+}
+
+type Dose = { sets: number; reps: number | null; holdSeconds: number | null };
+
+// One suggestion that was applied to a plan.
+export type AdjustmentEvent = {
+  id: string;
+  trend: "better" | "worse";
+  earlier: number;
+  recent: number;
+  createdAt: string;
+  undoneAt: string | null;
+  changes: { id: string; name: string; unit: "reps" | "hold"; from: Dose; to: Dose }[];
+  // True for the one change that undoing would reverse.
+  undoable: boolean;
+};
+
+// Newest first.
+export function listAdjustments(token: string, regimeId: string): Promise<AdjustmentEvent[]> {
+  return request(`/api/regimes/${id(regimeId)}/adjustments`, { token });
+}
+
+// Puts the plan back as it was before its latest change. A 409, with the
+// reason, when that can't be done.
+export function undoAdjustment(token: string, regimeId: string): Promise<Regime> {
+  return request(`/api/regimes/${id(regimeId)}/adjustments/undo`, { method: "POST", token });
 }
 
 // Deletes a saved plan. Hard delete on the server; there is no undo.

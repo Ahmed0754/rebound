@@ -554,19 +554,33 @@ export function checkRationales(rationales: Map<string, string>): string[] {
 // The pain tracker's check-ins, as far as a trend needs them.
 export type PainPoint = { day: string; pain: number };
 
+// A check-in as the adjustment reads it.
+export type CheckInPoint = PainPoint & { didExercises: boolean; updatedAt: string };
+
 export type Trend = "not_enough" | "better" | "steady" | "worse";
 
-// Compared in windows of this many check-ins: the latest ones against the
-// ones before them, so a single good or bad day can't move the plan.
+// The latest this many check-ins are compared with the ones before them, so
+// a single good or bad day can't move the plan.
 export const TREND_WINDOW = 3;
+
+// How many check-ins there must be to compare the latest ones with. Two, so
+// that one unusual day on its own can't be what the trend is measured from.
+const MIN_EARLIER = 2;
+
+export const MIN_CHECK_INS = TREND_WINDOW + MIN_EARLIER;
+
+// Only this many days count, today included: a trend is about how someone is
+// doing now, and a check-in from months ago says nothing about that.
+export const WINDOW_DAYS = 7;
 
 // A move of 2 points on the 0-10 scale is about the smallest change in pain
 // people notice as real (Farrar et al. 2001). Judgment that it is what should
 // change a plan.
 const MEANINGFUL_CHANGE = 2;
 
-// Worse and this bad stops the exercises instead of easing them - the same
-// line the questionnaire's pain rule draws.
+// Pain this bad stops the exercises, whichever way it is heading - the same
+// line the questionnaire's pain rule draws, and PRODUCT.md's default for a
+// single check-in. Pending clinical sign-off, like the other thresholds.
 const STOP_AT = 7;
 
 // One step of a dose. Judgment: small enough that a step either way is gentle.
@@ -577,16 +591,16 @@ const average = (points: PainPoint[]) => points.reduce((sum, p) => sum + p.pain,
 
 /**
  * Better, worse or steady: the average of the latest `TREND_WINDOW` check-ins
- * against the ones before them (up to `TREND_WINDOW` of those). Needs at least
- * one earlier check-in to compare with. `points` are oldest first.
+ * against all the ones before them. Needs `MIN_CHECK_INS` to say anything.
+ * `points` are oldest first, and already only the ones that should count.
  */
 export function painTrend(points: PainPoint[]): { trend: Trend; earlier: number | null; recent: number | null } {
-  if (points.length <= TREND_WINDOW) {
+  if (points.length < MIN_CHECK_INS) {
     return { trend: "not_enough", earlier: null, recent: null };
   }
 
   const recent = average(points.slice(-TREND_WINDOW));
-  const earlier = average(points.slice(-2 * TREND_WINDOW, -TREND_WINDOW));
+  const earlier = average(points.slice(0, -TREND_WINDOW));
   const change = recent - earlier;
 
   const trend = change <= -MEANINGFUL_CHANGE ? "better" : change >= MEANINGFUL_CHANGE ? "worse" : "steady";
@@ -633,81 +647,112 @@ export type Adjustment = {
   // rules. Those were set by answers that may no longer be true, so a new
   // questionnaire is the way to looser ones - nothing here raises a limit.
   retake: boolean;
+  // Pain is high enough that the advice is to stop the exercises.
+  stop: boolean;
 };
 
+type Dose = Pick<DraftItem, "id" | "sets" | "reps" | "holdSeconds">;
+
+/** Whether two lists are the same exercises at the same doses, in the same order. */
+export function sameDoses(a: Dose[], b: Dose[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (dose, i) =>
+        dose.id === b[i].id && dose.sets === b[i].sets && dose.reps === b[i].reps && dose.holdSeconds === b[i].holdSeconds
+    )
+  );
+}
+
+// "2026-11-02", `offset` days from another such date.
+function addDays(day: string, offset: number): string {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
 /**
- * What the pain trend says to do with a plan. Only ever a suggestion: the
- * person applies it or doesn't, through the same edit as changing a dose by
- * hand. Never adds or swaps exercises, and never goes outside `limits`.
+ * What the last week of check-ins says to do with a plan. Only ever a
+ * suggestion, which the person applies or doesn't. Never adds or swaps
+ * exercises, and never goes outside `limits`.
+ *
+ * `checkIns` are oldest first. `today` is the person's own date. The trend
+ * only counts check-ins saved since `dosesChangedAt`, so the trend that led to
+ * one change can't lead straight to another. High pain counts whenever it was
+ * saved: changing a dose doesn't make it go away.
  */
-export function adjustPlan(items: DraftItem[], points: PainPoint[], limits: Limits): Adjustment {
-  const { trend, earlier, recent } = painTrend(points);
-  const same = (proposed: DraftItem[]) =>
-    proposed.every((p, i) => p.sets === items[i].sets && p.reps === items[i].reps && p.holdSeconds === items[i].holdSeconds);
+export function adjustPlan(
+  items: DraftItem[],
+  checkIns: CheckInPoint[],
+  limits: Limits,
+  { today, dosesChangedAt }: { today: string; dosesChangedAt: string }
+): Adjustment {
+  const firstDay = addDays(today, 1 - WINDOW_DAYS);
+  const week = checkIns.filter((checkIn) => checkIn.day >= firstDay);
+  const counted = week.filter((checkIn) => checkIn.updatedAt >= dosesChangedAt);
+
+  const { trend, earlier, recent } = painTrend(counted);
+  const noChange = (advice: string, extra: { retake?: boolean; stop?: boolean } = {}): Adjustment => ({
+    trend,
+    earlier,
+    recent,
+    advice,
+    proposed: null,
+    retake: false,
+    stop: false,
+    ...extra,
+  });
+
+  // First, and needing no trend: one check-in at this level is enough, and a
+  // steady or falling pain that is still this high is no reason to carry on.
+  const latest = week.slice(-TREND_WINDOW);
+
+  if (latest.length > 0 && (latest[latest.length - 1].pain >= STOP_AT || average(latest) >= STOP_AT)) {
+    return noChange("Your pain is high. Stop the exercises and talk to a doctor or physiotherapist.", { stop: true });
+  }
 
   if (trend === "not_enough") {
-    return {
-      trend,
-      earlier,
-      recent,
-      advice: `Check in on ${TREND_WINDOW + 1} days and we'll see whether your plan should change.`,
-      proposed: null,
-      retake: false,
-    };
+    return noChange(`Check in on at least ${MIN_CHECK_INS} days in a week and we'll see whether your plan should change.`);
   }
 
   if (trend === "steady") {
-    return { trend, earlier, recent, advice: "Your pain is holding steady, so keep the plan as it is.", proposed: null, retake: false };
+    return noChange("Your pain is holding steady, so keep the plan as it is.");
   }
 
-  if (trend === "worse" && recent !== null && recent >= STOP_AT) {
-    return {
-      trend,
-      earlier,
-      recent,
-      advice: "Your pain is getting worse and is now high. Stop the exercises and talk to a doctor or physiotherapist.",
-      proposed: null,
-      retake: false,
-    };
+  // Pain falling without the exercises says nothing about whether they are
+  // too easy. Only this direction: a lighter plan is still the safe answer to
+  // pain getting worse, done or not. "Most" is judgment.
+  const done = counted.filter((checkIn) => checkIn.didExercises).length;
+
+  if (trend === "better" && done * 2 <= counted.length) {
+    return noChange(
+      `Your pain is improving, but you did the exercises on only ${done} of your last ${counted.length} check-ins. Keep the plan as it is until you're doing them most days.`
+    );
   }
 
   const proposed = stepDoses(items, trend === "better" ? "up" : "down", limits);
 
-  if (same(proposed)) {
+  if (sameDoses(proposed, items)) {
     if (trend === "worse") {
-      return {
-        trend,
-        earlier,
-        recent,
-        advice: "Your pain is getting worse, and your plan is already as light as it goes. Talk to a doctor or physiotherapist.",
-        proposed: null,
-        retake: false,
-      };
+      return noChange("Your pain is getting worse, and your plan is already as light as it goes. Talk to a doctor or physiotherapist.");
     }
 
     const retake = limits.reasons.length > 0;
 
-    return {
-      trend,
-      earlier,
-      recent,
-      advice: retake
+    return noChange(
+      retake
         ? "Your pain is improving, and your plan is already at the most its limits allow. Those limits came from how you were doing when you filled in the questionnaire - fill it in again for a plan that fits how you are now."
         : "Your pain is improving, and your plan is already at the most it can be.",
-      proposed: null,
-      retake,
-    };
+      { retake }
+    );
   }
 
   return {
-    trend,
-    earlier,
-    recent,
-    advice:
+    ...noChange(
       trend === "better"
         ? "Your pain is improving. You could make the exercises a little harder."
-        : "Your pain is getting worse. Make the exercises a little easier.",
+        : "Your pain is getting worse. Make the exercises a little easier."
+    ),
     proposed,
-    retake: false,
   };
 }

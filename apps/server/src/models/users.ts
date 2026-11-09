@@ -10,15 +10,18 @@ export type User = {
   id: string;
   username: string;
   createdAt: string;
+  // May use the admin page and run the judge. Set by hand in SQL.
+  isAdmin: boolean;
 };
 
 type UserRow = {
   id: string;
   username: string;
   created_at: Date;
+  is_admin: boolean;
 };
 
-const USER_COLUMNS = "id, username, created_at";
+const USER_COLUMNS = "id, username, created_at, is_admin";
 
 // Postgres rejects a non-uuid compared against a uuid column, which would
 // surface as a 500 for what is only a bad id. Same regex as models/regimes.ts.
@@ -40,6 +43,7 @@ function fromDbRow(row: UserRow): User {
     id: row.id,
     username: row.username,
     createdAt: row.created_at.toISOString(),
+    isAdmin: row.is_admin,
   };
 }
 

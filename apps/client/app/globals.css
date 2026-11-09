@@ -740,10 +740,57 @@ h3 {
   border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
 }
 
+/* The admin page's editable list of check-ins. */
+
+.admin-presets {
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.admin-checkins {
+  margin: 0 0 16px;
+}
+
+.admin-checkins > li {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 6px 0;
+}
+
+.admin-checkins .input {
+  width: auto;
+}
+
+.card-stop {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.adjustment-history {
+  margin-top: 20px;
+}
+
+.adjustment-history h3 {
+  margin: 0 0 8px;
+}
+
 .change-list {
   list-style: none;
   padding: 0;
   margin: 0 0 16px;
+}
+
+.change-list .adjustment-doses {
+  flex-basis: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.change-list .adjustment-doses li {
+  padding: 2px 0;
+  border-top: 0;
+  font-size: inherit;
 }
 
 .change-list li {

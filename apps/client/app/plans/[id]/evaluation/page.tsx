@@ -51,6 +51,17 @@ export default function EvaluationPage() {
     );
   }
 
+  //The server refuses the run anyway; this only saves showing a dead button.
+  if (!user.isAdmin) {
+    return (
+      <main className="page">
+        <BackLink href={`/plans/${id}`}>Back to the plan</BackLink>
+        <h1>Not available</h1>
+        <p className="lead">This page is for admins.</p>
+      </main>
+    );
+  }
+
   async function start() {
     if (!token) return;
 

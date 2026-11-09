@@ -140,12 +140,13 @@ vi.mock("./models/regimes.js", () => ({
     };
   }),
   remove: vi.fn(async (id: string, userId: string) => id === SAVED_ID && userId === USER_ID),
+  getForEvaluation: vi.fn(async () => null),
   getCandidatesFor: vi.fn(async () => []),
   getFunnelFor: vi.fn(async () => FUNNEL),
   toCandidateQuery: vi.fn((answers: { region: string }) => ({ region: answers.region })),
 }));
 
-const user = { id: USER_ID, username: "shahid", createdAt: CREATED_AT };
+const user = { id: USER_ID, username: "shahid", createdAt: CREATED_AT, isAdmin: false };
 const PASSWORD = "correct horse battery";
 
 class DuplicateUsername extends Error {
@@ -273,6 +274,32 @@ vi.mock("./models/checkins.js", () => ({
     didExercises: input.didExercises,
     updatedAt: EDITED_AT,
   })),
+  replaceAll: vi.fn(async (_regimeId: string, _userId: string, list: { day: string; pain: number; didExercises: boolean }[]) =>
+    list.map((checkIn) => ({ ...checkIn, updatedAt: EDITED_AT }))
+  ),
+}));
+
+// Same reason as UnknownExercise: the controller maps these with `instanceof`.
+class StaleAdjustment extends Error {
+  constructor() {
+    super("your plan has changed since this suggestion was made");
+    this.name = "StaleAdjustment";
+  }
+}
+
+class CannotUndo extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = "CannotUndo";
+  }
+}
+
+vi.mock("./models/adjustments.js", () => ({
+  StaleAdjustment,
+  CannotUndo,
+  apply: vi.fn(async () => saved),
+  list: vi.fn(async () => []),
+  undo: vi.fn(async (id: string, userId: string) => (id === SAVED_ID && userId === USER_ID ? saved : null)),
 }));
 
 // No database: the token map stands in for the sessions table.
@@ -741,29 +768,42 @@ describe("GET /api/regimes/:id/checkins", () => {
   });
 });
 
-describe("GET /api/regimes/:id/adjustment", () => {
-  const checkIn = (day: string, pain: number, updatedAt = EDITED_AT) => ({ day, pain, didExercises: true, updatedAt });
+// The trend only looks at the last week, so these dates move with the clock.
+function daysAgo(n: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - n);
+  return date.toISOString().slice(0, 10);
+}
 
+const checkInFrom = (ago: number, pain: number, updatedAt = EDITED_AT) => ({
+  day: daysAgo(ago),
+  pain,
+  didExercises: true,
+  updatedAt,
+});
+
+// Pain going from 2 to 5 over five days: the plan should get easier.
+const worsening = () => [checkInFrom(4, 2), checkInFrom(3, 2), checkInFrom(2, 5), checkInFrom(1, 5), checkInFrom(0, 5)];
+
+// One exercise, with everything the adjustment needs to read its dose.
+const onePlan = () => ({
+  ...saved,
+  limits: null,
+  regime: [{ ...knee[0], unit: "reps" as const, holdSeconds: null, rationale: null }],
+});
+
+describe("GET /api/regimes/:id/adjustment", () => {
   it("suggests nothing with too few check-ins", async () => {
     const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
     expect(res.status).toBe(200);
-    expect(await json<unknown>(res)).toMatchObject({ trend: "not_enough", proposed: null });
+    expect(await json<unknown>(res)).toMatchObject({ trend: "not_enough", proposed: null, stop: false });
   });
 
   it("suggests easier doses when the pain is getting worse", async () => {
     const { get } = await import("./models/regimes.js");
-    vi.mocked(get).mockResolvedValueOnce({
-      ...saved,
-      limits: null,
-      regime: [{ ...knee[0], unit: "reps", holdSeconds: null, rationale: null }],
-    });
+    vi.mocked(get).mockResolvedValueOnce(onePlan());
     const { list } = await import("./models/checkins.js");
-    vi.mocked(list).mockResolvedValueOnce([
-      checkIn("2026-09-25", 2),
-      checkIn("2026-09-26", 5),
-      checkIn("2026-09-27", 5),
-      checkIn("2026-09-28", 5),
-    ]);
+    vi.mocked(list).mockResolvedValueOnce(worsening());
 
     const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
     const body = await json<{ trend: string; proposed: { reps: number }[] }>(res);
@@ -775,18 +815,289 @@ describe("GET /api/regimes/:id/adjustment", () => {
     const { list } = await import("./models/checkins.js");
     const before = "2026-09-23T00:00:00.000Z";
     vi.mocked(list).mockResolvedValueOnce([
-      checkIn("2026-09-20", 2, before),
-      checkIn("2026-09-25", 5),
-      checkIn("2026-09-26", 5),
-      checkIn("2026-09-27", 5),
+      checkInFrom(4, 2, before),
+      checkInFrom(3, 2),
+      checkInFrom(2, 5),
+      checkInFrom(1, 5),
+      checkInFrom(0, 5),
     ]);
 
     const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
     expect(await json<unknown>(res)).toMatchObject({ trend: "not_enough" });
   });
 
+  it("ignores check-ins from more than a week ago", async () => {
+    const { list } = await import("./models/checkins.js");
+    vi.mocked(list).mockResolvedValueOnce([
+      checkInFrom(30, 2),
+      checkInFrom(29, 2),
+      checkInFrom(28, 5),
+      checkInFrom(27, 5),
+      checkInFrom(26, 5),
+    ]);
+
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
+    expect(await json<unknown>(res)).toMatchObject({ trend: "not_enough" });
+  });
+
+  it("tells them to stop on a high check-in", async () => {
+    const { list } = await import("./models/checkins.js");
+    vi.mocked(list).mockResolvedValueOnce([checkInFrom(0, 9)]);
+
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
+    expect(await json<unknown>(res)).toMatchObject({ stop: true, proposed: null });
+  });
+
+  it("uses the person's own date, and ignores one that can't be today", async () => {
+    const { list } = await import("./models/checkins.js");
+
+    // The oldest is six days back: inside a week ending today, outside one
+    // ending tomorrow.
+    const points = [checkInFrom(6, 2), checkInFrom(5, 2), checkInFrom(2, 5), checkInFrom(1, 5), checkInFrom(0, 5)];
+    const adjustmentOn = async (today: string) => {
+      vi.mocked(list).mockResolvedValueOnce(points);
+      return json<unknown>(await authed(`${base}/api/regimes/${SAVED_ID}/adjustment?today=${today}`));
+    };
+
+    expect(await adjustmentOn(daysAgo(-1))).toMatchObject({ trend: "not_enough" });
+    expect(await adjustmentOn(daysAgo(-30))).toMatchObject({ trend: "worse" });
+    expect(await adjustmentOn("not-a-date")).toMatchObject({ trend: "worse" });
+  });
+
   it("404s for another account's plan", async () => {
     const res = await fetch(`${base}/api/regimes/${SAVED_ID}/adjustment`, {
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /api/regimes/:id/adjustments", () => {
+  // What the suggestion for `onePlan` under `worsening` is.
+  const eased = { id: knee[0].id, sets: knee[0].sets, reps: knee[0].reps - 2 };
+  const post = (body: unknown) => send("POST", `/api/regimes/${SAVED_ID}/adjustments`, body);
+
+  async function worseningPlan() {
+    const { get } = await import("./models/regimes.js");
+    vi.mocked(get).mockResolvedValueOnce(onePlan());
+    const { list } = await import("./models/checkins.js");
+    vi.mocked(list).mockResolvedValueOnce(worsening());
+  }
+
+  async function applied() {
+    const { apply } = await import("./models/adjustments.js");
+    return vi.mocked(apply);
+  }
+
+  it("applies what the rules suggest and records why", async () => {
+    await worseningPlan();
+    (await applied()).mockClear();
+
+    const res = await post({ regime: [eased] });
+
+    expect(res.status).toBe(201);
+    expect(await applied()).toHaveBeenCalledWith(
+      expect.objectContaining({ regimeId: SAVED_ID, userId: USER_ID, trend: "worse", earlier: 2, recent: 5 })
+    );
+  });
+
+  it("409s when the doses sent aren't the ones suggested", async () => {
+    await worseningPlan();
+    (await applied()).mockClear();
+
+    const res = await post({ regime: [{ ...eased, reps: 20 }] });
+
+    expect(res.status).toBe(409);
+    expect(await applied()).not.toHaveBeenCalled();
+  });
+
+  it("refuses while the advice is to stop", async () => {
+    const { get } = await import("./models/regimes.js");
+    vi.mocked(get).mockResolvedValueOnce(onePlan());
+    const { list } = await import("./models/checkins.js");
+    vi.mocked(list).mockResolvedValueOnce([...worsening().slice(0, 4), checkInFrom(0, 9)]);
+    (await applied()).mockClear();
+
+    const res = await post({ regime: [eased] });
+
+    expect(res.status).toBe(409);
+    expect(await applied()).not.toHaveBeenCalled();
+  });
+
+  it("409s when the plan changed between the check and the save", async () => {
+    await worseningPlan();
+    const { StaleAdjustment } = await import("./models/adjustments.js");
+    (await applied()).mockRejectedValueOnce(new StaleAdjustment());
+
+    expect((await post({ regime: [eased] })).status).toBe(409);
+  });
+
+  it("400s for a body that isn't a list of doses", async () => {
+    expect((await post({ regime: "harder" })).status).toBe(400);
+  });
+
+  it("404s for another account's plan", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/adjustments`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ regime: [eased] }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("401s when not logged in", async () => {
+    expect((await fetch(`${base}/api/regimes/${SAVED_ID}/adjustments`, { method: "POST" })).status).toBe(401);
+  });
+});
+
+describe("GET /api/regimes/:id/adjustments", () => {
+  it("returns the plan's history", async () => {
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustments`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toEqual([]);
+  });
+
+  it("404s for another account's plan", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/adjustments`, {
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+// The next request's account is an admin. The ordinary test account isn't.
+async function asAdmin() {
+  const users = await import("./models/users.js");
+  vi.mocked(users.get).mockResolvedValueOnce({ ...user, isAdmin: true });
+}
+
+describe("POST /api/regimes/:id/evaluation", () => {
+  const path = `/api/regimes/${SAVED_ID}/evaluation`;
+
+  async function lookups() {
+    const { getForEvaluation } = await import("./models/regimes.js");
+    vi.mocked(getForEvaluation).mockClear();
+    return vi.mocked(getForEvaluation);
+  }
+
+  it("is refused for an ordinary account, before anything is looked up", async () => {
+    const found = await lookups();
+
+    const res = await send("POST", path);
+
+    expect(res.status).toBe(403);
+    expect(await json<ErrorBody>(res)).toEqual({ error: "this is for admins only" });
+    expect(found).not.toHaveBeenCalled();
+  });
+
+  it("goes through for an admin", async () => {
+    const found = await lookups();
+    await asAdmin();
+
+    // A 404 from the route itself: the mock has no plan, but it got that far.
+    const res = await send("POST", path);
+
+    expect(res.status).toBe(404);
+    expect(found).toHaveBeenCalledWith(SAVED_ID, USER_ID);
+  });
+
+  it("401s when not logged in", async () => {
+    expect((await fetch(`${base}${path}`, { method: "POST" })).status).toBe(401);
+  });
+});
+
+describe("PUT /api/admin/regimes/:id/checkins", () => {
+  const path = `/api/admin/regimes/${SAVED_ID}/checkins`;
+  const good = { day: "2026-10-01", pain: 5, didExercises: true };
+
+  async function replaced() {
+    const { replaceAll } = await import("./models/checkins.js");
+    vi.mocked(replaceAll).mockClear();
+    return vi.mocked(replaceAll);
+  }
+
+  async function adminPut(body: unknown) {
+    await asAdmin();
+    return send("PUT", path, body);
+  }
+
+  it("replaces the plan's check-ins, days before the plan included", async () => {
+    const save = await replaced();
+    const list = [good, { day: "2020-01-01", pain: 0, didExercises: false }];
+
+    const res = await adminPut({ checkIns: list });
+
+    expect(res.status).toBe(200);
+    expect(save).toHaveBeenCalledWith(SAVED_ID, USER_ID, list);
+  });
+
+  it("accepts an empty list, which clears the graph", async () => {
+    const save = await replaced();
+
+    expect((await adminPut({ checkIns: [] })).status).toBe(200);
+    expect(save).toHaveBeenCalledWith(SAVED_ID, USER_ID, []);
+  });
+
+  it("is refused for an ordinary account", async () => {
+    const save = await replaced();
+
+    expect((await send("PUT", path, { checkIns: [good] })).status).toBe(403);
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("401s when not logged in", async () => {
+    expect((await fetch(`${base}${path}`, { method: "PUT" })).status).toBe(401);
+  });
+
+  it("404s for a plan that isn't the admin's own", async () => {
+    await asAdmin();
+    const res = await send("PUT", `/api/admin/regimes/${OTHER_USER_ID}/checkins`, { checkIns: [good] });
+    expect(res.status).toBe(404);
+  });
+
+  it.each([
+    ["no list", { checkIns: "lots" }],
+    ["too many", { checkIns: Array.from({ length: 61 }, () => good) }],
+    ["an impossible month", { checkIns: [{ ...good, day: "2026-13-45" }] }],
+    ["a day that doesn't exist", { checkIns: [{ ...good, day: "2026-02-30" }] }],
+    ["not a date", { checkIns: [{ ...good, day: "yesterday" }] }],
+    ["the future", { checkIns: [{ ...good, day: "2099-01-01" }] }],
+    ["the same day twice", { checkIns: [good, good] }],
+    ["pain over 10", { checkIns: [{ ...good, pain: 11 }] }],
+    ["pain that isn't whole", { checkIns: [{ ...good, pain: 1.5 }] }],
+    ["pain as text", { checkIns: [{ ...good, pain: "5" }] }],
+    ["didExercises as text", { checkIns: [{ ...good, didExercises: "yes" }] }],
+    ["an entry that isn't an object", { checkIns: [null] }],
+  ])("400s for %s, saving nothing", async (_name, body) => {
+    const save = await replaced();
+
+    expect((await adminPut(body)).status).toBe(400);
+    expect(save).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/regimes/:id/adjustments/undo", () => {
+  const undo = () => send("POST", `/api/regimes/${SAVED_ID}/adjustments/undo`);
+
+  it("returns the plan as it now stands", async () => {
+    const res = await undo();
+    expect(res.status).toBe(200);
+    expect(await json<RegimeBody>(res)).toMatchObject({ id: SAVED_ID });
+  });
+
+  it("409s with the reason when there is nothing it can undo", async () => {
+    const adjustments = await import("./models/adjustments.js");
+    vi.mocked(adjustments.undo).mockRejectedValueOnce(new adjustments.CannotUndo("there is no change to undo"));
+
+    const res = await undo();
+
+    expect(res.status).toBe(409);
+    expect(await json<ErrorBody>(res)).toEqual({ error: "there is no change to undo" });
+  });
+
+  it("404s when the account has no such plan", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/adjustments/undo`, {
+      method: "POST",
       headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
     });
     expect(res.status).toBe(404);

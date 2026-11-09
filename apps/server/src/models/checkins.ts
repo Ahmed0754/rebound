@@ -61,3 +61,40 @@ export async function save(input: {
 
   return fromDbRow(saved.rows[0]);
 }
+
+/**
+ * Makes a plan's check-ins exactly this list, for testing from the admin page.
+ * All of it, or none of it. Every row is saved as new, so the whole list counts
+ * towards the trend even when the doses changed a moment ago.
+ */
+export async function replaceAll(
+  regimeId: string,
+  userId: string,
+  checkIns: { day: string; pain: number; didExercises: boolean }[]
+): Promise<CheckIn[]> {
+  const client = await pool.connect();
+
+  try {
+    await client.query("begin");
+    await client.query(`delete from pain_checkins where regime_id = $1`, [regimeId]);
+    await client.query(
+      `insert into pain_checkins (regime_id, user_id, day, pain, did_exercises)
+       select $1, $2, * from unnest($3::date[], $4::smallint[], $5::boolean[])`,
+      [
+        regimeId,
+        userId,
+        checkIns.map((checkIn) => checkIn.day),
+        checkIns.map((checkIn) => checkIn.pain),
+        checkIns.map((checkIn) => checkIn.didExercises),
+      ]
+    );
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  return list(regimeId);
+}

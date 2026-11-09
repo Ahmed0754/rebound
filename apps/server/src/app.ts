@@ -3,6 +3,7 @@
 // Built here and started in index.ts, so the tests can use it without a port.
 
 import express, { type ErrorRequestHandler } from "express";
+import adminController from "./controllers/admin.js";
 import onboardingController from "./controllers/onboarding.js";
 import regimesController from "./controllers/regimes.js";
 import { sessionsRouter, users } from "./controllers/users.js";
@@ -45,6 +46,7 @@ app.get("/api/regions", async (_req, res) => {
   res.send(await listRegions());
 });
 
+app.use("/api/admin", adminController);
 app.use("/api/onboarding", onboardingController);
 app.use("/api/regimes", regimesController);
 app.use("/api/users", users);

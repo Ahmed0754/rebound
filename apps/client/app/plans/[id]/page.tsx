@@ -201,9 +201,11 @@ export default function PlanPage() {
                 <button type="button" className="btn btn-small btn-pill" onClick={startEdit} disabled={busy}>
                   <Sliders size={15} /> Edit doses
                 </button>
-                <Link className="btn btn-small btn-pill" href={`/plans/${plan.id}/evaluation`}>
-                  How it was judged
-                </Link>
+                {user.isAdmin && (
+                  <Link className="btn btn-small btn-pill" href={`/plans/${plan.id}/evaluation`}>
+                    How it was judged
+                  </Link>
+                )}
                 <button type="button" className="btn btn-small btn-pill btn-danger" onClick={remove} disabled={busy}>
                   Delete
                 </button>
@@ -213,14 +215,13 @@ export default function PlanPage() {
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
-          {/* One list: plans have no morning/evening split yet. The first
-              exercise gets the full row, like a featured card. */}
+          {/* One list: plans have no morning/evening split yet. Every exercise
+              gets the same size of card. */}
           <ol className="card-grid plain-list">
             {plan.regime.map((ex, i) => (
-              <li key={ex.id} className={i === 0 ? "wide" : undefined}>
+              <li key={ex.id}>
                 <PhotoCard
                   tone={i}
-                  wide={i === 0}
                   photo={imageUrls(ex.id)[1]}
                   chip={`Exercise ${i + 1}`}
                   title={ex.name}

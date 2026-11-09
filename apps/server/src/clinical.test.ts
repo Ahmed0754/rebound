@@ -10,6 +10,7 @@ import {
   hasRedFlag,
   isCrisisText,
   painTrend,
+  sameDoses,
   stepDoses,
   validateRegime,
   widestLimits,
@@ -394,13 +395,13 @@ describe("painTrend", () => {
     expect(painTrend(days(5, 5, 5, 4, 4, 4)).trend).toBe("steady");
   });
 
-  it("only looks at the last six", () => {
-    // Pain was 9 a long time ago; recently it has stayed at 3.
-    expect(painTrend(days(9, 9, 9, 3, 3, 3, 3, 3, 3)).trend).toBe("steady");
+  it("averages everything before the latest three", () => {
+    expect(painTrend(days(8, 6, 6, 4, 3, 3, 3))).toMatchObject({ earlier: 6, recent: 3 });
   });
 
-  it("works with one earlier check-in", () => {
-    expect(painTrend(days(7, 4, 4, 4)).trend).toBe("better");
+  it("won't measure from one earlier check-in", () => {
+    expect(painTrend(days(7, 4, 4, 4)).trend).toBe("not_enough");
+    expect(painTrend(days(7, 7, 4, 4, 4)).trend).toBe("better");
   });
 });
 
@@ -432,33 +433,119 @@ describe("stepDoses", () => {
 describe("adjustPlan", () => {
   const limits = widestLimits();
   const plan: DraftItem[] = [{ id: "squat", unit: "reps", sets: 2, reps: 10, holdSeconds: null }];
-  const days = (...pains: number[]) => pains.map((pain, i) => ({ day: `2026-11-${String(i + 1).padStart(2, "0")}`, pain }));
+
+  // Doses last changed before any of these check-ins were saved.
+  const CHANGED = "2026-11-01T00:00:00.000Z";
+  const SAVED = "2026-11-10T00:00:00.000Z";
+
+  // Consecutive days ending on `today`, exercises done, saved after the doses changed.
+  const today = "2026-11-10";
+  const days = (...pains: number[]) =>
+    pains.map((pain, i) => ({
+      day: `2026-11-${String(10 - (pains.length - 1 - i)).padStart(2, "0")}`,
+      pain,
+      didExercises: true,
+      updatedAt: SAVED,
+    }));
+
+  const adjust = (items: DraftItem[], points: ReturnType<typeof days>, lim = limits) =>
+    adjustPlan(items, points, lim, { today, dosesChangedAt: CHANGED });
 
   it("suggests nothing until there is a trend", () => {
-    expect(adjustPlan(plan, days(5), limits)).toMatchObject({ trend: "not_enough", proposed: null });
+    expect(adjust(plan, days(5))).toMatchObject({ trend: "not_enough", proposed: null, stop: false });
   });
 
   it("suggests nothing when the pain is steady", () => {
-    expect(adjustPlan(plan, days(4, 4, 4, 4), limits)).toMatchObject({ trend: "steady", proposed: null });
+    expect(adjust(plan, days(4, 4, 4, 4, 4))).toMatchObject({ trend: "steady", proposed: null });
   });
 
   it("suggests a harder plan when the pain is better", () => {
-    expect(adjustPlan(plan, days(6, 3, 3, 3), limits).proposed).toEqual([{ ...plan[0], reps: 12 }]);
+    expect(adjust(plan, days(6, 6, 3, 3, 3)).proposed).toEqual([{ ...plan[0], reps: 12 }]);
   });
 
   it("suggests an easier plan when the pain is worse", () => {
-    expect(adjustPlan(plan, days(2, 5, 5, 5), limits).proposed).toEqual([{ ...plan[0], reps: 8 }]);
-  });
-
-  it("says to stop, not ease off, when worse and 7 or above", () => {
-    const result = adjustPlan(plan, days(3, 7, 8, 7), limits);
-    expect(result).toMatchObject({ trend: "worse", proposed: null });
-    expect(result.advice).toMatch(/stop the exercises/i);
+    expect(adjust(plan, days(2, 2, 5, 5, 5)).proposed).toEqual([{ ...plan[0], reps: 8 }]);
   });
 
   it("suggests nothing when the plan is already at its limit", () => {
     const top: DraftItem[] = [{ ...plan[0], sets: limits.sets.max, reps: limits.reps.max }];
-    expect(adjustPlan(top, days(6, 3, 3, 3), limits)).toMatchObject({ trend: "better", proposed: null });
+    expect(adjust(top, days(6, 6, 3, 3, 3))).toMatchObject({ trend: "better", proposed: null });
+  });
+
+  describe("high pain", () => {
+    const stops = (points: ReturnType<typeof days>) => {
+      const result = adjust(plan, points);
+      expect(result).toMatchObject({ proposed: null, stop: true });
+      expect(result.advice).toMatch(/stop the exercises/i);
+    };
+
+    it("stops when worse and 7 or above", () => stops(days(3, 3, 7, 8, 7)));
+    it("stops when it stays high, even though it is steady", () => stops(days(8, 8, 8, 8, 8, 8)));
+    it("stops when it is falling but still high", () => stops(days(10, 10, 10, 7, 7, 7)));
+    it("stops on a sudden spike", () => stops(days(4, 4, 4, 4, 4, 10)));
+    it("stops on one check-in, before there is any trend", () => stops(days(9)));
+    it("stops when the last three average 7, though the latest is lower", () => stops(days(4, 4, 8, 8, 5)));
+
+    it("doesn't stop just under the line", () => {
+      expect(adjust(plan, days(6, 6, 6, 6, 6)).stop).toBe(false);
+    });
+
+    it("still counts when the doses changed after it was saved", () => {
+      const result = adjustPlan(plan, days(9), limits, { today, dosesChangedAt: "2026-11-20T00:00:00.000Z" });
+      expect(result.stop).toBe(true);
+    });
+
+    it("no longer counts after a week", () => {
+      const result = adjustPlan(plan, days(9), limits, { today: "2026-11-17", dosesChangedAt: CHANGED });
+      expect(result.stop).toBe(false);
+    });
+  });
+
+  describe("the last seven days", () => {
+    it("ignores check-ins older than that", () => {
+      // Six check-ins, but the first two are 7 and 8 days before today.
+      const points = days(9, 9, 4, 4, 4, 4).map((p, i) => (i < 2 ? { ...p, day: `2026-11-0${2 + i}` } : p));
+      expect(adjust(plan, points).trend).toBe("not_enough");
+    });
+
+    it("counts the day six days back", () => {
+      const points = days(6, 6, 3, 3, 3).map((p, i) => (i === 0 ? { ...p, day: "2026-11-04" } : p));
+      expect(adjust(plan, points).trend).toBe("better");
+    });
+
+    it("says nothing about a plan with only old check-ins", () => {
+      const old = adjustPlan(plan, days(6, 6, 3, 3, 3), limits, { today: "2026-12-01", dosesChangedAt: CHANGED });
+      expect(old).toMatchObject({ trend: "not_enough", proposed: null });
+    });
+
+    it("leaves out check-ins saved before the doses last changed", () => {
+      const points = days(6, 6, 3, 3, 3).map((p, i) => (i === 0 ? { ...p, updatedAt: "2026-10-31T00:00:00.000Z" } : p));
+      expect(adjust(plan, points).trend).toBe("not_enough");
+    });
+  });
+
+  describe("whether the exercises were done", () => {
+    const skipping = (skipped: number) =>
+      days(6, 6, 6, 3, 3, 3).map((p, i) => (i < skipped ? { ...p, didExercises: false } : p));
+
+    it("won't make a plan harder when they mostly weren't", () => {
+      const result = adjust(plan, skipping(6));
+      expect(result).toMatchObject({ trend: "better", proposed: null, retake: false });
+      expect(result.advice).toMatch(/only 0 of your last 6/);
+    });
+
+    it("counts exactly half as not most", () => {
+      expect(adjust(plan, skipping(3)).proposed).toBeNull();
+    });
+
+    it("makes it harder when they mostly were", () => {
+      expect(adjust(plan, skipping(2)).proposed).toEqual([{ ...plan[0], reps: 12 }]);
+    });
+
+    it("still eases the plan when pain is worse, done or not", () => {
+      const points = days(2, 2, 2, 5, 5, 5).map((p) => ({ ...p, didExercises: false }));
+      expect(adjust(plan, points).proposed).toEqual([{ ...plan[0], reps: 8 }]);
+    });
   });
 
   describe("suggesting the questionnaire again", () => {
@@ -468,24 +555,35 @@ describe("adjustPlan", () => {
 
     it("does when pain is better, the plan is at its limits, and a rule lowered them", () => {
       expect(tight.reasons.length).toBeGreaterThan(0);
-      const result = adjustPlan(top, days(6, 3, 3, 3), tight);
+      const result = adjust(top, days(6, 6, 3, 3, 3), tight);
       expect(result).toMatchObject({ trend: "better", proposed: null, retake: true });
       expect(result.advice).toMatch(/questionnaire/);
     });
 
     it("doesn't while there is still room inside the limits", () => {
       const room: DraftItem[] = [{ ...plan[0], sets: 1, reps: tight.reps.min }];
-      expect(adjustPlan(room, days(6, 3, 3, 3), tight).retake).toBe(false);
+      expect(adjust(room, days(6, 6, 3, 3, 3), tight).retake).toBe(false);
     });
 
     it("doesn't when no rule lowered the limits, since a retake would change nothing", () => {
       const top: DraftItem[] = [{ ...plan[0], sets: limits.sets.max, reps: limits.reps.max }];
-      expect(adjustPlan(top, days(6, 3, 3, 3), limits).retake).toBe(false);
+      expect(adjust(top, days(6, 6, 3, 3, 3)).retake).toBe(false);
     });
 
     it("doesn't when the pain is worse", () => {
       const bottom: DraftItem[] = [{ ...plan[0], sets: 1, reps: tight.reps.min }];
-      expect(adjustPlan(bottom, days(2, 5, 5, 5), tight).retake).toBe(false);
+      expect(adjust(bottom, days(2, 2, 5, 5, 5), tight).retake).toBe(false);
     });
+  });
+});
+
+describe("sameDoses", () => {
+  const dose = { id: "squat", sets: 2, reps: 10, holdSeconds: null };
+
+  it("is true only for the same exercises at the same doses", () => {
+    expect(sameDoses([dose], [{ ...dose }])).toBe(true);
+    expect(sameDoses([dose], [{ ...dose, reps: 12 }])).toBe(false);
+    expect(sameDoses([dose], [{ ...dose, id: "lunge" }])).toBe(false);
+    expect(sameDoses([dose], [dose, dose])).toBe(false);
   });
 });

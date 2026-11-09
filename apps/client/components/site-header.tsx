@@ -71,6 +71,11 @@ export function SiteHeader() {
               <Link href="/onboarding" aria-current={current("/onboarding")}>
                 New plan
               </Link>
+              {state.user.isAdmin && (
+                <Link href="/admin" aria-current={current("/admin")}>
+                  Admin
+                </Link>
+              )}
             </>
           )}
         </nav>

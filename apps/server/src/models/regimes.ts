@@ -169,7 +169,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * inside `update` has to see the same transaction that is about to replace
  * these rows.
  */
-async function readItems(runner: Queryable, regimeId: string): Promise<RegimeItem[]> {
+export async function readItems(runner: Queryable, regimeId: string): Promise<RegimeItem[]> {
   // `position` is what makes this come back in the order it was shown.
   const items = await runner.query<ItemRow>(
     `select ${ITEM_COLUMNS}
@@ -649,7 +649,7 @@ export async function getForEvaluation(
  * Stored rows are preferred over the catalogue, so an exercise that a re-seed
  * has since dropped still survives an edit of a regime that contains it.
  */
-async function resolveItems(
+export async function resolveItems(
   client: PoolClient,
   regimeId: string,
   picks: RegimeEdit[]
@@ -702,15 +702,29 @@ async function resolveItems(
  * Replaces the exercises of one regime and returns it as it now stands, or
  * null when `userId` has no regime with that id. Throws `UnknownExercise` when an edit names
  * an exercise that is neither already in the regime nor in the catalogue.
- *
- * Replace, not update in place: the number of exercises can change, and
- * `position` is half the primary key, so there is no row to update when the
- * list grows or shrinks.
  */
 export async function update(
   id: string,
   userId: string,
   picks: RegimeEdit[]
+): Promise<Regime | null> {
+  return replaceItems(id, userId, (client) => resolveItems(client, id, picks));
+}
+
+/**
+ * The one way a regime's exercises are rewritten: finds and locks it, asks
+ * `decide` what it should hold now, and stores that. Null when `userId` has no
+ * regime with that id. `decide` runs inside the transaction and can write
+ * alongside it; anything it throws undoes the lot.
+ *
+ * Replace, not update in place: the number of exercises can change, and
+ * `position` is half the primary key, so there is no row to update when the
+ * list grows or shrinks.
+ */
+export async function replaceItems(
+  id: string,
+  userId: string,
+  decide: (client: PoolClient) => Promise<RegimeItem[]>
 ): Promise<Regime | null> {
   if (!UUID.test(id)) {
     return null;
@@ -738,7 +752,7 @@ export async function update(
       return null;
     }
 
-    const items = await resolveItems(client, id, picks);
+    const items = await decide(client);
 
     await client.query(`delete from regime_exercises where regime_id = $1`, [id]);
     await insertItems(client, id, items);

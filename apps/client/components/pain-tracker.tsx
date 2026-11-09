@@ -11,9 +11,11 @@ import { listCheckIns, messageOf, saveCheckIn, type CheckIn } from "@/lib/api";
 const PAIN_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // Today in the person's own timezone, "2026-11-02". Not toISOString(), which
-// is UTC and is already tomorrow on an evening in the Americas.
-function today(): string {
+// is UTC and is already tomorrow on an evening in the Americas. `offset` moves
+// it that many days: -1 is yesterday.
+export function today(offset = 0): string {
   const now = new Date();
+  now.setDate(now.getDate() + offset);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
@@ -168,7 +170,7 @@ export function PainTracker({
   );
 }
 
-function PainHistory({ checkIns }: { checkIns: CheckIn[] }) {
+export function PainHistory({ checkIns }: { checkIns: Pick<CheckIn, "day" | "pain" | "didExercises">[] }) {
   if (checkIns.length === 0) {
     return <p className="muted">No check-ins yet. Your first one starts the graph.</p>;
   }
@@ -217,7 +219,7 @@ const W = 600;
 const H = 220;
 const PAD = { left: 36, right: 18, top: 14, bottom: 34 };
 
-function PainChart({ checkIns }: { checkIns: CheckIn[] }) {
+function PainChart({ checkIns }: { checkIns: Pick<CheckIn, "day" | "pain" | "didExercises">[] }) {
   const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / 86_400_000;
   const start = dayNumber(checkIns[0].day);
   const span = dayNumber(checkIns[checkIns.length - 1].day) - start;

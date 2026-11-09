@@ -2,8 +2,9 @@
 // calls the model, and picks a status code. Mounted at /api/regimes in app.ts.
 
 import { Router } from "express";
-import { adjustPlan, decide, getLimits, widestLimits } from "../clinical.js";
+import { adjustPlan, decide, getLimits, sameDoses, widestLimits } from "../clinical.js";
 import { evaluate } from "../../eval/live.js";
+import * as adjustments from "../models/adjustments.js";
 import * as checkins from "../models/checkins.js";
 import { get as getOnboarding, listBefore, type Onboarding } from "../models/onboarding.js";
 import {
@@ -17,8 +18,9 @@ import {
   update,
   UnknownExercise,
   WrongUnit,
+  type Regime,
 } from "../models/regimes.js";
-import { requireUser, userIdOf } from "../require-user.js";
+import { requireAdmin, requireUser, userIdOf } from "../require-user.js";
 import type { RegimeEdit } from "../types/index.js";
 
 const router = Router();
@@ -265,7 +267,11 @@ router.get("/:id", async (req, res) => {
  * before the plan was, is taken instead, and the response says so. 409 when
  * there is none: a plan from the type-a-body-part path has no person to judge
  * it for.
+ *
+ * Admins only: it is a testing tool, and each call costs two Gemini requests.
  */
+router.use("/:id/evaluation", requireAdmin);
+
 router.post("/:id/evaluation", async (req, res) => {
   const userId = userIdOf(res);
   const found = await getForEvaluation(req.params.id, userId);
@@ -414,13 +420,30 @@ router.put("/:id/checkins/:day", async (req, res) => {
 });
 
 /**
- * What the pain trend says to do with the plan - see `adjustPlan` in
- * clinical.ts. A suggestion only: applying it is an ordinary PUT of the doses.
- *
- * Only check-ins saved since the doses last changed count, so the trend that
- * led to one adjustment can't lead straight to another. Plans saved before
- * their limits were recorded are held to the widest limits.
+ * The person's own date, sent by the client because only it knows their
+ * timezone. Anything more than a day from UTC's date can't be today anywhere,
+ * so it falls back to UTC's: a wrong device clock shouldn't cost them the card.
  */
+function todayFrom(value: unknown): string {
+  const now = new Date();
+  const possible = [-1, 0, 1].map((offset) => utcDay(now, offset));
+
+  return possible.find((day) => day === value) ?? utcDay(now);
+}
+
+/**
+ * What the last week of check-ins says to do with this plan - see `adjustPlan`
+ * in clinical.ts. Plans saved before their limits were recorded are held to
+ * the widest limits.
+ */
+async function adjustmentFor(regime: Regime, today: unknown) {
+  return adjustPlan(regime.regime, await checkins.list(regime.id), regime.limits ?? widestLimits(), {
+    today: todayFrom(today),
+    dosesChangedAt: regime.updatedAt,
+  });
+}
+
+// A suggestion only: nothing changes until it is applied below.
 router.get("/:id/adjustment", async (req, res) => {
   const regime = await get(req.params.id, userIdOf(res));
 
@@ -429,9 +452,102 @@ router.get("/:id/adjustment", async (req, res) => {
     return;
   }
 
-  const since = (await checkins.list(regime.id)).filter((c) => c.updatedAt >= regime.updatedAt);
+  res.send(await adjustmentFor(regime, req.query.today));
+});
 
-  res.send(adjustPlan(regime.regime, since, regime.limits ?? widestLimits()));
+// What the pain trend has changed on this plan, newest first.
+router.get("/:id/adjustments", async (req, res) => {
+  const regime = await get(req.params.id, userIdOf(res));
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  res.send(await adjustments.list(regime));
+});
+
+/**
+ * Applies the suggestion and records it. The server works the suggestion out
+ * again rather than trusting the body, so this can only ever do what the rules
+ * would offer right now: nothing while the advice is to stop. The body is what
+ * the person saw, and a 409 means that is no longer the suggestion.
+ */
+router.post("/:id/adjustments", async (req, res) => {
+  const userId = userIdOf(res);
+  const regime = await get(req.params.id, userId);
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  const parsed = parseItems(req.body);
+
+  if ("error" in parsed) {
+    res.status(400).send({ error: parsed.error });
+    return;
+  }
+
+  const { proposed, trend, earlier, recent } = await adjustmentFor(regime, req.body?.today);
+
+  if (proposed === null || earlier === null || recent === null || (trend !== "better" && trend !== "worse")) {
+    res.status(409).send({ error: "there is no change to apply right now" });
+    return;
+  }
+
+  if (!sameDoses(proposed, parsed.items)) {
+    res.status(409).send({ error: "this suggestion has changed - have another look" });
+    return;
+  }
+
+  try {
+    const updated = await adjustments.apply({
+      regimeId: regime.id,
+      userId,
+      expected: regime.regime,
+      picks: parsed.items,
+      trend,
+      earlier,
+      recent,
+    });
+
+    if (updated === null) {
+      res.status(404).send({ error: "no regime with that id" });
+      return;
+    }
+
+    res.status(201).send(updated);
+  } catch (error) {
+    if (error instanceof adjustments.StaleAdjustment) {
+      res.status(409).send({ error: error.message });
+      return;
+    }
+
+    throw error;
+  }
+});
+
+// Declared after POST /:id/adjustments only for reading order: the extra path
+// segment means the two can't be confused.
+router.post("/:id/adjustments/undo", async (req, res) => {
+  try {
+    const updated = await adjustments.undo(req.params.id, userIdOf(res));
+
+    if (updated === null) {
+      res.status(404).send({ error: "no regime with that id" });
+      return;
+    }
+
+    res.send(updated);
+  } catch (error) {
+    if (error instanceof adjustments.CannotUndo) {
+      res.status(409).send({ error: error.message });
+      return;
+    }
+
+    throw error;
+  }
 });
 
 router.delete("/:id", async (req, res) => {

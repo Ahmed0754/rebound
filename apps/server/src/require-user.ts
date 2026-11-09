@@ -7,6 +7,7 @@
 
 import type { RequestHandler, Response } from "express";
 import { userIdFor } from "./models/sessions.js";
+import { get as getUser } from "./models/users.js";
 
 /** The token a request carries, or null when it carries none. */
 export function tokenOf(req: { header(name: string): string | undefined }): string | null {
@@ -33,3 +34,18 @@ export const requireUser: RequestHandler = async (req, res, next) => {
 export function userIdOf(res: Response): string {
   return res.locals.userId as string;
 }
+
+/**
+ * For routes only admins may use. Goes behind `requireUser`. Read from the
+ * database on every request, so taking the flag away works immediately.
+ */
+export const requireAdmin: RequestHandler = async (_req, res, next) => {
+  const user = await getUser(userIdOf(res));
+
+  if (user?.isAdmin !== true) {
+    res.status(403).send({ error: "this is for admins only" });
+    return;
+  }
+
+  next();
+};
