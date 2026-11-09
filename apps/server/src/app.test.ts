@@ -741,6 +741,58 @@ describe("GET /api/regimes/:id/checkins", () => {
   });
 });
 
+describe("GET /api/regimes/:id/adjustment", () => {
+  const checkIn = (day: string, pain: number, updatedAt = EDITED_AT) => ({ day, pain, didExercises: true, updatedAt });
+
+  it("suggests nothing with too few check-ins", async () => {
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toMatchObject({ trend: "not_enough", proposed: null });
+  });
+
+  it("suggests easier doses when the pain is getting worse", async () => {
+    const { get } = await import("./models/regimes.js");
+    vi.mocked(get).mockResolvedValueOnce({
+      ...saved,
+      limits: null,
+      regime: [{ ...knee[0], unit: "reps", holdSeconds: null, rationale: null }],
+    });
+    const { list } = await import("./models/checkins.js");
+    vi.mocked(list).mockResolvedValueOnce([
+      checkIn("2026-09-25", 2),
+      checkIn("2026-09-26", 5),
+      checkIn("2026-09-27", 5),
+      checkIn("2026-09-28", 5),
+    ]);
+
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
+    const body = await json<{ trend: string; proposed: { reps: number }[] }>(res);
+    expect(body.trend).toBe("worse");
+    expect(body.proposed.map((item) => item.reps)).toEqual([8]);
+  });
+
+  it("ignores check-ins saved before the doses last changed", async () => {
+    const { list } = await import("./models/checkins.js");
+    const before = "2026-09-23T00:00:00.000Z";
+    vi.mocked(list).mockResolvedValueOnce([
+      checkIn("2026-09-20", 2, before),
+      checkIn("2026-09-25", 5),
+      checkIn("2026-09-26", 5),
+      checkIn("2026-09-27", 5),
+    ]);
+
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/adjustment`);
+    expect(await json<unknown>(res)).toMatchObject({ trend: "not_enough" });
+  });
+
+  it("404s for another account's plan", async () => {
+    const res = await fetch(`${base}/api/regimes/${SAVED_ID}/adjustment`, {
+      headers: { Authorization: `Bearer ${OTHER_TOKEN}` },
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("PUT /api/regimes/:id/checkins/:day", () => {
   // The saved regime was made on CREATED_AT, 2026-09-24.
   function checkIn(day: string, body: unknown, id = SAVED_ID) {

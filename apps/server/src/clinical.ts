@@ -546,3 +546,168 @@ export function checkRationales(rationales: Map<string, string>): string[] {
 
   return problems;
 }
+
+// ---------------------------------------------------------------------------
+// Adjusting a plan to how the pain is going
+// ---------------------------------------------------------------------------
+
+// The pain tracker's check-ins, as far as a trend needs them.
+export type PainPoint = { day: string; pain: number };
+
+export type Trend = "not_enough" | "better" | "steady" | "worse";
+
+// Compared in windows of this many check-ins: the latest ones against the
+// ones before them, so a single good or bad day can't move the plan.
+export const TREND_WINDOW = 3;
+
+// A move of 2 points on the 0-10 scale is about the smallest change in pain
+// people notice as real (Farrar et al. 2001). Judgment that it is what should
+// change a plan.
+const MEANINGFUL_CHANGE = 2;
+
+// Worse and this bad stops the exercises instead of easing them - the same
+// line the questionnaire's pain rule draws.
+const STOP_AT = 7;
+
+// One step of a dose. Judgment: small enough that a step either way is gentle.
+const REPS_STEP = 2;
+const HOLD_STEP = 5;
+
+const average = (points: PainPoint[]) => points.reduce((sum, p) => sum + p.pain, 0) / points.length;
+
+/**
+ * Better, worse or steady: the average of the latest `TREND_WINDOW` check-ins
+ * against the ones before them (up to `TREND_WINDOW` of those). Needs at least
+ * one earlier check-in to compare with. `points` are oldest first.
+ */
+export function painTrend(points: PainPoint[]): { trend: Trend; earlier: number | null; recent: number | null } {
+  if (points.length <= TREND_WINDOW) {
+    return { trend: "not_enough", earlier: null, recent: null };
+  }
+
+  const recent = average(points.slice(-TREND_WINDOW));
+  const earlier = average(points.slice(-2 * TREND_WINDOW, -TREND_WINDOW));
+  const change = recent - earlier;
+
+  const trend = change <= -MEANINGFUL_CHANGE ? "better" : change >= MEANINGFUL_CHANGE ? "worse" : "steady";
+
+  return { trend, earlier, recent };
+}
+
+const clamp = (value: number, range: { min: number; max: number }) =>
+  Math.min(range.max, Math.max(range.min, value));
+
+/**
+ * The plan one step harder (`up`) or easier, inside `limits`. Each exercise's
+ * reps or hold moves first; once that is at its limit, a set is added or
+ * taken away instead. Exercises already at the limit stay as they are.
+ */
+export function stepDoses(items: DraftItem[], direction: "up" | "down", limits: Limits): DraftItem[] {
+  const sign = direction === "up" ? 1 : -1;
+
+  return items.map((item) => {
+    const range = item.unit === "hold" ? limits.hold : limits.reps;
+    const amount = (item.unit === "hold" ? item.holdSeconds : item.reps) ?? range.min;
+    const moved = clamp(amount + sign * (item.unit === "hold" ? HOLD_STEP : REPS_STEP), range);
+    const sets = moved === amount ? clamp(item.sets + sign, limits.sets) : item.sets;
+
+    return {
+      ...item,
+      sets,
+      reps: item.unit === "reps" ? moved : null,
+      holdSeconds: item.unit === "hold" ? moved : null,
+    };
+  });
+}
+
+export type Adjustment = {
+  trend: Trend;
+  earlier: number | null;
+  recent: number | null;
+  // What to do about it, worded for the person.
+  advice: string;
+  // The doses to switch to, or null when nothing should change.
+  proposed: DraftItem[] | null;
+  // True when the plan has outgrown its limits: pain is better, every dose is
+  // already at the top, and the limits were lowered by the questionnaire's
+  // rules. Those were set by answers that may no longer be true, so a new
+  // questionnaire is the way to looser ones - nothing here raises a limit.
+  retake: boolean;
+};
+
+/**
+ * What the pain trend says to do with a plan. Only ever a suggestion: the
+ * person applies it or doesn't, through the same edit as changing a dose by
+ * hand. Never adds or swaps exercises, and never goes outside `limits`.
+ */
+export function adjustPlan(items: DraftItem[], points: PainPoint[], limits: Limits): Adjustment {
+  const { trend, earlier, recent } = painTrend(points);
+  const same = (proposed: DraftItem[]) =>
+    proposed.every((p, i) => p.sets === items[i].sets && p.reps === items[i].reps && p.holdSeconds === items[i].holdSeconds);
+
+  if (trend === "not_enough") {
+    return {
+      trend,
+      earlier,
+      recent,
+      advice: `Check in on ${TREND_WINDOW + 1} days and we'll see whether your plan should change.`,
+      proposed: null,
+      retake: false,
+    };
+  }
+
+  if (trend === "steady") {
+    return { trend, earlier, recent, advice: "Your pain is holding steady, so keep the plan as it is.", proposed: null, retake: false };
+  }
+
+  if (trend === "worse" && recent !== null && recent >= STOP_AT) {
+    return {
+      trend,
+      earlier,
+      recent,
+      advice: "Your pain is getting worse and is now high. Stop the exercises and talk to a doctor or physiotherapist.",
+      proposed: null,
+      retake: false,
+    };
+  }
+
+  const proposed = stepDoses(items, trend === "better" ? "up" : "down", limits);
+
+  if (same(proposed)) {
+    if (trend === "worse") {
+      return {
+        trend,
+        earlier,
+        recent,
+        advice: "Your pain is getting worse, and your plan is already as light as it goes. Talk to a doctor or physiotherapist.",
+        proposed: null,
+        retake: false,
+      };
+    }
+
+    const retake = limits.reasons.length > 0;
+
+    return {
+      trend,
+      earlier,
+      recent,
+      advice: retake
+        ? "Your pain is improving, and your plan is already at the most its limits allow. Those limits came from how you were doing when you filled in the questionnaire - fill it in again for a plan that fits how you are now."
+        : "Your pain is improving, and your plan is already at the most it can be.",
+      proposed: null,
+      retake,
+    };
+  }
+
+  return {
+    trend,
+    earlier,
+    recent,
+    advice:
+      trend === "better"
+        ? "Your pain is improving. You could make the exercises a little harder."
+        : "Your pain is getting worse. Make the exercises a little easier.",
+    proposed,
+    retake: false,
+  };
+}

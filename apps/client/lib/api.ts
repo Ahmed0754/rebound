@@ -287,6 +287,22 @@ export function saveCheckIn(
   });
 }
 
+// What the pain trend says to do with a plan. `proposed` is the doses to
+// switch to, applied with `updateRegime`, or null when nothing should change.
+export type Adjustment = {
+  trend: "not_enough" | "better" | "steady" | "worse";
+  earlier: number | null;
+  recent: number | null;
+  advice: string;
+  proposed: (RegimeEdit & { unit: "reps" | "hold" })[] | null;
+  // The plan is at the top of limits the questionnaire set; a new one may loosen them.
+  retake: boolean;
+};
+
+export function getAdjustment(token: string, regimeId: string): Promise<Adjustment> {
+  return request(`/api/regimes/${id(regimeId)}/adjustment`, { token });
+}
+
 // Deletes a saved plan. Hard delete on the server; there is no undo.
 export function deleteRegime(token: string, regimeId: string): Promise<void> {
   return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE", token });
