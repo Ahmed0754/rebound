@@ -8,6 +8,9 @@ export const KEYS = {
   // From before passwords: an account id this browser trusted as-is. Only
   // read to delete it.
   legacyUserId: "rebound.userId",
+  // "light" when the person switched to the light theme; dark otherwise.
+  // Also read by the script in layout.tsx, which can't import this.
+  theme: "rebound.theme",
   // The questionnaire in progress, so a refresh mid-way doesn't lose it.
   draft: "rebound.onboardingDraft",
   // The latest questionnaire each account submitted. There is no endpoint

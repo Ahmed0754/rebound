@@ -10,6 +10,8 @@ import { AccountError, ErrorMessage, Loading } from "@/components/ui";
 import { listRegimes, messageOf, type Regime } from "@/lib/api";
 import { useRequiredUser } from "@/lib/current-user";
 import { regionLabel } from "@/lib/questionnaire";
+import { imageUrls } from "@/lib/exercises";
+import { PhotoCard, PlanMeta } from "@/components/photo-card";
 import { KEYS, read } from "@/lib/storage";
 
 export default function PlansPage() {
@@ -49,9 +51,9 @@ export default function PlansPage() {
   }
 
   return (
-    <main className="page">
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>My plans</h1>
+    <main className="page page-app">
+      <div className="row" style={{ justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ margin: 0 }}>Your plans</h1>
         <Link className="btn btn-primary" href="/onboarding">
           New plan
         </Link>
@@ -71,17 +73,18 @@ export default function PlansPage() {
       )}
 
       {plans !== null && plans.length > 0 && (
-        <ul className="plain-list">
-          {plans.map((plan) => (
-            <li key={plan.id}>
-              <Link className="card plan-link" href={`/plans/${plan.id}`}>
-                <div className="exercise-name">{regionLabel(plan.muscle)}</div>
-                <div className="muted small">
-                  {plan.regime.length} exercise{plan.regime.length === 1 ? "" : "s"} · made{" "}
-                  {new Date(plan.createdAt).toLocaleDateString()}
-                  {plan.updatedAt !== plan.createdAt && " · edited"}
-                </div>
-              </Link>
+        <ul className="card-grid plain-list">
+          {plans.map((plan, i) => (
+            <li key={plan.id} className={i === 0 ? "wide" : undefined}>
+              <PhotoCard
+                tone={i}
+                wide={i === 0}
+                href={`/plans/${plan.id}`}
+                photo={plan.regime[0] ? imageUrls(plan.regime[0].id)[1] : null}
+                chip={i === 0 ? "Newest" : plan.updatedAt !== plan.createdAt ? "Edited" : undefined}
+                title={regionLabel(plan.muscle)}
+                meta={<PlanMeta plan={plan} />}
+              />
             </li>
           ))}
         </ul>
