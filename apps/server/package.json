@@ -16,16 +16,19 @@
     "eval:freeze": "dotenv -e ../../.env -- tsx eval/freeze.ts",
     "eval:judge": "dotenv -e ../../.env -- tsx eval/judge-report.ts",
     "eval:screen": "dotenv -e ../../.env -- tsx eval/screen.ts",
-    "db:setup": "pnpm run db:migrate && pnpm run db:seed"
+    "push:keys": "web-push generate-vapid-keys",
+    "db:setup":"pnpm run db:migrate && pnpm run db:seed"
   },
   "dependencies": {
     "@google/genai": "2.19.0",
     "express": "5.2.1",
-    "pg": "8.23.0"
+    "pg": "8.23.0",
+    "web-push": "4.0.0"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/pg": "8.23.1",
+    "@types/web-push": "3.6.4",
     "node-pg-migrate": "9.0.0",
     "tsx": "4.23.13",
     "vitest": "4.1.11"

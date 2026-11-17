@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ReminderPicker } from "@/components/reminder-picker";
 import { AccountError, ErrorMessage, Loading } from "@/components/ui";
 import {
   changePassword,
@@ -121,6 +122,11 @@ export default function ProfilePage() {
         {plansError && <ErrorMessage>{plansError}</ErrorMessage>}
         {!plansError && plans === null && <Loading />}
         {plans !== null && <PlansSummary plans={plans} />}
+      </section>
+
+      <section className="card">
+        <h2 style={{ marginTop: 0 }}>Workout reminder</h2>
+        <ReminderPicker token={token} showTest />
       </section>
 
       <section className="card">

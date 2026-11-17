@@ -6,6 +6,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { ReminderPicker } from "@/components/reminder-picker";
 import { AccountError, BackLink, Choices, ErrorMessage, Loading } from "@/components/ui";
 import { createOnboarding, listRegions, messageOf } from "@/lib/api";
 import { useRequiredUser } from "@/lib/current-user";
@@ -362,6 +363,15 @@ export default function OnboardingPage() {
               {noteLength}/{NOTE_LIMIT}
             </span>
           </label>
+
+          {token && (
+            <Field label="Want a daily reminder to do your workout?">
+              <p className="muted small" style={{ margin: "-4px 0 8px" }}>
+                We&apos;ll send a notification at the time you pick. You can change it later on your profile.
+              </p>
+              <ReminderPicker token={token} />
+            </Field>
+          )}
         </>
       )}
 

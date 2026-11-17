@@ -1,5 +1,6 @@
 // The public-facing API calls this client makes: one named function per server endpoint.
 
+import type { ReminderSlot } from "@/lib/push";
 import type { Answers } from "@/lib/questionnaire";
 
 // Falls back to the server's own default port so a fresh checkout works
@@ -358,6 +359,37 @@ export function undoAdjustment(token: string, regimeId: string): Promise<Regime>
 // Deletes a saved plan. Hard delete on the server; there is no undo.
 export function deleteRegime(token: string, regimeId: string): Promise<void> {
   return request(`/api/regimes/${id(regimeId)}`, { method: "DELETE", token });
+}
+
+// The daily workout reminder. `publicKey` is null when the server has
+// reminders turned off, in which case there is nothing to offer.
+export type ReminderSettings = {
+  reminder: { slot: ReminderSlot; timeZone: string } | null;
+  publicKey: string | null;
+};
+
+export function getReminder(token: string): Promise<ReminderSettings> {
+  return request("/api/reminders", { token });
+}
+
+// Sets the reminder and records this browser as one to send it to.
+export function saveReminder(
+  token: string,
+  slot: ReminderSlot,
+  timeZone: string,
+  subscription: PushSubscriptionJSON
+): Promise<ReminderSettings> {
+  return request("/api/reminders", { method: "PUT", token, body: { slot, timeZone, subscription } });
+}
+
+// Turns reminders off on every browser this account had them on.
+export function deleteReminder(token: string): Promise<void> {
+  return request("/api/reminders", { method: "DELETE", token });
+}
+
+// Sends a reminder now. 409 when none is set, 502 when it didn't get through.
+export function sendTestReminder(token: string): Promise<{ sent: number }> {
+  return request("/api/reminders/test", { method: "POST", token });
 }
 
 // One row of a table in the server's eval/REFERENCES.md, its cells keyed by

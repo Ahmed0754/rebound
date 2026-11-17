@@ -72,6 +72,10 @@ Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 nee
 | `DELETE` | `/api/regimes/:id` 👤 | — | `204` | `404` |
 | `GET` | `/api/regimes/:id/checkins` 👤 | — | `200` the plan's pain check-ins, oldest first | `404` |
 | `PUT` | `/api/regimes/:id/checkins/:day` 👤 | `{pain: 0–10, didExercises}` | `200` check-in; the same day again replaces it | `400` bad day or body · `404` |
+| `GET` | `/api/reminders` 👤 | — | `200 {reminder: {slot, timeZone} \| null, publicKey}`; `publicKey` is `null` when reminders are off on this server | `401` |
+| `PUT` | `/api/reminders` 👤 | `{slot: morning \| noon \| evening, timeZone, subscription}` | `200`, same shape as `GET` | `400` bad slot, zone or subscription · `503` no VAPID keys |
+| `DELETE` | `/api/reminders` 👤 | — | `204`, off on every browser | `401` |
+| `POST` | `/api/reminders/test` 👤 | — | `200 {sent}`, a notification now | `409` no reminder set · `502` not delivered |
 
 `outcome` is `ready`, `see_a_doctor` or `crisis`. All three come back as a success, so a client must branch on `outcome`, never on the HTTP status. `POST /api/regimes` still accepts the original `{muscle}` body, which builds a plan with no questionnaire, held only to the widest limits.
 
@@ -168,8 +172,10 @@ The JSON shapes the API returns, since they are the contract between the two hal
 | `onboarding_responses` | Each questionnaire: the answers, the note, and how the note was screened. The outcome is worked out from these each time, not stored |
 | `regimes` | Each plan: owner, body region, and the limits it was validated against |
 | `regime_exercises` | The exercises of each plan, a snapshot of exactly what the user was shown |
+| `workout_reminders` | *(experimental)* Each account's daily reminder: morning, noon or evening, the time zone, and the date the last one went out |
+| `push_subscriptions` | *(experimental)* Each browser that gets those reminders: its push endpoint and keys |
 
-Deleting an account cascades to its questionnaires, plans and sessions.
+Deleting an account cascades to its questionnaires, plans, sessions and reminders.
 
 ## How to run it locally
 
@@ -192,6 +198,14 @@ Deleting an account cascades to its questionnaires, plans and sessions.
 6. Open `http://localhost:3000`.
 
 Checks: `pnpm test`, `pnpm typecheck` and `pnpm lint` from the repo root.
+
+**Workout reminders (experimental).** The questionnaire's last step and the profile page let someone pick a daily reminder: morning (6 am), noon (12 pm) or evening (6 pm), on their own clock. They arrive as browser notifications, even with the tab closed, but only while the API server is running: a timer inside it checks once a minute and sends each day's reminder during its hour. To switch them on:
+
+1. Make a key pair: `pnpm --filter @rebound/api run push:keys`.
+2. Put the two keys in `.env` as `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`, then restart `pnpm dev`. The API logs `workout reminders on`.
+3. Pick a time on the profile page, allow notifications, and use **Send a test notification** to check it works.
+
+Without the keys, reminders are off and the client says so. If you change the keys, everyone has to pick their reminder again.
 
 **For a demo, run the client as a production build** (`pnpm --filter web run build`, then `pnpm --filter web run start`). In dev mode each page compiles the first time it's opened, and the Next.js dev badge shows in the corner.
 
