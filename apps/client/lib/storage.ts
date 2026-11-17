@@ -16,6 +16,9 @@ export const KEYS = {
   // The latest questionnaire each account submitted. There is no endpoint
   // that lists them, so this is the only way back to a past result.
   lastOnboarding: (userId: string) => `rebound.lastOnboarding.${userId}`,
+  // A workout in progress: the sets ticked off so far, for one plan on one
+  // day. Only the finished workout reaches the server.
+  workout: (planId: string, day: string) => `rebound.workout.${planId}.${day}`,
 };
 
 type Area = "local" | "session";

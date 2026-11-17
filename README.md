@@ -22,6 +22,7 @@ Step by step:
    - **Quality checks:** criteria taken from published sources (AAOS, APTA, ACSM, credited in [`apps/server/eval/REFERENCES.md`](./apps/server/eval/REFERENCES.md)). For example, a knee plan should include something for the quadriceps or hamstrings. A criterion only counts when the limits allow it and one of the candidates could meet it.
    - **What happens on a miss:** Gemini is told exactly what was wrong and tries again, for up to 30 seconds in total. If time runs out, the plan that passed the hard checks with the fewest quality misses is saved. If none passed, nothing is saved and you're asked to try again later. Nothing is quietly patched.
 8. **You get the plan:** each exercise with start and finish photos, numbered steps, its dose and its rationale, and the limits it was built inside. You can edit doses or delete it.
+9. **Do the workout:** **Start workout** opens a full-screen player with one flashcard per exercise: its photos on the front, its steps on the back. Tap each set off, with a countdown for held stretches. After the last set, the day is marked done. Logging pain is still a separate step in the pain tracker.
 
 ```mermaid
 flowchart LR
@@ -72,6 +73,8 @@ Express on `:4000`. Errors are always `{"error": "..."}`. Routes marked 👤 nee
 | `DELETE` | `/api/regimes/:id` 👤 | — | `204` | `404` |
 | `GET` | `/api/regimes/:id/checkins` 👤 | — | `200` the plan's pain check-ins, oldest first | `404` |
 | `PUT` | `/api/regimes/:id/checkins/:day` 👤 | `{pain: 0–10, didExercises}` | `200` check-in; the same day again replaces it | `400` bad day or body · `404` |
+| `GET` | `/api/regimes/:id/workouts` 👤 | — | `200` the plan's finished workouts, newest first | `404` |
+| `PUT` | `/api/regimes/:id/workouts/:day` 👤 | — | `200` the day's workout, marked done with a copy of the plan's doses; the same day again keeps the first | `400` bad day · `404` |
 | `GET` | `/api/reminders` 👤 | — | `200 {reminder: {slot, timeZone} \| null, publicKey}`; `publicKey` is `null` when reminders are off on this server | `401` |
 | `PUT` | `/api/reminders` 👤 | `{slot: morning \| noon \| evening, timeZone, subscription}` | `200`, same shape as `GET` | `400` bad slot, zone or subscription · `503` no VAPID keys |
 | `DELETE` | `/api/reminders` 👤 | — | `204`, off on every browser | `401` |
@@ -172,6 +175,7 @@ The JSON shapes the API returns, since they are the contract between the two hal
 | `onboarding_responses` | Each questionnaire: the answers, the note, and how the note was screened. The outcome is worked out from these each time, not stored |
 | `regimes` | Each plan: owner, body region, and the limits it was validated against |
 | `regime_exercises` | The exercises of each plan, a snapshot of exactly what the user was shown |
+| `workout_sessions` | Finished workouts: one row per plan per day, with a copy of the doses that were done. Progress through the sets stays in the browser until the last one |
 | `workout_reminders` | *(experimental)* Each account's daily reminder: morning, noon or evening, the time zone, and the date the last one went out |
 | `push_subscriptions` | *(experimental)* Each browser that gets those reminders: its push endpoint and keys |
 

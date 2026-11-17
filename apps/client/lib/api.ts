@@ -290,6 +290,24 @@ export function saveCheckIn(
   });
 }
 
+// A finished workout: every set of the plan, done on `day` (the person's own
+// date). `exercises` is the doses as they were that day.
+export type Workout = {
+  day: string;
+  completedAt: string;
+  exercises: { id: string; name: string; unit: "reps" | "hold"; sets: number; reps: number | null; holdSeconds: number | null }[];
+};
+
+// A plan's finished workouts, newest first.
+export function listWorkouts(token: string, regimeId: string): Promise<Workout[]> {
+  return request(`/api/regimes/${id(regimeId)}/workouts`, { token });
+}
+
+// Marks `day`'s workout done. Doing it again the same day keeps the first.
+export function completeWorkout(token: string, regimeId: string, day: string): Promise<Workout> {
+  return request(`/api/regimes/${id(regimeId)}/workouts/${id(day)}`, { method: "PUT", token });
+}
+
 // Admin only: makes a plan's check-ins exactly this list. Unlike a real
 // check-in it can fill in past days, and each one counts as newly saved.
 export function replaceCheckIns(

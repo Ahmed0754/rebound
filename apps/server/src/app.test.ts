@@ -266,6 +266,15 @@ vi.mock("./models/users.js", () => ({
 
 // Echoes what it was asked to save; only ever reached for USER_ID's saved
 // regime, because the controller looks the plan up for its owner first.
+vi.mock("./models/workouts.js", () => ({
+  list: vi.fn(async () => [{ day: "2026-09-25", completedAt: EDITED_AT, exercises: [] }]),
+  complete: vi.fn(async (input: { day: string; exercises: unknown[] }) => ({
+    day: input.day,
+    completedAt: EDITED_AT,
+    exercises: input.exercises,
+  })),
+}));
+
 vi.mock("./models/checkins.js", () => ({
   list: vi.fn(async () => [{ day: "2026-09-25", pain: 6, didExercises: true, updatedAt: CREATED_AT }]),
   save: vi.fn(async (input: { day: string; pain: number; didExercises: boolean }) => ({
@@ -1664,5 +1673,53 @@ describe("GET /api/onboarding/:id/candidates", () => {
 
   it("returns 404 for an unknown questionnaire", async () => {
     expect((await getCandidates("99999999-9999-9999-9999-999999999999")).status).toBe(404);
+  });
+});
+
+describe("workouts", () => {
+  // The saved regime was made on CREATED_AT, 2026-09-24.
+  const finish = (day: string, token = TOKEN) =>
+    fetch(`${base}/api/regimes/${SAVED_ID}/workouts/${day}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+  it("lists the plan's finished workouts", async () => {
+    const res = await authed(`${base}/api/regimes/${SAVED_ID}/workouts`);
+    expect(res.status).toBe(200);
+    expect(await json<unknown>(res)).toEqual([{ day: "2026-09-25", completedAt: EDITED_AT, exercises: [] }]);
+  });
+
+  it("records the day as done, with the server's own copy of the doses", async () => {
+    const { complete } = await import("./models/workouts.js");
+    vi.mocked(complete).mockClear();
+
+    const res = await finish("2026-09-25");
+    expect(res.status).toBe(200);
+
+    const [call] = vi.mocked(complete).mock.calls[0];
+    expect(call).toMatchObject({ regimeId: SAVED_ID, userId: USER_ID, day: "2026-09-25" });
+    expect(call.exercises).toEqual(
+      knee.map((exercise) => expect.objectContaining({ id: exercise.id, name: exercise.name, sets: exercise.sets }))
+    );
+  });
+
+  it("rejects a day in the future or before the plan, and records nothing", async () => {
+    const { complete } = await import("./models/workouts.js");
+    vi.mocked(complete).mockClear();
+
+    expect((await finish("2999-01-01")).status).toBe(400);
+    expect((await finish("2026-01-01")).status).toBe(400);
+    expect((await finish("someday")).status).toBe(400);
+    expect(complete).not.toHaveBeenCalled();
+  });
+
+  it("404s for another account's plan", async () => {
+    expect((await finish("2026-09-25", OTHER_TOKEN)).status).toBe(404);
+    expect((await fetch(`${base}/api/regimes/${SAVED_ID}/workouts`, { headers: { Authorization: `Bearer ${OTHER_TOKEN}` } })).status).toBe(404);
+  });
+
+  it("401s when not logged in", async () => {
+    expect((await fetch(`${base}/api/regimes/${SAVED_ID}/workouts/2026-09-25`, { method: "PUT" })).status).toBe(401);
   });
 });

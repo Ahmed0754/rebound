@@ -20,6 +20,7 @@ import {
   WrongUnit,
   type Regime,
 } from "../models/regimes.js";
+import * as workouts from "../models/workouts.js";
 import { requireAdmin, requireUser, userIdOf } from "../require-user.js";
 import type { RegimeEdit } from "../types/index.js";
 
@@ -417,6 +418,49 @@ router.put("/:id/checkins/:day", async (req, res) => {
   }
 
   res.send(await checkins.save({ regimeId: regime.id, userId, day: req.params.day, pain, didExercises }));
+});
+
+// Finished workouts, from the workout player. Found through the plan, like check-ins.
+router.get("/:id/workouts", async (req, res) => {
+  const regime = await get(req.params.id, userIdOf(res));
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  res.send(await workouts.list(regime.id));
+});
+
+// Marks the day's workout done. No body: what was done is the plan as it
+// stands, every set of it, so the server records its own copy of the doses
+// rather than taking them from the request.
+router.put("/:id/workouts/:day", async (req, res) => {
+  const userId = userIdOf(res);
+  const regime = await get(req.params.id, userId);
+
+  if (regime === null) {
+    res.status(404).send({ error: "no regime with that id" });
+    return;
+  }
+
+  const dayError = badDay(req.params.day, regime.createdAt);
+
+  if (dayError !== null) {
+    res.status(400).send({ error: dayError });
+    return;
+  }
+
+  const exercises = regime.regime.map((exercise) => ({
+    id: exercise.id,
+    name: exercise.name,
+    unit: exercise.unit,
+    sets: exercise.sets,
+    reps: exercise.reps,
+    holdSeconds: exercise.holdSeconds,
+  }));
+
+  res.send(await workouts.complete({ regimeId: regime.id, userId, day: req.params.day, exercises }));
 });
 
 /**

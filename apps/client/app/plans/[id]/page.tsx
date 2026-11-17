@@ -13,6 +13,7 @@ import { PhotoCard } from "@/components/photo-card";
 import { PainTracker } from "@/components/pain-tracker";
 import { PlanAdjustment } from "@/components/plan-adjustment";
 import { AccountError, BackLink, ErrorMessage, Loading } from "@/components/ui";
+import { WorkoutStart } from "@/components/workout-start";
 import { ApiError, deleteRegime, getRegimeById, messageOf, updateRegime, type Regime } from "@/lib/api";
 import { useRequiredUser } from "@/lib/current-user";
 import { imageUrls, steps } from "@/lib/exercises";
@@ -64,6 +65,14 @@ export default function PlanPage() {
       cancelled = true;
     };
   }, [token, id]);
+
+  //The browser jumps to a #hash before the plan has loaded, when there is
+  //nothing there yet, so it is done again once there is.
+  const loaded = load.status === "loaded";
+  useEffect(() => {
+    if (!loaded || window.location.hash !== "#pain-tracker") return;
+    document.getElementById("pain-tracker")?.scrollIntoView({ block: "start" });
+  }, [loaded]);
 
   if (accountError) {
     return (
@@ -215,6 +224,8 @@ export default function PlanPage() {
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
+          {!editing && token && <WorkoutStart token={token} plan={plan} />}
+
           {/* One list: plans have no morning/evening split yet. Every exercise
               gets the same size of card. */}
           <ol className="card-grid plain-list">
@@ -303,7 +314,10 @@ export default function PlanPage() {
                 checkInsSaved={checkInsSaved}
                 onApplied={(updated) => setLoad({ status: "loaded", plan: updated })}
               />
-              <PainTracker token={token} planId={plan.id} onSaved={() => setCheckInsSaved((n) => n + 1)} />
+              {/* The workout player's "Log today's pain" links here. */}
+              <div id="pain-tracker" className="anchor">
+                <PainTracker token={token} planId={plan.id} onSaved={() => setCheckInsSaved((n) => n + 1)} />
+              </div>
             </>
           )}
         </div>

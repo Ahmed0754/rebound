@@ -2231,3 +2231,269 @@ a.photo-card-top:hover .photo-card-img {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* The way into the workout player, on the plan page and the dashboard. */
+
+.workout-start {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.workout-start.done {
+  background: var(--success-bg);
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+}
+
+.workout-start.done .feature-icon {
+  background: var(--success);
+  color: var(--surface);
+}
+
+.workout-start-text {
+  flex: 1 1 220px;
+}
+
+.workout-start-text h2 {
+  margin: 0 0 2px;
+  font-size: 19px;
+}
+
+.workout-start-text p {
+  margin: 0;
+}
+
+.anchor {
+  scroll-margin-top: 80px;
+}
+
+/* The workout player: full screen, over the header and footer, so nothing
+   else competes with the card during a session. */
+
+.player {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.player-inner {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.player-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  overflow: hidden;
+}
+
+.player-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.player-cards {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.player-dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+}
+
+.player-dot.done {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.player-dot.current {
+  border-color: var(--primary);
+  transform: scale(1.25);
+}
+
+/* The flashcard: both faces share one grid cell, so the card is as tall as
+   the taller face, and the back is turned away until it is flipped. */
+
+.flashcard {
+  perspective: 1400px;
+}
+
+.flashcard-inner {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 0.45s ease;
+}
+
+.flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+}
+
+.flashcard-title {
+  margin: 0;
+  font-size: 26px;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.flashcard-meta {
+  color: var(--muted);
+}
+
+.flashcard .exercise-figure {
+  max-width: none;
+  margin-top: 4px;
+}
+
+.flashcard .steps-list {
+  margin: 0;
+}
+
+.flashcard-flip {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flashcard-inner,
+  .player-progress > span {
+    transition: none;
+  }
+}
+
+.player-sets {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.set-pip {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.set-pip.done {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+.hold-timer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.hold-timer-count {
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  min-width: 3ch;
+  text-align: center;
+}
+
+.hold-timer-count.over {
+  color: var(--success);
+}
+
+.player-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.player-done {
+  width: 100%;
+  padding: 18px 24px;
+  font-size: 18px;
+}
+
+.player-nav {
+  justify-content: center;
+}
+
+.player-dose {
+  text-align: center;
+  margin: 0;
+}
+
+.player-finished {
+  align-items: center;
+  text-align: center;
+  padding-top: 15vh;
+}
+
+.player-finished h1 {
+  margin: 0;
+}
+
+.player-finished .lead {
+  margin: 0;
+}
+
+.player-trophy {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--success);
+  color: var(--surface);
+}
+
+.player-finished-actions {
+  justify-content: center;
+}

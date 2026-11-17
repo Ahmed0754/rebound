@@ -10,6 +10,7 @@ import { Activity, ArrowRight, Book, Check, Clock, Plus, Shield, Sliders } from 
 import { PainTracker } from "@/components/pain-tracker";
 import { PhotoCard, PlanMeta } from "@/components/photo-card";
 import { ErrorMessage, Loading } from "@/components/ui";
+import { WorkoutStart } from "@/components/workout-start";
 import { listRegimes, messageOf, type Regime, type User } from "@/lib/api";
 import { useCurrentUser } from "@/lib/current-user";
 import { imageUrls } from "@/lib/exercises";
@@ -389,6 +390,8 @@ function Dashboard({ user, token }: { user: User; token: string }) {
               meta={<PlanMeta plan={current} />}
             />
           </div>
+
+          {current.regime.length > 0 && <WorkoutStart token={token} plan={current} />}
 
           <PainTracker token={token} planId={current.id} />
 
