@@ -2,16 +2,17 @@
 //it wraps every page, sets the <html>/<body>, page metadata, and the base styling.
 
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Archivo } from "next/font/google";
 import type { ReactNode } from "react";
-import { SiteFooter, SiteHeader } from "@/components/site-header";
-import { CurrentUserProvider } from "@/lib/current-user";
+import { SiteFooter, SiteHeader } from "@/components/site-header";import { CurrentUserProvider } from "@/lib/current-user";
 import "./globals.css";
 
 //Downloaded at build time and served by Next itself, so no request to Google
 //from the browser. Exposed as --font-sans, which globals.css reads.
-//Italic too: the big headings and card titles use it.
-const sans = Plus_Jakarta_Sans({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-sans" });
+//Archivo is variable in width as well as weight. The width axis is what lets
+//the headings run condensed (font-stretch in globals.css) while body text
+//stays at normal width, all from one family.
+const sans = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-sans" });
 
 //Runs before the first paint, so a light-theme visitor never sees a flash of
 //dark. Dark unless "light" was chosen; the key is KEYS.theme in lib/storage.

@@ -77,7 +77,6 @@ export default function PlansPage() {
           {plans.map((plan, i) => (
             <li key={plan.id} className={i === 0 ? "wide" : undefined}>
               <PhotoCard
-                tone={i}
                 wide={i === 0}
                 href={`/plans/${plan.id}`}
                 photo={plan.regime[0] ? imageUrls(plan.regime[0].id)[1] : null}

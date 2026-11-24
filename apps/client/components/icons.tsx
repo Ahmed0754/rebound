@@ -129,3 +129,11 @@ export const Calendar = ({ size }: Props) => (
     <path d="M16 2v4M8 2v4M3 10h18" />
   </Icon>
 );
+
+export const Download = ({ size }: Props) => (
+  <Icon size={size}>
+    <path d="M12 4v11" />
+    <path d="m7 10 5 5 5-5" />
+    <path d="M5 20h14" />
+  </Icon>
+);

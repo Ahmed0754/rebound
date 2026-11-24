@@ -4,11 +4,19 @@
 // its two pictures live in: the start of the movement, then the end. A few
 // exercises have no pictures at all, so whatever shows these has to cope with
 // them failing to load.
-const IMAGE_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
+import type { Exercise } from "@/lib/api";
+
+const IMAGE_BASE ="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
 
 export function imageUrls(exerciseId: string): [string, string] {
   const folder = encodeURIComponent(exerciseId);
   return [`${IMAGE_BASE}/${folder}/0.jpg`, `${IMAGE_BASE}/${folder}/1.jpg`];
+}
+
+// "3 × 12 reps" or "2 × 30s hold": the dose as one line.
+export function dose(ex: Pick<Exercise, "sets" | "unit" | "reps" | "holdSeconds">): string {
+  const each = ex.unit === "hold" ? `${ex.holdSeconds}s hold` : `${ex.reps} reps`;
+  return `${ex.sets} × ${each}`;
 }
 
 // The instructions as separate steps. The server sends one step per line;

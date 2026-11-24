@@ -4,15 +4,16 @@
 //how it works, and the way in. Logged in, it is the dashboard: today's
 //check-in on the newest plan, and the way to everything else.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, Book, Check, Clock, Plus, Shield, Sliders } from "@/components/icons";
-import { PainTracker } from "@/components/pain-tracker";
+import { Activity, ArrowRight, Check, Plus } from "@/components/icons";
+import { PainTracker, painZone } from "@/components/pain-tracker";
 import { PhotoCard, PlanMeta } from "@/components/photo-card";
 import { ErrorMessage, Loading } from "@/components/ui";
 import { WorkoutStart } from "@/components/workout-start";
 import { listRegimes, messageOf, type Regime, type User } from "@/lib/api";
 import { useCurrentUser } from "@/lib/current-user";
+import { planDay } from "@/lib/days";
 import { imageUrls } from "@/lib/exercises";
 import { regionLabel } from "@/lib/questionnaire";
 
@@ -56,31 +57,35 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const SAFETY = [
-  {
-    icon: <Shield />,
-    title: "Screened before anything is built",
-    text: "Warning signs like numbness, fever or a recent fall stop the questionnaire and point you to a doctor.",
-  },
-  {
-    icon: <Sliders />,
-    title: "Limits set by rules, not by AI",
-    text: "Nine rules read your answers and cap sets, reps, hold times and difficulty. The AI can only choose inside them.",
-  },
-  {
-    icon: <Book />,
-    title: "Checked against published guidance",
-    text: "Every plan is checked before it's saved. One that breaks a limit or says to push through pain is never shown.",
-  },
+//The rules in the server's clinical.ts, in the words a person would use.
+//Copied, not fetched: if a rule or a cap changes there, change it here too.
+//null means the rule leaves that limit alone.
+type RuleRow = {
+  when: string;
+  sets: number | null;
+  reps: number | null;
+  hold: number | null;
+  count: number | null;
+  allowed: string | null;
+};
+
+const BASELINE: RuleRow = { when: "Everyone starts at", sets: 4, reps: 15, hold: 30, count: 5, allowed: "Up to your training level" };
+
+const RULES: RuleRow[] = [
+  { when: "Pain is 7 or above", sets: 2, reps: 8, hold: 20, count: 3, allowed: "Stretching only" },
+  { when: "Pain is 4 to 6", sets: 3, reps: 12, hold: null, count: null, allowed: null },
+  { when: "It started less than a week ago", sets: 2, reps: null, hold: 20, count: 3, allowed: "Stretching only" },
+  { when: "It started more than 6 weeks ago", sets: 3, reps: 12, hold: null, count: null, allowed: null },
+  { when: "You are 50 or over", sets: 2, reps: 10, hold: null, count: null, allowed: "Beginner exercises" },
+  { when: "You have a long-term condition", sets: 2, reps: 10, hold: null, count: null, allowed: "Beginner exercises" },
+  { when: "You're mostly sitting at the moment", sets: 2, reps: null, hold: null, count: null, allowed: null },
+  { when: "Your sessions are 5 minutes", sets: null, reps: null, hold: null, count: 2, allowed: null },
+  { when: "Your sessions are 10 minutes or less", sets: null, reps: null, hold: null, count: 3, allowed: null },
 ];
 
-//A made-up plan drawn with the app's own pieces and real catalogue photos, so
-//the hero shows what you get.
-const PREVIEW = [
-  { id: "Butt_Lift_Bridge", name: "Glute bridge", dose: "3 sets × 12 reps", done: true },
-  { id: "Seated_Floor_Hamstring_Stretch", name: "Hamstring stretch", dose: "2 sets × 30s hold", done: true },
-  { id: "Kneeling_Hip_Flexor", name: "Kneeling hip flexor", dose: "2 sets × 20s hold", done: false },
-];
+//A made-up plan for the hero, shown as an example: six days of check-ins with
+//the pain coming down.
+const EXAMPLE_PAIN = [6, 6, 5, 4, 4, 3];
 
 //One catalogue exercise per area, picked for a clear photo.
 const REGIONS = [
@@ -94,147 +99,115 @@ const REGIONS = [
   { name: "Ankle", id: "Ankle_Circles", example: "Ankle circles" },
 ];
 
-//Each one is counted from the code: the rules and warning signs in the
-//server's clinical.ts, the areas the questionnaire offers, the catalogue.
-const STATS = [
-  { value: "700+", label: "exercises with photos" },
-  { value: "10", label: "body areas covered" },
-  { value: "9", label: "safety rules on every plan" },
-  { value: "2 min", label: "to answer the questions" },
-];
-
 const photo = (id: string, frame: 0 | 1 = 1) => imageUrls(id)[frame];
 
+function Limit({ value, unit = "" }: { value: number | null; unit?: string }) {
+  return value === null ? <td className="none">–</td> : <td className="num">{`${value}${unit}`}</td>;
+}
+
+function RuleCells({ rule }: { rule: RuleRow }) {
+  return (
+    <>
+      <th scope="row">{rule.when}</th>
+      <Limit value={rule.sets} />
+      <Limit value={rule.reps} />
+      <Limit value={rule.hold} unit="s" />
+      <Limit value={rule.count} />
+      {rule.allowed === null ? <td className="none">–</td> : <td>{rule.allowed}</td>}
+    </>
+  );
+}
+
 function Landing() {
+  const first = EXAMPLE_PAIN[0];
+  const last = EXAMPLE_PAIN[EXAMPLE_PAIN.length - 1];
+
   return (
     <main className="landing">
-      <div className="hero-band">
-        <section className="section hero">
-          <div>
-            <span className="pill">
-              <span className="pill-dot" /> Personal recovery plans
-            </span>
-            <h1>
-              Exercises for <em>the part that hurts.</em>
-            </h1>
+      <div className="hero">
+        <img
+          className="hero-photo"
+          src={photo("Kneeling_Hip_Flexor")}
+          alt="Someone in a kneeling hip flexor stretch on a mat"
+        />
+        <section className="section hero-inner">
+          <div className="hero-copy">
+            <h1>Exercises for the part that hurts.</h1>
             <p className="lead">
-              Answer a two-minute questionnaire and get a short exercise plan built around your pain, your goal and the
-              equipment you have. Then check in daily to see if it&apos;s helping.
+              Answer a two-minute questionnaire. Get two to five exercises sized to your pain, your goal and the
+              equipment you own. Check in each day, and the plan suggests easier or harder doses as your pain changes.
             </p>
             <div className="row">
               <Link className="btn btn-primary btn-large" href="/account?mode=sign_up">
                 Build my plan <ArrowRight size={18} />
               </Link>
-              <Link className="btn btn-large" href="/account">
+              <Link className="btn btn-large btn-on-photo" href="/account">
                 Log in
               </Link>
             </div>
-            <div className="trust-row">
-              <span>
-                <Check size={16} /> Free
-              </span>
-              <span>
-                <Clock size={16} /> Two minutes
-              </span>
-              <span>
-                <Shield size={16} /> Every plan safety-checked
-              </span>
-            </div>
           </div>
 
-          <div className="preview">
-            <img className="hero-photo" src={photo("Childs_Pose")} alt="Someone doing a child's pose stretch on a mat" />
-
-            <div className="preview-card" aria-hidden="true">
-              <div className="preview-head">
-                <div>
-                  <div className="eyebrow" style={{ marginBottom: 0 }}>
-                    Today
-                  </div>
-                  <div className="preview-title">Knee plan</div>
-                </div>
-                <span className="trend-chip">2 of 3 done</span>
-              </div>
-              {PREVIEW.map((item) => (
-                <div key={item.name} className="preview-item">
-                  <img className="preview-thumb" src={photo(item.id, 0)} alt="" />
-                  <div>
-                    <div className="preview-name">{item.name}</div>
-                    <div className="preview-dose">{item.dose}</div>
-                  </div>
-                  <span className={item.done ? "preview-check on" : "preview-check"}>
-                    {item.done && <Check size={13} />}
-                  </span>
-                </div>
-              ))}
+          <aside className="plan-card" aria-label="An example plan">
+            <div className="plan-card-head">
+              <span className="plan-card-title">Knee plan</span>
+              <span>Day 6 · example</span>
             </div>
-
-            <div className="preview-float" aria-hidden="true">
-              <div className="preview-float-top">
-                Pain this week <span className="trend-chip">↓ 3</span>
+            <dl className="plan-card-stats">
+              <div>
+                <dt>Pain</dt>
+                <dd>
+                  {first}→{last}
+                </dd>
               </div>
-              <svg viewBox="0 0 220 64">
-                <path className="spark-fill" d="M4 12 L40 18 L76 16 L112 30 L148 38 L184 46 L216 50 L216 64 L4 64 Z" />
-                <path className="spark-line" d="M4 12 L40 18 L76 16 L112 30 L148 38 L184 46 L216 50" />
-                <circle className="spark-dot" cx="216" cy="50" r="5" />
-              </svg>
+              <div>
+                <dt>Exercises</dt>
+                <dd>3</dd>
+              </div>
+              <div>
+                <dt>Session</dt>
+                <dd>
+                  10<small>min</small>
+                </dd>
+              </div>
+            </dl>
+            <div aria-hidden="true">
+              <div className="pain-bars">
+                {EXAMPLE_PAIN.map((pain, i) => (
+                  <span key={i} className={painZone(pain)} style={{ "--pain": pain } as CSSProperties} />
+                ))}
+              </div>
+              <div className="pain-bars-x">
+                {EXAMPLE_PAIN.map((pain, i) => (
+                  <span key={i}>{pain}</span>
+                ))}
+              </div>
             </div>
-          </div>
+            <p className="plan-card-note">Daily pain on the 0–10 scale, days 1 to 6.</p>
+          </aside>
         </section>
       </div>
-
-      <section className="section" style={{ paddingTop: 0, paddingBottom: 0 }}>
-        <div className="stats-strip">
-          {STATS.map((stat) => (
-            <div key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
 
       <section className="section">
         <div className="section-head">
-          <span className="eyebrow">Where does it hurt?</span>
-          <h2>A plan for the part that&apos;s bothering you</h2>
-          <p>Pick an area in the questionnaire and get exercises chosen for it, from stretches to gentle strength work.</p>
+          <div>
+            <h2>How a plan is made</h2>
+            <p>Four steps, about two minutes. Safety is checked before the AI is involved, and again after.</p>
+          </div>
         </div>
-        <ul className="card-grid region-grid plain-list">
-          {REGIONS.map((region, i) => (
-            <li key={region.name}>
-              <PhotoCard
-                tone={i}
-                href="/account?mode=sign_up"
-                photo={photo(region.id)}
-                chip={`e.g. ${region.example}`}
-                title={region.name}
-              />
+        <ol className="plan-steps">
+          {HOW_IT_WORKS.map((step, i) => (
+            <li key={step.title}>
+              <span className="plan-step-num" aria-hidden="true">
+                {i + 1}
+              </span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
             </li>
           ))}
-        </ul>
+        </ol>
       </section>
 
-      <div className="band-alt">
-        <section className="section">
-          <div className="section-head">
-            <span className="eyebrow">How it works</span>
-            <h2>From &ldquo;it hurts&rdquo; to a plan in four steps</h2>
-            <p>No long sign-up, no generic workout. Just the exercises that fit you.</p>
-          </div>
-          <ol className="steps-grid">
-            {HOW_IT_WORKS.map((step, i) => (
-              <li key={step.title} className="step-card">
-                <div className="step-num">{i + 1}</div>
-                <h3>{step.title}</h3>
-                <p>{step.text}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-      </div>
-
-      <section className="section showcase">
+      <section className="section showcase" style={{ paddingTop: 0 }}>
         <div className="showcase-photos">
           <figure>
             <img src={photo("Butt_Lift_Bridge", 0)} alt="Glute bridge, starting position: lying on the back, knees bent" loading="lazy" />
@@ -246,7 +219,6 @@ function Landing() {
           </figure>
         </div>
         <div>
-          <span className="eyebrow">Easy to follow</span>
           <h2>Know exactly what to do</h2>
           <p>Every exercise in your plan comes with what you need to do it right at home.</p>
           <ul className="check-list">
@@ -267,56 +239,87 @@ function Landing() {
       </section>
 
       <div className="band-alt">
-        <section className="section split">
-          <div>
-            <span className="eyebrow">Built around safety</span>
-            <h2>AI picks the exercises. Rules decide what&apos;s safe.</h2>
-            <p>
-              Rebound never lets a model decide how much is too much. Your answers set hard limits first, and every plan
-              is checked against them before you see it.
-            </p>
-            <div className="source-tags">
-              <span className="source-tag">AAOS</span>
-              <span className="source-tag">APTA</span>
-              <span className="source-tag">ACSM</span>
+        <section className="section">
+          <div className="section-head">
+            <div>
+              <h2>The rulebook</h2>
+              <p>
+                Your answers set the limits before any exercise is chosen. They can only lower the starting numbers,
+                and the AI picks exercises inside whatever is left.
+              </p>
+            </div>
+            <span className="eyebrow">{RULES.length} rules</span>
+          </div>
+
+          <div className="table-scroll">
+            <table className="rulebook">
+              <thead>
+                <tr>
+                  <th scope="col">If</th>
+                  <th scope="col">Most sets</th>
+                  <th scope="col">Most reps</th>
+                  <th scope="col">Longest hold</th>
+                  <th scope="col">Exercises</th>
+                  <th scope="col">Allowed</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="baseline">
+                  <RuleCells rule={BASELINE} />
+                </tr>
+                {RULES.map((rule) => (
+                  <tr key={rule.when}>
+                    <RuleCells rule={rule} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted small">When more than one rule applies, the lowest number wins.</p>
+
+          <div className="safety-notes">
+            <div>
+              <h3>Before the rules</h3>
+              <p>
+                Warning signs like numbness, fever or a recent fall stop the questionnaire. You&apos;re pointed to a
+                doctor instead of getting a plan.
+              </p>
+            </div>
+            <div>
+              <h3>After the AI</h3>
+              <p>
+                Every plan is checked against these limits before it&apos;s saved. One that breaks a limit or says to
+                push through pain is never shown.
+              </p>
             </div>
           </div>
-          <ul className="feature-rows">
-            {SAFETY.map((item) => (
-              <li key={item.title} className="feature-row">
-                <span className="feature-icon">{item.icon}</span>
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <p className="sources">Sources: AAOS · APTA · ACSM</p>
         </section>
       </div>
 
       <section className="section">
-        <div className="cta-band">
-          <h2>Ready to get moving again?</h2>
-          <p>Two minutes of questions. A plan that fits you, and a daily check-in to keep it honest.</p>
-          <Link className="btn btn-large" href="/account?mode=sign_up">
-            Build my plan <ArrowRight size={18} />
-          </Link>
+        <div className="section-head">
+          <h2>Start with where it hurts.</h2>
+          <span className="eyebrow">10 areas · 700+ exercises</span>
         </div>
+        <ul className="card-grid region-grid plain-list">
+          {REGIONS.map((region) => (
+            <li key={region.name}>
+              <PhotoCard
+                href="/account?mode=sign_up"
+                photo={photo(region.id)}
+                chip={region.example}
+                title={region.name}
+              />
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );
 }
 
 // -------------------------------------------------------------- Dashboard
-
-//"Good morning" by the person's own clock.
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 function Dashboard({ user, token }: { user: User; token: string }) {
   const [plans, setPlans] = useState<Regime[] | null>(null);
@@ -342,6 +345,14 @@ function Dashboard({ user, token }: { user: User; token: string }) {
   const current = plans?.[0] ?? null;
   const others = plans?.slice(1, 4) ?? [];
 
+  //The plan and how far into it, once that's known.
+  const heading =
+    current !== null
+      ? `${regionLabel(current.muscle)} plan, day ${planDay(current.createdAt)}`
+      : plans !== null
+        ? `Welcome, ${user.username}`
+        : "Today";
+
   return (
     <main className="page">
       <div className="dash-hero">
@@ -349,9 +360,7 @@ function Dashboard({ user, token }: { user: User; token: string }) {
           <span className="eyebrow">
             {new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
           </span>
-          <h1>
-            {greeting()}, {user.username}
-          </h1>
+          <h1>{heading}</h1>
         </div>
         <Link className="btn btn-small" href="/onboarding">
           <Plus size={16} /> New plan
@@ -366,7 +375,7 @@ function Dashboard({ user, token }: { user: User; token: string }) {
           <span className="feature-icon">
             <Activity size={26} />
           </span>
-          <h2>Let&apos;s build your first plan</h2>
+          <h2>Build your first plan</h2>
           <p className="muted" style={{ maxWidth: 420, margin: "0 auto 20px" }}>
             Answer a few short questions about what hurts and what you have to train with. It takes about two
             minutes.
@@ -381,7 +390,6 @@ function Dashboard({ user, token }: { user: User; token: string }) {
         <>
           <div style={{ marginBottom: 16 }}>
             <PhotoCard
-              tone={0}
               wide
               href={`/plans/${current.id}`}
               photo={current.regime[0] ? imageUrls(current.regime[0].id)[1] : null}
@@ -404,10 +412,9 @@ function Dashboard({ user, token }: { user: User; token: string }) {
                 </Link>
               </div>
               <ul className="card-grid plain-list">
-                {others.map((plan, i) => (
+                {others.map((plan) => (
                   <li key={plan.id}>
                     <PhotoCard
-                      tone={i + 1}
                       href={`/plans/${plan.id}`}
                       photo={plan.regime[0] ? imageUrls(plan.regime[0].id)[1] : null}
                       title={regionLabel(plan.muscle)}

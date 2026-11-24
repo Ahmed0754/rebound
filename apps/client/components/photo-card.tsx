@@ -1,5 +1,5 @@
-// The app's big card: a soft colour gradient with an exercise photo blended
-// into its right side, a chip at the top, a bold title and a line of facts at
+// The app's big card: an exercise photo filling the top, in greyscale under a
+// dark shade, with a chip at the top and a bold title and a line of facts at
 // the bottom. Used for exercises, plans and the homepage's body areas.
 
 import Link from "next/link";
@@ -7,11 +7,7 @@ import type { ReactNode } from "react";
 import { Calendar, Layers } from "@/components/icons";
 import type { Regime } from "@/lib/api";
 
-// Four gradients, cycled through so neighbouring cards differ.
-export const TONES = 4;
-
 export function PhotoCard({
-  tone,
   photo,
   chip,
   title,
@@ -20,7 +16,6 @@ export function PhotoCard({
   wide,
   children,
 }: {
-  tone: number;
   photo: string | null;
   chip?: ReactNode;
   title: ReactNode;
@@ -29,7 +24,7 @@ export function PhotoCard({
   href?: string;
   // Spans the full row of a `.card-grid`.
   wide?: boolean;
-  // Shown under the coloured part, on the plain card surface.
+  // Shown under the photo, on the plain card surface.
   children?: ReactNode;
 }) {
   const top = (
@@ -45,7 +40,7 @@ export function PhotoCard({
   );
 
   return (
-    <div className={`photo-card tone-${tone % TONES}${wide ? " wide" : ""}`}>
+    <div className={wide ? "photo-card wide" : "photo-card"}>
       {href ? (
         <Link className="photo-card-top" href={href}>
           {top}

@@ -12,10 +12,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ExerciseFigure } from "@/components/exercise-figure";
 import { Check, Clock, Layers, Repeat } from "@/components/icons";
-import { today } from "@/components/pain-tracker";
+import { today } from "@/lib/days";
 import { ErrorMessage } from "@/components/ui";
-import { completeWorkout, messageOf, type Exercise, type Regime } from "@/lib/api";
-import { steps } from "@/lib/exercises";
+import { completeWorkout, messageOf, type Regime } from "@/lib/api";
+import { dose, steps } from "@/lib/exercises";
 import { KEYS, read, remove, write } from "@/lib/storage";
 
 //`done` is the sets ticked off for each exercise, in the plan's order.
@@ -23,10 +23,6 @@ type Progress = { done: number[]; card: number };
 
 type Finish = { status: "playing" } | { status: "saving" } | { status: "saved" } | { status: "error"; message: string };
 
-function dose(ex: Exercise): string {
-  const each = ex.unit === "hold" ? `${ex.holdSeconds}s hold` : `${ex.reps} reps`;
-  return `${ex.sets} × ${each}`;
-}
 
 //A saved progress that still fits this plan, or null. The doses may have been
 //edited since, so a count past an exercise's sets is clamped, and a different

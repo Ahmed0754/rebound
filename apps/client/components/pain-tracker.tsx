@@ -7,18 +7,19 @@
 import { useEffect, useState } from "react";
 import { Choices, ErrorMessage, Loading } from "@/components/ui";
 import { listCheckIns, messageOf, saveCheckIn, type CheckIn } from "@/lib/api";
+import { today } from "@/lib/days";
 
 const PAIN_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-// Today in the person's own timezone, "2026-11-02". Not toISOString(), which
-// is UTC and is already tomorrow on an evening in the Americas. `offset` moves
-// it that many days: -1 is yesterday.
-export function today(offset = 0): string {
-  const now = new Date();
-  now.setDate(now.getDate() + offset);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+// The colour band a pain level falls in, as the zone-* class globals.css
+// colours. The bands match the server's rules in clinical.ts: 7 and up is high
+// pain, 4 to 6 moderate.
+export function painZone(level: number): "zone-low" | "zone-mid" | "zone-high" {
+  if (level >= 7) return "zone-high";
+  if (level >= 4) return "zone-mid";
+  return "zone-low";
 }
+
 
 // "2 Nov". Read as UTC on both sides so the date never shifts.
 function shortDay(day: string): string {
@@ -119,7 +120,7 @@ export function PainTracker({
                   <button
                     key={level}
                     type="button"
-                    className="choice"
+                    className={`choice ${painZone(level)}`}
                     aria-pressed={pain === level}
                     aria-label={`Pain ${level} out of 10`}
                     onClick={() => setPain(level)}

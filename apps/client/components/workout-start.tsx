@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity, ArrowRight, Check } from "@/components/icons";
-import { today } from "@/components/pain-tracker";
+import { today } from "@/lib/days";
 import { listWorkouts, type Regime } from "@/lib/api";
 import { KEYS, read } from "@/lib/storage";
 

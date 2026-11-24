@@ -1,16 +1,17 @@
 "use client";
 
 //this is one plan: its exercises, doses and rationales, with editing of the
-//doses, deleting the whole plan, and the pain tracker.
+//doses, saving it as a PDF, deleting the whole plan, and the pain tracker.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ExerciseFigure } from "@/components/exercise-figure";
-import { Clock, Layers, Repeat, Sliders } from "@/components/icons";
+import { Clock, Download, Layers, Repeat, Sliders } from "@/components/icons";
 import { LimitsSidebar } from "@/components/limits";
 import { PhotoCard } from "@/components/photo-card";
 import { PainTracker } from "@/components/pain-tracker";
+import { PlanSheet } from "@/components/plan-sheet";
 import { PlanAdjustment } from "@/components/plan-adjustment";
 import { AccountError, BackLink, ErrorMessage, Loading } from "@/components/ui";
 import { WorkoutStart } from "@/components/workout-start";
@@ -178,150 +179,165 @@ export default function PlanPage() {
     }
   }
 
+  //Opens the print dialog, where "Save as PDF" makes a file to share. The page
+  //title becomes the file's suggested name, so it is set for the moment of
+  //printing and put back after.
+  function savePdf() {
+    const before = document.title;
+    document.title = `Rebound - ${regionLabel(plan.muscle)} plan`;
+    window.addEventListener("afterprint", () => (document.title = before), { once: true });
+    window.print();
+  }
+
   const editing = doses !== null;
   const count = plan.regime.length;
 
   return (
-    <main className="page page-app">
-      <BackLink href="/plans">My plans</BackLink>
+    <>
+      <PlanSheet plan={plan} />
+      <main className="page page-app print-hide">
+        <BackLink href="/plans">My plans</BackLink>
 
-      <div className={plan.limits ? "app-layout" : "app-layout no-side"}>
-        {/* Older plans were saved before the server recorded their limits. */}
-        {plan.limits && (
-          <aside className="app-side" aria-label="The limits this plan was built inside">
-            <LimitsSidebar limits={plan.limits} />
-          </aside>
-        )}
+        <div className={plan.limits ? "app-layout" : "app-layout no-side"}>
+          {/* Older plans were saved before the server recorded their limits. */}
+          {plan.limits && (
+            <aside className="app-side" aria-label="The limits this plan was built inside">
+              <LimitsSidebar limits={plan.limits} />
+            </aside>
+          )}
 
-        <div className="app-main">
-          <div className="app-head">
-            <div>
-              <h1>
-                {count} exercise{count === 1 ? "" : "s"} for your {regionLabel(plan.muscle).toLowerCase()}
-              </h1>
-              <p className="muted small" style={{ margin: 0 }}>
-                Made {when(plan.createdAt)}
-                {plan.updatedAt !== plan.createdAt && <> · edited {when(plan.updatedAt)}</>}
-              </p>
+          <div className="app-main">
+            <div className="app-head">
+              <div>
+                <h1>
+                  {count} exercise{count === 1 ? "" : "s"} for your {regionLabel(plan.muscle).toLowerCase()}
+                </h1>
+                <p className="muted small" style={{ margin: 0 }}>
+                  Made {when(plan.createdAt)}
+                  {plan.updatedAt !== plan.createdAt && <> · edited {when(plan.updatedAt)}</>}
+                </p>
+              </div>
+
+              {!editing && (
+                <div className="row">
+                  <button type="button" className="btn btn-small btn-pill" onClick={startEdit} disabled={busy}>
+                    <Sliders size={15} /> Edit doses
+                  </button>
+                  <button type="button" className="btn btn-small btn-pill" onClick={savePdf}>
+                    <Download size={15} /> Save as PDF
+                  </button>
+                  {user.isAdmin && (
+                    <Link className="btn btn-small btn-pill" href={`/plans/${plan.id}/evaluation`}>
+                      How it was judged
+                    </Link>
+                  )}
+                  <button type="button" className="btn btn-small btn-pill btn-danger" onClick={remove} disabled={busy}>
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
 
-            {!editing && (
-              <div className="row">
-                <button type="button" className="btn btn-small btn-pill" onClick={startEdit} disabled={busy}>
-                  <Sliders size={15} /> Edit doses
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+
+            {!editing && token && <WorkoutStart token={token} plan={plan} />}
+
+            {/* One list: plans have no morning/evening split yet. Every exercise
+                gets the same size of card. */}
+            <ol className="card-grid plain-list">
+              {plan.regime.map((ex, i) => (
+                <li key={ex.id}>
+                  <PhotoCard
+                    photo={imageUrls(ex.id)[1]}
+                    chip={`Exercise ${i + 1}`}
+                    title={ex.name}
+                    meta={
+                      editing ? (
+                        <div className="row" style={{ gap: 8 }}>
+                          <label className="row dose-edit">
+                            <input
+                              className="input-number"
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={doses[ex.id]?.sets ?? ""}
+                              onChange={(e) => setDose(ex.id, "sets", e.target.value)}
+                              disabled={busy}
+                            />
+                            sets
+                          </label>
+                          <label className="row dose-edit">
+                            <input
+                              className="input-number"
+                              type="number"
+                              min={1}
+                              max={ex.unit === "hold" ? 600 : 100}
+                              value={doses[ex.id]?.amount ?? ""}
+                              onChange={(e) => setDose(ex.id, "amount", e.target.value)}
+                              disabled={busy}
+                            />
+                            {ex.unit === "hold" ? "sec hold" : "reps"}
+                          </label>
+                        </div>
+                      ) : (
+                        <>
+                          <span>
+                            <Layers size={14} /> {ex.sets} set{ex.sets === 1 ? "" : "s"}
+                          </span>
+                          <span>
+                            {ex.unit === "hold" ? <Clock size={14} /> : <Repeat size={14} />}{" "}
+                            {ex.unit === "hold" ? `${ex.holdSeconds}s hold` : `${ex.reps} reps`}
+                          </span>
+                        </>
+                      )
+                    }
+                  >
+                    {/* The dose is what counts: the description below may give a
+                        different range, so the dose is the one on the card. */}
+                    {ex.rationale && <p className="rationale">{ex.rationale}</p>}
+                    <details className="how-to">
+                      <summary>How to do it</summary>
+                      <ExerciseFigure exerciseId={ex.id} name={ex.name} />
+                      <ol className="steps-list">
+                        {steps(ex.description).map((step, j) => (
+                          <li key={j}>{step}</li>
+                        ))}
+                      </ol>
+                    </details>
+                  </PhotoCard>
+                </li>
+              ))}
+            </ol>
+
+            {editing && (
+              <div className="row" style={{ marginBottom: 16 }}>
+                <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
+                  {busy ? "Saving…" : "Save changes"}
                 </button>
-                {user.isAdmin && (
-                  <Link className="btn btn-small btn-pill" href={`/plans/${plan.id}/evaluation`}>
-                    How it was judged
-                  </Link>
-                )}
-                <button type="button" className="btn btn-small btn-pill btn-danger" onClick={remove} disabled={busy}>
-                  Delete
+                <button type="button" className="btn" onClick={cancelEdit} disabled={busy}>
+                  Cancel
                 </button>
               </div>
             )}
+
+            {/* Out of the way while the doses are being edited. */}
+            {!editing && token && (
+              <>
+                <PlanAdjustment
+                  token={token}
+                  plan={plan}
+                  checkInsSaved={checkInsSaved}
+                  onApplied={(updated) => setLoad({ status: "loaded", plan: updated })}
+                />
+                {/* The workout player's "Log today's pain" links here. */}
+                <div id="pain-tracker" className="anchor">
+                  <PainTracker token={token} planId={plan.id} onSaved={() => setCheckInsSaved((n) => n + 1)} />
+                </div>
+              </>
+            )}
           </div>
-
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-
-          {!editing && token && <WorkoutStart token={token} plan={plan} />}
-
-          {/* One list: plans have no morning/evening split yet. Every exercise
-              gets the same size of card. */}
-          <ol className="card-grid plain-list">
-            {plan.regime.map((ex, i) => (
-              <li key={ex.id}>
-                <PhotoCard
-                  tone={i}
-                  photo={imageUrls(ex.id)[1]}
-                  chip={`Exercise ${i + 1}`}
-                  title={ex.name}
-                  meta={
-                    editing ? (
-                      <div className="row" style={{ gap: 8 }}>
-                        <label className="row dose-edit">
-                          <input
-                            className="input-number"
-                            type="number"
-                            min={1}
-                            max={20}
-                            value={doses[ex.id]?.sets ?? ""}
-                            onChange={(e) => setDose(ex.id, "sets", e.target.value)}
-                            disabled={busy}
-                          />
-                          sets
-                        </label>
-                        <label className="row dose-edit">
-                          <input
-                            className="input-number"
-                            type="number"
-                            min={1}
-                            max={ex.unit === "hold" ? 600 : 100}
-                            value={doses[ex.id]?.amount ?? ""}
-                            onChange={(e) => setDose(ex.id, "amount", e.target.value)}
-                            disabled={busy}
-                          />
-                          {ex.unit === "hold" ? "sec hold" : "reps"}
-                        </label>
-                      </div>
-                    ) : (
-                      <>
-                        <span>
-                          <Layers size={14} /> {ex.sets} set{ex.sets === 1 ? "" : "s"}
-                        </span>
-                        <span>
-                          {ex.unit === "hold" ? <Clock size={14} /> : <Repeat size={14} />}{" "}
-                          {ex.unit === "hold" ? `${ex.holdSeconds}s hold` : `${ex.reps} reps`}
-                        </span>
-                      </>
-                    )
-                  }
-                >
-                  {/* The dose is what counts: the description below may give a
-                      different range, so the dose is the one on the card. */}
-                  {ex.rationale && <p className="rationale">{ex.rationale}</p>}
-                  <details className="how-to">
-                    <summary>How to do it</summary>
-                    <ExerciseFigure exerciseId={ex.id} name={ex.name} />
-                    <ol className="steps-list">
-                      {steps(ex.description).map((step, j) => (
-                        <li key={j}>{step}</li>
-                      ))}
-                    </ol>
-                  </details>
-                </PhotoCard>
-              </li>
-            ))}
-          </ol>
-
-          {editing && (
-            <div className="row" style={{ marginBottom: 16 }}>
-              <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
-                {busy ? "Saving…" : "Save changes"}
-              </button>
-              <button type="button" className="btn" onClick={cancelEdit} disabled={busy}>
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {/* Out of the way while the doses are being edited. */}
-          {!editing && token && (
-            <>
-              <PlanAdjustment
-                token={token}
-                plan={plan}
-                checkInsSaved={checkInsSaved}
-                onApplied={(updated) => setLoad({ status: "loaded", plan: updated })}
-              />
-              {/* The workout player's "Log today's pain" links here. */}
-              <div id="pain-tracker" className="anchor">
-                <PainTracker token={token} planId={plan.id} onSaved={() => setCheckInsSaved((n) => n + 1)} />
-              </div>
-            </>
-          )}
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { today } from "@/components/pain-tracker";
+import { today } from "@/lib/days";
 import { ErrorMessage } from "@/components/ui";
 import {
   applyAdjustment,

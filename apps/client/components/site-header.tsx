@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Moon, ReboundMark, Sun } from "@/components/icons";
+import { Moon, Sun } from "@/components/icons";
 import { useCurrentUser } from "@/lib/current-user";
 import { KEYS, remove, write } from "@/lib/storage";
 
@@ -56,10 +56,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="brand">
-          <span className="brand-mark">
-            <ReboundMark />
-          </span>
-          <span className="brand-text">Rebound</span>
+          Rebound
         </Link>
 
         <nav className="site-nav">
@@ -107,10 +104,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <Link href="/" className="brand" style={{ fontSize: 16 }}>
-          <span className="brand-mark" style={{ width: 26, height: 26 }}>
-            <ReboundMark size={15} />
-          </span>
+        <Link href="/" className="brand brand-small">
           Rebound
         </Link>
         <p>

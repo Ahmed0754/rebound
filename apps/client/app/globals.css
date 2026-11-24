@@ -33,15 +33,6 @@
   --crisis: #cfa8f5;
   --crisis-bg: rgb(170 120 230 / 14%);
   --bar: var(--primary);
-
-  --header-bg: rgb(11 18 16 / 78%);
-  --glow-1: rgb(47 191 155 / 16%);
-  --glow-2: rgb(242 165 65 / 7%);
-  --photo-shade: linear-gradient(180deg, transparent 40%, rgb(4 12 10 / 85%));
-
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
-  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 28%);
-  --shadow-lg: 0 2px 6px rgb(0 0 0 / 30%), 0 24px 60px rgb(0 0 0 / 45%);
 }
 
 :root[data-theme="light"] {
@@ -70,24 +61,30 @@
   --success-bg: #e6f6ed;
   --crisis: #5b1a8c;
   --crisis-bg: #f5eefb;
-
-  --header-bg: rgb(255 255 255 / 85%);
-  --glow-1: rgb(18 163 131 / 14%);
-  --glow-2: rgb(242 165 65 / 10%);
-  --photo-shade: linear-gradient(180deg, transparent 40%, rgb(6 30 24 / 80%));
-
-  --shadow-sm: 0 1px 2px rgb(16 32 28 / 6%);
-  --shadow: 0 1px 2px rgb(16 32 28 / 5%), 0 4px 16px rgb(16 32 28 / 6%);
-  --shadow-lg: 0 2px 4px rgb(16 32 28 / 5%), 0 18px 48px rgb(16 32 28 / 12%);
 }
 
+/* The same in both themes. Flat on purpose: sharp corners, no shadows, no
+   glows. Things are set apart with borders, rules and space. */
 :root {
-  --radius: 12px;
-  --radius-small: 8px;
-  --brand-dark: #0a5c4a;
+  --radius: 2px;
+  --radius-small: 2px;
   --font: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --wide: 1120px;
   --narrow: 720px;
+
+  /* Photos sit on the dark theme's own background in both themes, with white
+     text over them. One treatment for the whole catalogue: the photos all
+     come from one studio, and greyscale makes them read as one shoot. */
+  --photo-ground: #0b1210;
+  --photo-filter: grayscale(1) contrast(1.15);
+  --photo-shade: linear-gradient(180deg, rgb(11 18 16 / 35%) 0%, transparent 30%, transparent 40%, rgb(11 18 16 / 88%) 100%);
+
+  /* Pain zones on the 0-10 scale, in the palette's own status colours. The
+     bands are the ones the server's rules use: 7 and up is high pain, 4 to 6
+     moderate. These colours mean pain and are used for nothing else. */
+  --zone-low: var(--success);
+  --zone-mid: var(--warn-text);
+  --zone-high: var(--danger);
 }
 
 * {
@@ -122,30 +119,45 @@ a {
 h1,
 h2,
 h3 {
-  letter-spacing: -0.02em;
   color: var(--text);
 }
 
+/* Headings are the same family as the text, at its narrowest width, heavy
+   and in capitals. */
+h1,
+h2 {
+  font-weight: 850;
+  font-stretch: 64%;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
 h1 {
-  font-size: 34px;
-  line-height: 1.12;
-  margin: 0 0 10px;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: -0.03em;
+  font-size: 46px;
+  line-height: 0.95;
+  margin: 0 0 12px;
 }
 
 h2 {
-  font-size: 20px;
-  line-height: 1.25;
-  margin: 0 0 12px;
-  font-weight: 700;
+  font-size: 27px;
+  line-height: 1;
+  margin: 0 0 14px;
 }
 
 h3 {
   font-size: 16px;
   margin: 0 0 6px;
-  font-weight: 650;
+  font-weight: 700;
+}
+
+/* The crisis screen speaks gently: sentence case at normal width. */
+.crisis h1,
+.crisis h2 {
+  text-transform: none;
+  font-stretch: 100%;
+  font-weight: 800;
+  line-height: 1.15;
 }
 
 :focus-visible {
@@ -159,8 +171,7 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--header-bg);
-  backdrop-filter: saturate(1.4) blur(10px);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
@@ -173,26 +184,20 @@ h3 {
   gap: 28px;
 }
 
+/* The wordmark: the name in the heading face, nothing else. */
 .brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-weight: 800;
-  font-size: 19px;
-  letter-spacing: -0.03em;
+  font-size: 27px;
+  font-weight: 900;
+  font-stretch: 62%;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--text);
   text-decoration: none;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, #14a585, var(--brand-dark));
-  color: #fff;
-  box-shadow: var(--shadow-sm);
+.brand-small {
+  font-size: 21px;
 }
 
 .site-nav {
@@ -205,31 +210,19 @@ h3 {
 .site-nav a {
   color: var(--muted);
   text-decoration: none;
-  padding: 6px 14px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-weight: 550;
-}
-
-.site-nav a {
   white-space: nowrap;
-}
-
-@media (max-width: 420px) {
-  .brand-text {
-    display: none;
-  }
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
 }
 
 .site-nav a:hover {
   color: var(--text);
-  background: var(--surface-alt);
 }
 
 .site-nav a[aria-current="page"] {
   color: var(--text);
-  background: transparent;
-  border-color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
 .header-actions {
@@ -248,7 +241,7 @@ h3 {
   text-decoration: none;
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 999px;
+  border-radius: var(--radius);
   padding: 4px 12px 4px 4px;
 }
 
@@ -261,7 +254,7 @@ h3 {
   place-items: center;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: var(--radius);
   background: var(--primary-soft);
   color: var(--primary);
   font-size: 13px;
@@ -303,6 +296,25 @@ h3 {
   .account-chip {
     padding: 3px;
   }
+}
+
+/* The light/dark switch in the header. */
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
 }
 
 /* Footer */
@@ -347,10 +359,11 @@ h3 {
 .eyebrow {
   display: inline-block;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
+  font-stretch: 88%;
   color: var(--primary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   margin-bottom: 6px;
 }
 
@@ -382,7 +395,6 @@ h3 {
   border-radius: var(--radius);
   padding: 22px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
 }
 
 .card > :last-child {
@@ -417,16 +429,18 @@ h3 {
   gap: 8px;
   padding: 10px 18px;
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
+  font-stretch: 88%;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
   transition:
     background 0.15s,
     border-color 0.15s,
@@ -468,14 +482,12 @@ h3 {
 
 .btn-small {
   padding: 7px 12px;
-  font-size: 14px;
-  border-radius: 9px;
+  font-size: 13px;
 }
 
 .btn-large {
-  padding: 14px 24px;
-  font-size: 16px;
-  border-radius: 12px;
+  padding: 15px 24px;
+  font-size: 15px;
 }
 
 /* A button that reads as a link, for an action inside a sentence. */
@@ -508,7 +520,7 @@ h3 {
   width: 100%;
   padding: 11px 14px;
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
+  border-radius: var(--radius);
   font: inherit;
   background: var(--surface);
   color: var(--text);
@@ -533,7 +545,7 @@ h3 {
   width: 80px;
   padding: 8px 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   font: inherit;
 }
 
@@ -548,7 +560,7 @@ h3 {
 .choice {
   padding: 9px 16px;
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -577,11 +589,36 @@ h3 {
   gap: 6px;
 }
 
+/* Each number is underlined in its pain zone, and filled with it once
+   chosen. --zone comes from the zone-* class on the button. */
 .pain-scale .choice {
   padding: 10px 0;
-  border-radius: 10px;
   text-align: center;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  border-bottom: 3px solid var(--zone);
+}
+
+.pain-scale .choice:hover:not(:disabled) {
+  border-color: var(--zone);
+}
+
+.pain-scale .choice[aria-pressed="true"] {
+  background: var(--zone);
+  border-color: var(--zone);
+  color: var(--bg);
+}
+
+.zone-low {
+  --zone: var(--zone-low);
+}
+
+.zone-mid {
+  --zone: var(--zone-mid);
+}
+
+.zone-high {
+  --zone: var(--zone-high);
 }
 
 @media (max-width: 480px) {
@@ -591,7 +628,6 @@ h3 {
 
   .pain-scale .choice {
     font-size: 14px;
-    border-radius: 8px;
   }
 }
 
@@ -629,7 +665,7 @@ h3 {
 .steps span {
   flex: 1;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--border);
 }
 
@@ -642,7 +678,7 @@ h3 {
 .error {
   color: var(--danger);
   background: var(--danger-bg);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 12px 14px;
   margin: 12px 0;
 }
@@ -650,7 +686,7 @@ h3 {
 .notice {
   color: var(--warn-text);
   background: var(--warn-bg);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 12px 14px;
   margin: 12px 0;
 }
@@ -658,7 +694,7 @@ h3 {
 .success {
   color: var(--success);
   background: var(--success-bg);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 12px 14px;
   margin: 12px 0;
 }
@@ -736,8 +772,7 @@ h3 {
 /* The plan's adjustment card: a tinted card so it reads as a suggestion. */
 
 .card-highlight {
-  background: linear-gradient(180deg, var(--primary-soft), var(--surface) 70%);
-  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+  border-top: 4px solid var(--primary);
 }
 
 /* The admin page's editable list of check-ins. */
@@ -813,7 +848,8 @@ h3 {
   font-weight: 650;
 }
 
-/* Landing page */
+/* Landing page. Condensed type over full-width photos, flat surfaces, and
+   numbers in place of adjectives. */
 
 .landing {
   width: 100%;
@@ -822,275 +858,246 @@ h3 {
 .section {
   max-width: var(--wide);
   margin: 0 auto;
-  padding: 72px 20px;
+  padding: 80px 20px;
 }
 
+.landing h2 {
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 0.95;
+}
+
+/* A section's heading: left-aligned, with a fact on the right where there is
+   one. */
 .section-head {
-  max-width: 620px;
-  margin: 0 auto 40px;
-  text-align: center;
-}
-
-.section-head h2 {
-  font-size: 34px;
-  margin-bottom: 12px;
-}
-
-.section-head p {
-  color: var(--muted);
-  font-size: 17px;
-  margin: 0;
-}
-
-.hero-band {
-  background:
-    radial-gradient(900px 420px at 85% 10%, var(--glow-1), transparent 70%),
-    radial-gradient(700px 380px at 0% 100%, var(--glow-2), transparent 70%);
-}
-
-.hero {
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 56px;
-  align-items: center;
-  padding-top: 80px;
-  padding-bottom: 88px;
-}
-
-.hero h1 {
-  font-size: 56px;
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  margin-bottom: 20px;
-}
-
-.hero h1 em {
-  font-style: normal;
-  color: var(--primary);
-}
-
-.hero .lead {
-  font-size: 19px;
-  max-width: 520px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px 32px;
   margin-bottom: 32px;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 600;
+.section-head h2 {
+  margin: 0;
+}
+
+.section-head p {
+  margin: 14px 0 0;
+  max-width: 560px;
   color: var(--muted);
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
+  font-size: 17px;
 }
 
-.pill-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #12a383;
-  box-shadow: 0 0 0 4px rgb(18 163 131 / 18%);
+/* The hero: one exercise photo across the whole width with the headline on
+   it. Dark in both themes, because the text sits on the photo. */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--photo-ground);
+  color: #fff;
 }
 
-.trust-row {
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 15%;
+  filter: var(--photo-filter);
+}
+
+/* Darkens the side the text is on, so it reads over any part of the photo. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgb(11 18 16 / 92%) 0%, rgb(11 18 16 / 62%) 45%, rgb(11 18 16 / 0%) 80%);
+}
+
+.hero-inner {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 22px;
-  margin-top: 28px;
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.trust-row span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.trust-row svg {
-  color: var(--primary);
-}
-
-/* The made-up plan in the hero: real app parts, arranged as a picture. */
-
-.preview {
-  position: relative;
-  padding: 0 0 48px 110px;
-}
-
-/* The big photo the cards float over. */
-.hero-photo {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  object-position: 65% 60%;
-  border-radius: 24px;
-  box-shadow: var(--shadow-lg);
-  background: var(--surface-alt);
-}
-
-.preview-card {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 280px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  box-shadow: var(--shadow-lg);
-  padding: 18px;
-}
-
-.preview-head {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  align-items: flex-end;
+  gap: 40px;
+  min-height: 620px;
+  padding-top: 120px;
+  padding-bottom: 48px;
 }
 
-.preview-title {
-  font-weight: 750;
-  font-size: 17px;
-  letter-spacing: -0.02em;
+.hero-copy {
+  max-width: 640px;
 }
 
-.preview-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
-  border-top: 1px solid var(--border);
+.hero h1 {
+  font-size: clamp(56px, 8.5vw, 112px);
+  font-stretch: 62%;
+  line-height: 0.88;
+  color: #fff;
+  margin-bottom: 24px;
 }
 
-.preview-thumb {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  object-fit: cover;
-  background: var(--surface-alt);
+.hero .lead {
+  color: rgb(255 255 255 / 85%);
+  font-size: 19px;
+  max-width: 480px;
+  margin-bottom: 32px;
 }
 
-.preview-name {
-  font-weight: 650;
-  font-size: 14px;
+/* The second button on a photo: an outline, so the primary one leads. */
+.btn-on-photo {
+  background: transparent;
+  border-color: #fff;
+  color: #fff;
 }
 
-.preview-dose {
-  font-size: 12px;
-  color: var(--muted);
+.btn-on-photo:hover:not(:disabled) {
+  border-color: #fff;
+  background: rgb(255 255 255 / 12%);
 }
 
-.preview-check {
-  flex: none;
-  margin-left: auto;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--border-strong);
-}
+/* The example plan in the hero, laid out like an activity summary: the
+   numbers first, then the week's pain as bars in their zone colours. */
 
-.preview-check.on {
-  background: var(--primary);
-  border-color: var(--primary);
-  display: grid;
-  place-items: center;
-  color: var(--primary-text);
-}
-
-.preview-float {
-  position: absolute;
-  top: 24px;
-  right: -16px;
-  width: 220px;
+.plan-card {
+  width: 300px;
+  max-width: 100%;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
-  padding: 14px 16px 10px;
+  color: var(--text);
+  border-top: 4px solid var(--primary);
+  padding: 16px 18px;
+  display: grid;
+  gap: 12px;
 }
 
-.preview-float-top {
+.plan-card-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 600;
+  gap: 8px;
 }
 
-.trend-chip {
+.plan-card-title {
+  font-size: 22px;
+  font-weight: 850;
+  font-stretch: 70%;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.plan-card-head span,
+.plan-card-note {
+  margin: 0;
   font-size: 12px;
-  font-weight: 700;
-  color: var(--success);
-  background: var(--success-bg);
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.preview-float svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-top: 8px;
-}
-
-.spark-line {
-  fill: none;
-  stroke: var(--primary);
-  stroke-width: 3;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-.spark-fill {
-  fill: var(--primary);
-  opacity: 0.18;
-}
-
-.spark-dot {
-  fill: var(--primary);
-  stroke: var(--surface);
-  stroke-width: 2;
-}
-
-/* Numbers */
-
-.stats-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.stats-strip > div {
-  background: var(--surface);
-  padding: 24px;
-  text-align: center;
-}
-
-.stats-strip strong {
-  display: block;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--primary);
-  line-height: 1.1;
-}
-
-.stats-strip span {
-  font-size: 14px;
   color: var(--muted);
+}
+
+.plan-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.plan-card-stats div + div {
+  border-left: 1px solid var(--border);
+  padding-left: 12px;
+}
+
+.plan-card-stats dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.plan-card-stats dd {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 850;
+  font-stretch: 75%;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-card-stats dd small {
+  margin-left: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pain-bars,
+.pain-bars-x {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.pain-bars {
+  align-items: end;
+  height: 56px;
+}
+
+/* --pain is the day's pain, 0-10, so a bar's height is its share of 10. */
+.pain-bars span {
+  height: calc(var(--pain) * 10%);
+  background: var(--zone);
+}
+
+.pain-bars-x {
+  margin-top: -6px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* How a plan is made: a real sequence, so it is numbered. */
+
+.plan-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 3px solid var(--text);
+}
+
+.plan-steps li {
+  padding: 20px 24px 0 0;
+}
+
+.plan-steps li + li {
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
+}
+
+.plan-step-num {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 40px;
+  font-weight: 850;
+  font-stretch: 62%;
+  line-height: 1;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-steps h3 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+.plan-steps p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
 }
 
 /* Start and finish photos, as on a real plan */
@@ -1105,7 +1112,7 @@ h3 {
 .showcase-photos {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 
 .showcase-photos figure {
@@ -1118,27 +1125,25 @@ h3 {
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  background: var(--surface-alt);
+  background: var(--photo-ground);
+  filter: var(--photo-filter);
 }
 
 .showcase-photos figcaption {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 0;
+  left: 0;
+  padding: 6px 10px;
   font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--photo-ground);
+  color: #fff;
 }
 
 .showcase h2 {
-  font-size: 34px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .showcase > div > p {
@@ -1166,117 +1171,8 @@ h3 {
   color: var(--primary);
 }
 
-@media (max-width: 960px) {
-
-  .showcase {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .stats-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .preview {
-    padding: 0;
-  }
-
-  .hero-photo {
-    aspect-ratio: 5 / 4;
-  }
-
-  .preview-card {
-    position: relative;
-    width: auto;
-    margin: -60px 12px 0;
-  }
-
-  .preview-float {
-    top: 12px;
-    right: 12px;
-    width: 170px;
-    padding: 10px 12px 6px;
-  }
-
-  .stats-strip strong {
-    font-size: 26px;
-  }
-
-  .stats-strip > div {
-    padding: 18px 10px;
-  }
-
-
-  .showcase h2 {
-    font-size: 28px;
-  }
-}
-
-/* The light/dark switch in the header. */
-
-.theme-toggle {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.theme-toggle:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-
-/* How it works */
-
-.steps-grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  counter-reset: step;
-}
-
-.step-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-}
-
-.step-num {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--primary);
-  color: #fff;
-  font-weight: 750;
-  margin-bottom: 16px;
-}
-
-.step-card h3 {
-  font-size: 17px;
-  margin-bottom: 8px;
-}
-
-.step-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 15px;
-}
-
-/* Safety */
+/* The rulebook: the limits a plan gets, as a table, so the safety case is
+   made with the real numbers. */
 
 .band-alt {
   background: var(--surface);
@@ -1284,154 +1180,139 @@ h3 {
   border-bottom: 1px solid var(--border);
 }
 
-.split {
-  display: grid;
-  grid-template-columns: 1fr 1.1fr;
-  gap: 56px;
-  align-items: center;
+.table-scroll {
+  overflow-x: auto;
 }
 
-.split h2 {
-  font-size: 34px;
-  margin-bottom: 14px;
+.rulebook {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+  font-size: 15px;
 }
 
-.split > div > p {
+.rulebook th,
+.rulebook td {
+  text-align: left;
+  padding: 12px 16px 12px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: baseline;
+}
+
+.rulebook thead th {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
-  font-size: 17px;
+  border-bottom: 2px solid var(--text);
 }
 
-.feature-rows {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.rulebook tbody th {
+  font-weight: 600;
+}
+
+.rulebook .num {
+  font-size: 22px;
+  font-weight: 850;
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+
+.rulebook .none {
+  color: var(--faint);
+}
+
+/* The starting point every rule lowers from. */
+.rulebook .baseline th,
+.rulebook .baseline td {
+  color: var(--muted);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.safety-notes {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 40px;
+  margin-top: 40px;
 }
 
-.feature-row {
-  display: flex;
-  gap: 16px;
-  padding: 20px;
-  border-radius: 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
+.safety-notes > div {
+  border-top: 3px solid var(--text);
+  padding-top: 14px;
 }
 
-.feature-row h3 {
-  margin-bottom: 4px;
-}
-
-.feature-row p {
+.safety-notes p {
   margin: 0;
   color: var(--muted);
   font-size: 15px;
 }
 
+.sources {
+  margin: 28px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (max-width: 960px) {
+  .showcase {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .plan-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-steps li,
+  .plan-steps li + li {
+    padding: 20px 0;
+    border-left: 0;
+  }
+
+  .plan-steps li + li {
+    border-top: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 56px 16px;
+  }
+
+  .hero-inner {
+    min-height: 0;
+    padding-top: 200px;
+    padding-bottom: 24px;
+  }
+
+  /* On a phone the text is under the photo's subject, so darken the bottom. */
+  .hero::after {
+    background: linear-gradient(180deg, rgb(11 18 16 / 15%) 0%, rgb(11 18 16 / 92%) 45%);
+  }
+
+  .plan-card {
+    width: 100%;
+  }
+
+  .safety-notes {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* An icon on a tinted square, for the workout card and empty states. */
 .feature-icon {
   flex: none;
   display: grid;
   place-items: center;
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--primary-soft);
   color: var(--primary);
-}
-
-.source-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 20px;
-}
-
-.source-tag {
-  font-size: 13px;
-  font-weight: 650;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  color: var(--muted);
-  background: var(--surface);
-}
-
-/* Closing call to action */
-
-.cta-band {
-  border-radius: 24px;
-  padding: 56px 32px;
-  text-align: center;
-  color: #fff;
-  background:
-    radial-gradient(600px 300px at 90% 0%, rgb(255 255 255 / 14%), transparent 70%),
-    linear-gradient(135deg, #0f8f74, #0a5c4a);
-  box-shadow: var(--shadow-lg);
-}
-
-.cta-band h2 {
-  color: #fff;
-  font-size: 34px;
-  margin-bottom: 10px;
-}
-
-.cta-band p {
-  color: rgb(255 255 255 / 85%);
-  font-size: 17px;
-  margin: 0 auto 28px;
-  max-width: 520px;
-}
-
-.cta-band .btn {
-  background: #fff;
-  color: var(--brand-dark);
-  border-color: #fff;
-}
-
-.cta-band .btn:hover {
-  background: #f0faf7;
-}
-
-@media (max-width: 960px) {
-  .hero,
-  .split {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .hero {
-    padding-top: 48px;
-    padding-bottom: 56px;
-  }
-
-  .steps-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .preview {
-    max-width: 560px;
-  }
-}
-
-@media (max-width: 640px) {
-  .hero h1 {
-    font-size: 40px;
-  }
-
-  .section {
-    padding: 56px 16px;
-  }
-
-  .section-head h2,
-  .split h2,
-  .cta-band h2 {
-    font-size: 28px;
-  }
-
-  .steps-grid {
-    grid-template-columns: 1fr;
-  }
-
 }
 
 /* Dashboard */
@@ -1462,7 +1343,7 @@ h3 {
   margin: 0 auto 16px;
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 .section-title {
@@ -1497,7 +1378,7 @@ h3 {
   color: var(--primary);
   background: var(--primary-soft);
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   margin: 8px 0 4px;
 }
 
@@ -1543,8 +1424,9 @@ h3 {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface-alt);
+  filter: var(--photo-filter);
 }
 
 /* Limits: label / value rows. */
@@ -1599,7 +1481,6 @@ h3 {
 
 .auth-page .card {
   padding: 28px;
-  box-shadow: var(--shadow);
 }
 
 .auth-page .btn-primary {
@@ -1662,6 +1543,8 @@ h3 {
 .eval-section h2 .by {
   font-size: 13px;
   font-weight: normal;
+  font-stretch: 100%;
+  text-transform: none;
   color: var(--faint);
 }
 
@@ -1719,7 +1602,7 @@ h3 {
 .badge {
   display: inline-block;
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   font-size: 12px;
   font-weight: 600;
   border: 1px solid transparent;
@@ -1749,7 +1632,7 @@ h3 {
   font-size: 12px;
   color: var(--muted);
   border: 1px dashed var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--radius);
   padding: 0 8px;
 }
 
@@ -1783,7 +1666,7 @@ h3 {
   font-size: 12px;
   padding: 0 6px;
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   text-decoration: none;
   color: var(--text);
   background: var(--bg);
@@ -1842,7 +1725,7 @@ h3 {
   overflow: auto;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   font-size: 12px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -1853,9 +1736,9 @@ h3 {
   margin-bottom: 12px;
 }
 
-/* Photo cards: a gradient with an exercise photo blended into its right
-   side. The photo takes the gradient's colour (luminosity blend) and fades
-   in from the left, so the title always sits on plain colour. */
+/* Photo cards: the exercise photo fills the top of the card, in greyscale, on
+   the dark theme's ground, with a shade so the white title always reads. The
+   same in both themes, and the same when a photo fails to load. */
 
 .card-grid {
   display: grid;
@@ -1870,11 +1753,10 @@ h3 {
 
 .photo-card {
   height: 100%;
-  border-radius: 18px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
 }
@@ -1887,54 +1769,54 @@ h3 {
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  min-height: 190px;
-  padding: 16px 20px 18px;
+  min-height: 200px;
+  padding: 14px 18px 18px;
   text-decoration: none;
   overflow: hidden;
+  background: var(--photo-ground);
+  color: #fff;
+}
+
+.photo-card-top::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--photo-shade);
 }
 
 .photo-card.wide .photo-card-top {
-  min-height: 230px;
+  min-height: 260px;
 }
 
 .photo-card-img {
   position: absolute;
-  z-index: -1;
-  top: 0;
-  right: 0;
-  width: 62%;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
   height: 100%;
   object-fit: cover;
-  mix-blend-mode: luminosity;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 55%);
-  mask-image: linear-gradient(to right, transparent, #000 55%);
+  filter: var(--photo-filter);
   transition: transform 0.4s ease;
 }
 
-.photo-card.wide .photo-card-img {
-  width: 55%;
-}
-
 a.photo-card-top:hover .photo-card-img {
-  transform: scale(1.05);
-}
-
-.photo-card-text {
-  max-width: 70%;
+  transform: scale(1.04);
 }
 
 .photo-card-title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  font-size: 30px;
+  font-weight: 850;
+  font-stretch: 64%;
+  text-transform: uppercase;
+  line-height: 0.95;
+  text-wrap: balance;
   color: inherit;
 }
 
 .photo-card.wide .photo-card-title {
-  font-size: 32px;
+  font-size: 44px;
 }
 
 .photo-card-meta {
@@ -1944,6 +1826,7 @@ a.photo-card-top:hover .photo-card-img {
   margin-top: 8px;
   font-size: 13px;
   font-weight: 650;
+  color: rgb(255 255 255 / 85%);
 }
 
 .photo-card-meta > span {
@@ -1954,12 +1837,14 @@ a.photo-card-top:hover .photo-card-img {
 
 .chip {
   display: inline-block;
-  font-size: 12px;
-  font-weight: 650;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 72%);
-  color: #1d1d22;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: var(--radius-small);
+  background: var(--photo-ground);
+  color: #fff;
 }
 
 .photo-card-body {
@@ -1969,33 +1854,6 @@ a.photo-card-top:hover .photo-card-img {
 
 .photo-card-body > :first-child {
   margin-top: 0;
-}
-
-/* The same four gradients in both themes: they are the colour of the app. */
-
-.tone-0 .photo-card-top {
-  background: linear-gradient(115deg, #ecdcf7 0%, #d6daf6 50%, #c0e3ec 100%);
-  color: #17151d;
-}
-
-.tone-1 .photo-card-top {
-  background: linear-gradient(115deg, #d8eef0 0%, #a7d2dc 100%);
-  color: #0f1e22;
-}
-
-.tone-2 .photo-card-top {
-  background: linear-gradient(115deg, #b65a93 0%, #7861bf 55%, #4c95c8 100%);
-  color: #fff;
-}
-
-.tone-2 .chip {
-  background: rgb(255 255 255 / 22%);
-  color: #fff;
-}
-
-.tone-3 .photo-card-top {
-  background: linear-gradient(115deg, #f8ddce 0%, #e9b0a4 100%);
-  color: #24150f;
 }
 
 .dose-edit {
@@ -2009,8 +1867,23 @@ a.photo-card-top:hover .photo-card-img {
   border-color: rgb(0 0 0 / 15%);
 }
 
+/* Body areas on the landing page: tall photo tiles, the name on the photo. */
 .region-grid {
   grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.region-grid .photo-card {
+  border: 0;
+}
+
+.region-grid .photo-card-top {
+  aspect-ratio: 3 / 4;
+  min-height: 0;
+}
+
+.region-grid .photo-card-title {
+  font-size: 34px;
 }
 
 @media (max-width: 960px) {
@@ -2030,20 +1903,19 @@ a.photo-card-top:hover .photo-card-img {
   }
 
   .region-grid .photo-card-top {
-    min-height: 140px;
-    padding: 12px 14px;
+    padding: 10px 12px 12px;
   }
 
   .region-grid .photo-card-title {
-    font-size: 19px;
+    font-size: 26px;
   }
 
   .region-grid .chip {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .photo-card.wide .photo-card-title {
-    font-size: 26px;
+    font-size: 36px;
   }
 }
 
@@ -2098,7 +1970,7 @@ a.photo-card-top:hover .photo-card-img {
 }
 
 .btn-pill {
-  border-radius: 999px;
+  border-radius: var(--radius);
 }
 
 /* The limits as filter-style panels: ticks, radios and range bars. They only
@@ -2112,7 +1984,7 @@ a.photo-card-top:hover .photo-card-img {
 .side-panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 16px 18px;
 }
 
@@ -2159,7 +2031,7 @@ a.photo-card-top:hover .photo-card-img {
 }
 
 .fake-box {
-  border-radius: 5px;
+  border-radius: var(--radius-small);
 }
 
 .fake-radio {
@@ -2193,7 +2065,7 @@ a.photo-card-top:hover .photo-card-img {
   position: relative;
   height: 4px;
   margin: 14px 8px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--border-strong);
 }
 
@@ -2201,7 +2073,7 @@ a.photo-card-top:hover .photo-card-img {
   position: absolute;
   top: 0;
   bottom: 0;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--text);
 }
 
@@ -2297,7 +2169,7 @@ a.photo-card-top:hover .photo-card-img {
 
 .player-progress {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--surface-alt);
   overflow: hidden;
 }
@@ -2320,7 +2192,7 @@ a.photo-card-top:hover .photo-card-img {
   width: 12px;
   height: 12px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--radius);
   border: 2px solid var(--border-strong);
   background: transparent;
   cursor: pointer;
@@ -2359,8 +2231,7 @@ a.photo-card-top:hover .photo-card-img {
   -webkit-backface-visibility: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
+  border-radius: var(--radius);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -2373,10 +2244,8 @@ a.photo-card-top:hover .photo-card-img {
 
 .flashcard-title {
   margin: 0;
-  font-size: 26px;
-  font-style: italic;
-  font-weight: 800;
-  line-height: 1.15;
+  font-size: 34px;
+  line-height: 0.95;
 }
 
 .flashcard-meta {
@@ -2416,7 +2285,7 @@ a.photo-card-top:hover .photo-card-img {
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: var(--radius);
   border: 2px solid var(--border-strong);
   color: var(--muted);
   font-weight: 700;
@@ -2437,8 +2306,9 @@ a.photo-card-top:hover .photo-card-img {
 }
 
 .hold-timer-count {
-  font-size: 34px;
-  font-weight: 800;
+  font-size: 48px;
+  font-weight: 850;
+  font-stretch: 70%;
   font-variant-numeric: tabular-nums;
   min-width: 3ch;
   text-align: center;
@@ -2489,11 +2359,161 @@ a.photo-card-top:hover .photo-card-img {
   place-items: center;
   width: 84px;
   height: 84px;
-  border-radius: 50%;
+  border-radius: var(--radius);
   background: var(--success);
   color: var(--surface);
 }
 
 .player-finished-actions {
   justify-content: center;
+}
+
+/* A plan on paper. The sheet is hidden on screen; printing shows it alone,
+   black on white whatever the theme, so "Save as PDF" makes a clean file. */
+
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  :root,
+  :root[data-theme] {
+    color-scheme: light;
+    --bg: #fff;
+    --surface: #fff;
+    --surface-alt: #f2f2f2;
+    --text: #000;
+    --muted: #333;
+    --faint: #555;
+    --border: #bbb;
+    --border-strong: #888;
+    --primary: #0d7a64;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    display: block;
+    font-size: 10.5pt;
+  }
+
+  .site-header,
+  .site-footer,
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-sheet {
+    display: block;
+  }
+
+  .sheet-head {
+    padding-bottom: 4mm;
+    margin-bottom: 2mm;
+    border-bottom: 3px solid var(--text);
+  }
+
+  .sheet-head h1 {
+    margin: 2mm 0 1mm;
+    font-size: 30pt;
+  }
+
+  .sheet-head p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .sheet-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sheet-ex {
+    display: grid;
+    grid-template-columns: 58mm 1fr;
+    gap: 6mm;
+    padding: 5mm 0;
+    border-bottom: 1px solid var(--border);
+    break-inside: avoid;
+  }
+
+  .sheet-photos {
+    display: grid;
+    gap: 2mm;
+  }
+
+  .sheet-photos img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    filter: var(--photo-filter);
+  }
+
+  .sheet-ex h2 {
+    margin: 0 0 1mm;
+    font-size: 16pt;
+  }
+
+  .sheet-dose {
+    margin: 0 0 2mm;
+    font-size: 13pt;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sheet-why {
+    margin: 0 0 2mm;
+    color: var(--muted);
+  }
+
+  .sheet-steps {
+    margin: 0;
+    padding-left: 5mm;
+  }
+
+  .sheet-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6mm;
+    margin-top: 6mm;
+    break-inside: avoid;
+  }
+
+  .sheet-foot .card {
+    margin: 0;
+    padding: 4mm;
+  }
+
+  .sheet-foot h2 {
+    font-size: 13pt;
+  }
+
+  .sheet-stop {
+    padding: 4mm;
+    border: 2px solid var(--text);
+  }
+
+  .sheet-stop h3 {
+    margin: 0 0 1mm;
+    font-size: 13pt;
+  }
+
+  .sheet-stop p {
+    margin: 0 0 2mm;
+  }
+
+  .sheet-stop ul {
+    margin: 0;
+    padding-left: 5mm;
+  }
+
+  .sheet-note {
+    margin: 5mm 0 0;
+    font-size: 9pt;
+    color: var(--faint);
+  }
 }

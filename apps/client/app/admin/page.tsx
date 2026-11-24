@@ -6,7 +6,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PainHistory, today } from "@/components/pain-tracker";
+import { PainHistory } from "@/components/pain-tracker";
+import { today } from "@/lib/days";
 import { PlanAdjustment } from "@/components/plan-adjustment";
 import { AccountError, ErrorMessage, Loading } from "@/components/ui";
 import { listCheckIns, listRegimes, messageOf, replaceCheckIns, type Regime } from "@/lib/api";
